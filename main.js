@@ -83,3 +83,23 @@ setTimeout(function() {
     scene.requestRedraw();
 }, 1000);
 
+// setTimeout(function() {
+
+
+//     var canvas = document.createElement('canvas');
+//     var context = canvas.getContext('2d');
+//     var img = document.getElementById('myimg');
+//     context.drawImage(img, 0, 0 );
+//     var myData = context.getImageData(0, 0, img.width, img.height);
+
+//     var img1Ctx = 
+
+//     var img1 = img1Ctx.getImageData(0, 0, 250, 250),
+//         img2 = img2Ctx.getImageData(0, 0, 250, 250),
+//         diff = diffCtx.createImageData(250, 250);
+
+//     pixelmatch(img1.data, img2.data, diff.data, 250, 250, {threshold: 0.1});
+
+//     diffCtx.putImageData(diff, 0, 0);
+// }, 2000);
+
