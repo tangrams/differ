@@ -65,12 +65,20 @@ map = (function () {
 
 }());
 
+// var img1Ctx, img1;
+var buf;
 // Take a screenshot and save file
 function screenshot() {
     // Adapted from: https://gist.github.com/unconed/4370822
     var image = scene.canvas.toDataURL('image/png').slice(22); // slice strips host/mimetype/etc.
+
+    // img1Ctx = scene.canvas.getContext("2d");
+    // console.log('img1Ctx:', img1Ctx);
+    // img1 = img1Ctx.getImageData(0, 0, 250, 250);
+
+
     var data = atob(image); // convert base64 to binary without UTF-8 mangling
-    var buf = new Uint8Array(data.length);
+    buf = new Uint8Array(data.length);
     for (var i = 0; i < data.length; ++i) {
         buf[i] = data.charCodeAt(i);
     }
@@ -83,23 +91,25 @@ setTimeout(function() {
     scene.requestRedraw();
 }, 1000);
 
-// setTimeout(function() {
+setTimeout(function() {
+
+    var newcanvas = document.createElement('canvas');
+    var img2Ctx = newcanvas.getContext('2d');
+    var img = document.getElementById('myimg');
+    img2Ctx.drawImage(img, 0, 0 );
+    var img2 = img2Ctx.getImageData(0, 0, img.width, img.height);
+
+    var diffcanvas = document.createElement('canvas');
+    var diffCtx = diffcanvas.getContext('2d');
 
 
-//     var canvas = document.createElement('canvas');
-//     var context = canvas.getContext('2d');
-//     var img = document.getElementById('myimg');
-//     context.drawImage(img, 0, 0 );
-//     var myData = context.getImageData(0, 0, img.width, img.height);
+    // var img1 = img1Ctx.getImageData(0, 0, 250, 250),
+    //     img2 = img2Ctx.getImageData(0, 0, 250, 250),
+    var diff = diffCtx.createImageData(250, 250);
 
-//     var img1Ctx = 
+    pixelmatch(buf, img2.data, diff.data, 250, 250, {threshold: 0.1});
 
-//     var img1 = img1Ctx.getImageData(0, 0, 250, 250),
-//         img2 = img2Ctx.getImageData(0, 0, 250, 250),
-//         diff = diffCtx.createImageData(250, 250);
-
-//     pixelmatch(img1.data, img2.data, diff.data, 250, 250, {threshold: 0.1});
-
-//     diffCtx.putImageData(diff, 0, 0);
-// }, 2000);
+    diffCtx.putImageData(diff, 0, 0);
+    document.getElementById("diff").appendChild(diffcanvas);
+}, 2000);
 
