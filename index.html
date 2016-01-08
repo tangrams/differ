@@ -19,6 +19,8 @@
             margin: 0px;
             border: 0px;
             padding: 0px;
+            font-size: 18px;
+            font-family: sans-serif
         }
 
         #map {
@@ -26,12 +28,29 @@
             height: 250px;
             width: 250px;
             position: absolute;
+            float: left;
+        }
+
+        #old {
+            height: 250px;
+            width: 250px;
+            background-image: url("tangram-1452215804599.png");
+            position: absolute;
+        }
+
+        .container {
+            height: 250px;
+            width: 250px;
+            border: 2px solid red;
+            float: left;
         }
     </style>
   </head>
 
   <body>
-    <div id="map"></div>
+    <div class="container">new<div id="map"></div></div>
+    <div class="container">old<div id="old"></div></div>
+    <div class="container">diff<div id="dif"></div></div>
 
     <!-- 3rd party libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"></script>
