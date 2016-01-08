@@ -67,18 +67,28 @@ map = (function () {
 }());
 
 // initialize variables
-var oldimg, newimg;
+var oldimg, newimg, oldData, mapImageURL;
 
 // draw old image
 oldimg = document.createElement('img');
+// make a canvas for the old image once the image loads
+var oldcanvas = document.createElement('canvas');
+oldcanvas.height = 500;
+oldcanvas.width = 500;
+var oldCtx = oldcanvas.getContext('2d');
+// add the old image to it once the image loads
+oldimg.addEventListener('load', function () {
+    oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
+    document.getElementById("old").appendChild(oldcanvas);
+    // make the data available
+    oldData = oldCtx.getImageData(0, 0, 500, 500);
+});
 oldimg.src = 'tangram-1452283152715.png';
-document.getElementById("old").appendChild(oldimg);
-
 
 // Take a screenshot and save file
 function screenshot() {
     // Adapted from: https://gist.github.com/unconed/4370822
-    var mapImageURL = scene.canvas.toDataURL('image/png');
+    mapImageURL = scene.canvas.toDataURL('image/png');
     newimg = document.createElement('img');
     newimg.src = mapImageURL;
 
@@ -90,28 +100,18 @@ function screenshot() {
         buf[i] = data.charCodeAt(i);
     }
     var blob = new Blob([buf], { type: 'image/png' });
-    saveAs(blob, 'tangram-' + (+new Date()) + '.png'); // uses FileSaver.js: https://github.com/eligrey/FileSaver.js/
+    // save to disk
+    // saveAs(blob, 'tangram-' + (+new Date()) + '.png'); // uses FileSaver.js: https://github.com/eligrey/FileSaver.js/
 }
 
 // give the scene time to draw, then queue a screenshot
 setTimeout(function() {
     queue_screenshot = true;
     scene.requestRedraw();
-
 }, 1500);
 
 // and perform the image comparison
 setTimeout(function() {
-
-    // make a canvas for the old image
-    var oldcanvas = document.createElement('canvas');
-    oldcanvas.height = 500;
-    oldcanvas.width = 500;
-    // add the old image to it
-    var oldCtx = oldcanvas.getContext('2d');
-    oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
-    // make the data available
-    var oldData = oldCtx.getImageData(0, 0, 500, 500);
 
     // make a canvas for the newly-drawn map image
     var newcanvas = document.createElement('canvas');
@@ -137,5 +137,5 @@ setTimeout(function() {
     diffCtx.putImageData(diff, 0, 0);
     document.getElementById("diff").appendChild(diffcanvas);
     
-}, 3000);
+}, 2000);
 
