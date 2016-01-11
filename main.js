@@ -1,6 +1,21 @@
 /*jslint browser: true*/
 /*global Tangram, gui */
 
+
+// initialize variables
+var newimg, oldData, size = 500;
+
+// set sizes
+document.getElementById("map").style.height = size+"px";
+document.getElementById("map").style.width = size+"px";
+
+document.getElementById("old").style.height = size+"px";
+document.getElementById("old").style.width = size+"px";
+
+document.getElementsByClassName("container")[0].style.height = size+"px";
+document.getElementsByClassName("container")[0].style.width = size+"px";
+
+
 map = (function () {
     'use strict';
 
@@ -28,7 +43,6 @@ map = (function () {
 
     var layer = Tangram.leafletLayer({
         scene: 'scene.yaml',
-        postUpdate: postUpdate,
         // highDensityDisplay: false
     });
 
@@ -51,91 +65,82 @@ map = (function () {
         layer.addTo(map);
     });
     
-    window.queue_screenshot = false;
-
-    // Post-render hook
-    function postUpdate () {
-        // Screenshot needs to happen in the requestAnimationFrame callback, or the frame buffer might already be cleared
-        if (queue_screenshot == true) {
-            queue_screenshot = false;
-            screenshot();
-        }
-    }
-
     return map;
 
 }());
 
-// initialize variables
-var oldimg, newimg, oldData, mapImageURL;
-
 // draw old image
-oldimg = document.createElement('img');
+var oldimg = new Image();
 // make a canvas for the old image once the image loads
 var oldcanvas = document.createElement('canvas');
-oldcanvas.height = 500;
-oldcanvas.width = 500;
+oldcanvas.height = size;
+oldcanvas.width = size;
 var oldCtx = oldcanvas.getContext('2d');
-// add the old image to it once the image loads
+
+// set the old image to be drawn to the canvas once the image loads
 oldimg.addEventListener('load', function () {
     oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
-    document.getElementById("old").appendChild(oldcanvas);
-    // make the data available
-    oldData = oldCtx.getImageData(0, 0, 500, 500);
+    // document.getElementById("old").appendChild(oldcanvas);
+    // make the data available to pixelmatch
+    oldData = oldCtx.getImageData(0, 0, size, size);
 });
+// load the image
 oldimg.src = 'tangram-1452283152715.png';
+
+// make a canvas for the newly-drawn map image
+var newcanvas = document.createElement('canvas');
+newcanvas.height = size;
+newcanvas.width = size;
+var newCtx = newcanvas.getContext('2d');
+
+// make a canvas for the diff
+var diffcanvas = document.createElement('canvas');
+diffcanvas.height = size;
+diffcanvas.width = size;
+var diffCtx = diffcanvas.getContext('2d');
+var diff = diffCtx.createImageData(size, size);
+
+
 
 // Take a screenshot and save file
 function screenshot() {
-    // Adapted from: https://gist.github.com/unconed/4370822
-    mapImageURL = scene.canvas.toDataURL('image/png');
-    newimg = document.createElement('img');
-    newimg.src = mapImageURL;
+    return scene.screenshot().then(function(screenshot) {
+        saveAs(screenshot.blob, 'tangram-' + (+new Date()) + '.png');
 
-    var image = mapImageURL.slice(22); // slice strips host/mimetype/etc.
-
-    var data = atob(image); // convert base64 to binary without UTF-8 mangling
-    var buf = new Uint8Array(data.length);
-    for (var i = 0; i < data.length; ++i) {
-        buf[i] = data.charCodeAt(i);
-    }
-    var blob = new Blob([buf], { type: 'image/png' });
-    // save to disk
-    // saveAs(blob, 'tangram-' + (+new Date()) + '.png'); // uses FileSaver.js: https://github.com/eligrey/FileSaver.js/
+        var urlCreator = window.URL || window.webkitURL;
+        newimg = document.createElement('img');
+        newimg.src = urlCreator.createObjectURL( screenshot.blob );
+    });
 }
 
 // give the scene time to draw, then queue a screenshot
 setTimeout(function() {
-    queue_screenshot = true;
-    scene.requestRedraw();
+    screenshot();
 }, 1500);
 
 // and perform the image comparison
 setTimeout(function() {
 
-    // make a canvas for the newly-drawn map image
-    var newcanvas = document.createElement('canvas');
-    newcanvas.height = 500;
-    newcanvas.width = 500;
-    var newCtx = newcanvas.getContext('2d');
     // draw map image so it fits the new canvas size (in case it's retina)
     newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
     // make the data available
-    var newData = newCtx.getImageData(0, 0, 500, 500);
-
-    // make a canvas for the diff
-    var diffcanvas = document.createElement('canvas');
-    diffcanvas.height = 500;
-    diffcanvas.width = 500;
-    var diffCtx = diffcanvas.getContext('2d');
-    var diff = diffCtx.createImageData(500, 500);
+    var newData = newCtx.getImageData(0, 0, size, size);
 
     // run the diff
-    pixelmatch(newData.data, oldData.data, diff.data, 500, 500, {threshold: 0.1});
+    pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.3});
 
-    // put the diff in its canvas and attach it to the document for viewing
+    // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
-    document.getElementById("diff").appendChild(diffcanvas);
+
+    // make imgs for new, old, and diff and attach them to the document
+    oldimg.width = size;
+    oldimg.height = size;
+    document.getElementById("old").insertBefore( oldimg, document.getElementById("old").firstChild );
+
+
+    diffimg = document.createElement('img');
+    diffimg.src = diffcanvas.toDataURL("image/png");
+    document.getElementById("diff").insertBefore( diffimg, document.getElementById("diff").firstChild );
     
 }, 2000);
 
