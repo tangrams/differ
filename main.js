@@ -1,9 +1,8 @@
 /*jslint browser: true*/
 /*global Tangram, gui */
 
-
 // initialize variables
-var newimg, oldData, size = 250;
+var newimg, oldimg, newData, oldData, size = 250;
 
 // set sizes
 document.getElementById("map").style.height = size+"px";
@@ -58,12 +57,12 @@ map = (function () {
 
     /***** Render loop *****/
 
-    window.addEventListener('load', function () {
-        // Scene initialized
-        layer.on('init', function() {
-        });
-        layer.addTo(map);
-    });
+    // window.addEventListener('load', function () {
+    //     // Scene initialized
+    //     layer.on('init', function() {
+    //     });
+    //     layer.addTo(map);
+    // });
     
     return map;
 
@@ -79,11 +78,13 @@ oldcanvas.width = size;
 var oldCtx = oldcanvas.getContext('2d');
 
 // set the old image to be drawn to the canvas once the image loads
-var oldimg = new Image();
+oldimg = new Image();
 oldimg.addEventListener('load', function () {
     oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
     // make the data available to pixelmatch
     oldData = oldCtx.getImageData(0, 0, size, size);
+
+    layer.addTo(map);
 });
 // load the image
 oldimg.src = 'tangram-1452283152715.png';
@@ -106,28 +107,25 @@ var diff = diffCtx.createImageData(size, size);
 
 // take a screenshot
 function screenshot() {
-    console.log('screenshot');
     return scene.screenshot().then(function(screenshot) {
+
         // save it to a file
         // saveAs(screenshot.blob, 'tangram-' + (+new Date()) + '.png');
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
+        // set image load vent
+        newimg.onload = function () { 
+            // save it to the new canvas, stretching it to fit (in case it's retina)
+            newCtx.drawImage(newimg, 0, 0, scene.canvas.width, scene.canvas.height, 0, 0, newcanvas.width, newcanvas.height);
+            // make the data available to pixelmatch
+            newData = newCtx.getImageData(0, 0, size, size);
+            // do the diff
+            doDiff();
+        };
+        // load image
         newimg.src = urlCreator.createObjectURL( screenshot.blob );
-        console.log(newimg.src);
-        // newimg.addEventListener('load', function () { 
-        // // save it to the new canvas, stretching it to fit (in case it's retina)
-
-        // // not working newimg.width and height are both 0 here
-        // newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
-        newCtx.drawImage(newimg, 0, 0, 250, 250, 0, 0, newcanvas.width, newcanvas.height);
-        // newCtx.drawImage(newimg, 0, 0);
-        // // make the data available to pixelmatch
-        // //not working - newData is the right size but all 0s
-        newData = newCtx.getImageData(0, 0, size, size);
-        // saveAs(newimg.src, 'tangram-' + (+new Date()) + '.png');
-
-    });
+    })
 }
 
 // perform the image comparison
@@ -139,12 +137,9 @@ function doDiff() {
     diffCtx.putImageData(diff, 0, 0);
 
     // make imgs for new, old, and diff and attach them to the document
-    // newimg.width = size;
-    // newimg.height = size;
-    // works:
-    // document.getElementById("new").insertBefore( newimg, document.getElementById("new").firstChild );
-    // doesn't work:
-    document.getElementById("new").insertBefore( newcanvas, document.getElementById("new").firstChild );
+    newimg.width = size;
+    newimg.height = size;
+    document.getElementById("new").insertBefore( newimg, document.getElementById("new").firstChild );
 
     oldimg.width = size;
     oldimg.height = size;
@@ -189,12 +184,11 @@ scene.subscribe({
     view_complete: function () {
         if (!(v > views.length)) {
             screenshot().then(function() {
-                doDiff();
+                // doDiff();
                 // nextView();
             });
         }
     }
 });
 
-scene.resetViewComplete();
 // nextView(); // kick off the process
