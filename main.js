@@ -3,7 +3,7 @@
 
 
 // initialize variables
-var newimg, oldData, size = 500;
+var newimg, oldData, size = 250;
 
 // set sizes
 document.getElementById("map").style.height = size+"px";
@@ -88,7 +88,8 @@ oldimg.addEventListener('load', function () {
 // load the image
 oldimg.src = 'tangram-1452283152715.png';
 
-// make a canvas for the newly-drawn map image
+// make a new canvas for the newly-drawn map image -
+// this is needed because you can't get a 2d context of a webgl canvas
 var newcanvas = document.createElement('canvas');
 newcanvas.height = size;
 newcanvas.width = size;
@@ -107,28 +108,30 @@ var diff = diffCtx.createImageData(size, size);
 function screenshot() {
     console.log('screenshot');
     return scene.screenshot().then(function(screenshot) {
-        // // save it to a file
+        // save it to a file
         // saveAs(screenshot.blob, 'tangram-' + (+new Date()) + '.png');
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
         newimg.src = urlCreator.createObjectURL( screenshot.blob );
+        console.log(newimg.src);
+        // newimg.addEventListener('load', function () { 
+        // // save it to the new canvas, stretching it to fit (in case it's retina)
+
+        // // not working newimg.width and height are both 0 here
+        // newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
+        newCtx.drawImage(newimg, 0, 0, 250, 250, 0, 0, newcanvas.width, newcanvas.height);
+        // newCtx.drawImage(newimg, 0, 0);
+        // // make the data available to pixelmatch
+        // //not working - newData is the right size but all 0s
+        newData = newCtx.getImageData(0, 0, size, size);
+        // saveAs(newimg.src, 'tangram-' + (+new Date()) + '.png');
+
     });
 }
 
-// give the scene time to draw, then queue a screenshot
-// setTimeout(function() {
-//     screenshot();
-// }, 1500);
-
 // perform the image comparison
 function doDiff() {
-
-    // once the map is done drawing, save it to the new canvas, stretching it to fit (in case it's retina)
-    newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
-    // make the data available
-    var newData = newCtx.getImageData(0, 0, size, size);
-
     // run the diff
     pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.3});
 
@@ -136,9 +139,12 @@ function doDiff() {
     diffCtx.putImageData(diff, 0, 0);
 
     // make imgs for new, old, and diff and attach them to the document
-    newimg.width = size;
-    newimg.height = size;
-    document.getElementById("new").insertBefore( newimg, document.getElementById("new").firstChild );
+    // newimg.width = size;
+    // newimg.height = size;
+    // works:
+    // document.getElementById("new").insertBefore( newimg, document.getElementById("new").firstChild );
+    // doesn't work:
+    document.getElementById("new").insertBefore( newcanvas, document.getElementById("new").firstChild );
 
     oldimg.width = size;
     oldimg.height = size;
@@ -147,7 +153,6 @@ function doDiff() {
     diffimg = document.createElement('img');
     diffimg.src = diffcanvas.toDataURL("image/png");
     document.getElementById("diff").insertBefore( diffimg, document.getElementById("diff").firstChild );
-    
 };
 
 
@@ -182,11 +187,9 @@ function nextView () {
 
 scene.subscribe({
     view_complete: function () {
-        console.log('complete');
         if (!(v > views.length)) {
             screenshot().then(function() {
                 doDiff();
-                console.log('done');
                 // nextView();
             });
         }
