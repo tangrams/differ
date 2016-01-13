@@ -2,7 +2,7 @@
 /*global Tangram, gui */
 
 // initialize variables
-var newimg, oldimg, newData, oldData, size = 250;
+var newimg, oldData, size = 250;
 
 // set sizes
 document.getElementById("map").style.height = size+"px";
@@ -54,43 +54,45 @@ map = (function () {
 
     var hash = new L.Hash(map);
 
-
-    /***** Render loop *****/
-
-    // window.addEventListener('load', function () {
-    //     // Scene initialized
-    //     layer.on('init', function() {
-    //     });
-    //     layer.addTo(map);
-    // });
+    layer.addTo(map);
     
     return map;
 
 }());
 
+// load an image asynchronously with a Promise
+function loadImage (url) {
+    return new Promise(function(resolve, reject) {
+        var image = new Image();
+        image.onload = function() {
+            resolve({ url: url, image: image });
+        };
+        image.onerror = function(error) {
+            reject({ url: url, error: error });
+        };
+        image.crossOrigin = 'anonymous';
+        image.src = url;
+    });
+}
 
 // set up canvases
 
-// make a canvas for the old image
+// make canvas for the old image
 var oldcanvas = document.createElement('canvas');
 oldcanvas.height = size;
 oldcanvas.width = size;
 var oldCtx = oldcanvas.getContext('2d');
 
 // set the old image to be drawn to the canvas once the image loads
-oldimg = new Image();
-oldimg.addEventListener('load', function () {
+var oldimg = new Image();
+loadImage('tangram-1452283152715.png').then(function(result){
+    oldimg = result.image;
     oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
     // make the data available to pixelmatch
     oldData = oldCtx.getImageData(0, 0, size, size);
-
-    layer.addTo(map);
 });
-// load the image
-oldimg.src = 'tangram-1452283152715.png';
 
-// make a new canvas for the newly-drawn map image -
-// this is needed because you can't get a 2d context of a webgl canvas
+// make a canvas for the newly-drawn map image
 var newcanvas = document.createElement('canvas');
 newcanvas.height = size;
 newcanvas.width = size;
@@ -108,28 +110,24 @@ var diff = diffCtx.createImageData(size, size);
 // take a screenshot
 function screenshot() {
     return scene.screenshot().then(function(screenshot) {
-
-        // save it to a file
+        // // save it to a file
         // saveAs(screenshot.blob, 'tangram-' + (+new Date()) + '.png');
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
-        // set image load vent
-        newimg.onload = function () { 
-            // save it to the new canvas, stretching it to fit (in case it's retina)
-            newCtx.drawImage(newimg, 0, 0, scene.canvas.width, scene.canvas.height, 0, 0, newcanvas.width, newcanvas.height);
-            // make the data available to pixelmatch
-            newData = newCtx.getImageData(0, 0, size, size);
-            // do the diff
-            doDiff();
-        };
-        // load image
+        newimg.onload = function() {doDiff();};
         newimg.src = urlCreator.createObjectURL( screenshot.blob );
-    })
+    });
 }
 
 // perform the image comparison
 function doDiff() {
+
+    // once the map is done drawing, save it to the new canvas, stretching it to fit (in case it's retina)
+    newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
+    // make the data available
+    var newData = newCtx.getImageData(0, 0, size, size);
+
     // run the diff
     pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.3});
 
@@ -148,6 +146,7 @@ function doDiff() {
     diffimg = document.createElement('img');
     diffimg.src = diffcanvas.toDataURL("image/png");
     document.getElementById("diff").insertBefore( diffimg, document.getElementById("diff").firstChild );
+    
 };
 
 
@@ -182,6 +181,7 @@ function nextView () {
 
 scene.subscribe({
     view_complete: function () {
+        // console.log('complete');
         if (!(v > views.length)) {
             screenshot().then(function() {
                 // doDiff();
@@ -190,5 +190,3 @@ scene.subscribe({
         }
     }
 });
-
-// nextView(); // kick off the process
