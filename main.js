@@ -82,23 +82,6 @@ oldcanvas.height = size;
 oldcanvas.width = size;
 var oldCtx = oldcanvas.getContext('2d');
 
-// set the old image to be drawn to the canvas once the image loads
-var oldimg = new Image();
- //new Promise(function(resolve, reject) {
-    //console.log('loadOld');
-
-var loadOld = loadImage('tangram-1452283152715.png').then(function(result){
-        oldimg = result.image;
-        oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
-        // make the data available to pixelmatch
-        oldData = oldCtx.getImageData(0, 0, size, size);
-        // console.log('load done');
-
-        return result;
-        //resolve(); 
-    });
-//});
-
 // make a canvas for the newly-drawn map image
 var newcanvas = document.createElement('canvas');
 newcanvas.height = size;
@@ -112,6 +95,21 @@ diffcanvas.width = size;
 var diffCtx = diffcanvas.getContext('2d');
 var diff = diffCtx.createImageData(size, size);
 
+// load the old image
+var oldimg = new Image();
+function loadOld (img) {
+    return loadImage(img).then(function(result){
+        // set the old image to be drawn to the canvas once the image loads
+        oldimg = result.image;
+        oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
+
+        // make the data available to pixelmatch
+        oldData = oldCtx.getImageData(0, 0, size, size);
+
+        return result;
+    });
+};
+
 // take a screenshot
 function screenshot () {
     return scene.screenshot().then(function(data) {
@@ -122,18 +120,18 @@ function screenshot () {
         newimg = new Image();
         return loadImage(urlCreator.createObjectURL( data.blob ), newimg);
     });
-}
+};
 
 // perform the image comparison
 function doDiff() {
 
-    // once the map is done drawing, save it to the new canvas, stretching it to fit (in case it's retina)
+    // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
     // make the data available
     var newData = newCtx.getImageData(0, 0, size, size);
 
     // run the diff
-    pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.125});
+    pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
 
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
@@ -185,11 +183,11 @@ function nextView () {
 
 scene.subscribe({
     view_complete: function () {
-        // console.log('complete');
-        Promise.all([screenshot(),loadOld]).then(function() {
-            console.log('all done!');
-            doDiff();
-            // nextView();
-        });
+        if (!(v > views.length)) {
+            Promise.all([screenshot(),loadOld('tangram-1452283152715.png')]).then(function() {
+                doDiff();
+                nextView();
+            });
+        }
     }
 });
