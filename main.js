@@ -3,61 +3,89 @@
 /*global Tangram, gui */
 
 // initialize variables
-var newimg, oldData, size = 250;
+var views, map, newimg, oldData, size = 250, testFile = "views.json";
 
-// set sizes
-document.getElementById("map").style.height = size+"px";
-document.getElementById("map").style.width = size+"px";
-
-document.getElementById("old").style.height = size+"px";
-document.getElementById("old").style.width = size+"px";
-
-document.getElementsByClassName("container")[0].style.height = size+"px";
-document.getElementsByClassName("container")[0].style.width = size+"px";
-
-
-var map = (function () {
-    var map_start_location = [40.70531887544228, -74.00976419448853, 15]; // NYC
-
-    /*** URL parsing ***/
-
-    // leaflet-style URL hash pattern:
-    // #[zoom],[lat],[lng]
-    var url_hash = window.location.hash.slice(1, window.location.hash.length).split('/');
-
-    if (url_hash.length == 3) {
-        map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
-        // convert from strings
-        map_start_location = map_start_location.map(Number);
+function readTextFile(file, callback) {
+    var rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    rawFile.open("GET", file, true);
+    rawFile.onreadystatechange = function() {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+        }
     }
+    rawFile.send(null);
+}
 
-    /*** Map ***/
-
-    var map = L.map('map', {
-        keyboardZoomOffset : .05,
-        zoomControl: false,
-        attributionControl : false
+readTextFile(testFile, function(text){
+    var data = JSON.parse(text);
+    console.log('data:', data);
+    views = data;
+    Object.keys(views.tests).forEach(function(key) {
+        console.log(key);
     });
+});
 
-    var layer = Tangram.leafletLayer({
-        scene: 'scene.yaml',
-        // highDensityDisplay: false
-    });
+var prep = new Promise( function (resolve, reject) {
 
-    window.layer = layer;
-    var scene = layer.scene;
-    window.scene = scene;
 
-    // setView expects format ([lat, long], zoom)
-    map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+    // set sizes
+    document.getElementById("map").style.height = size+"px";
+    document.getElementById("map").style.width = size+"px";
 
-    var hash = new L.Hash(map);
+    document.getElementById("old").style.height = size+"px";
+    document.getElementById("old").style.width = size+"px";
 
-    layer.addTo(map);
-    
-    return map;
+    document.getElementsByClassName("container")[0].style.height = size+"px";
+    document.getElementsByClassName("container")[0].style.width = size+"px";
 
-}());
+
+    map = (function () {
+        var map_start_location = [40.70531887544228, -74.00976419448853, 15]; // NYC
+
+        /*** URL parsing ***/
+
+        // leaflet-style URL hash pattern:
+        // #[zoom],[lat],[lng]
+        var url_hash = window.location.hash.slice(1, window.location.hash.length).split('/');
+
+        if (url_hash.length == 3) {
+            map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
+            // convert from strings
+            map_start_location = map_start_location.map(Number);
+        }
+
+        /*** Map ***/
+
+        var map = L.map('map', {
+            keyboardZoomOffset : .05,
+            zoomControl: false,
+            attributionControl : false
+        });
+
+        var layer = Tangram.leafletLayer({
+            scene: 'scene.yaml',
+            // highDensityDisplay: false
+        });
+
+        window.layer = layer;
+        var scene = layer.scene;
+        window.scene = scene;
+
+        // setView expects format ([lat, long], zoom)
+        map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+
+        var hash = new L.Hash(map);
+
+        layer.addTo(map);
+        
+        return map;
+
+    }());
+
+    resolve();
+});
+
 
 // load an image asynchronously with a Promise
 function loadImage (url, target) {
@@ -151,19 +179,9 @@ function doDiff() {
     
 };
 
-
-var views = [
-    ['http://localhost:7000/eraser-map.yaml', 48.86110101269274, 2.361373901367188, 11],
-    ['https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml', 40.7139883550567, -74.00600910186769, 15],
-    ['https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml', 51.50286581276559,-0.12119293212890626,14],
-    ['http://localhost:7000/eraser-map.yaml', 35.68518697509636,139.75725173950198,15],
-    ['https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml', 47.604774168947614,-122.28607177734376,11],
-    ['https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml', 41.89075864654001,12.487063873882976,17]
-];
-var v;
+var v = 0;
 
 function nextView () {
-    v = v || 0;
     if (v < views.length) {
         var view = views[v];
         if (scene.config_path !== view[0]) {
@@ -183,11 +201,15 @@ function nextView () {
 
 scene.subscribe({
     view_complete: function () {
-        if (!(v > views.length)) {
-            Promise.all([screenshot(),loadOld('tangram-1452283152715.png')]).then(function() {
-                doDiff();
+        Promise.all([prep,screenshot(),loadOld('tangram-1452283152715.png')]).then(function() {
+            console.log(views);
+            console.log(views[v]);
+        // Promise.all([screenshot(),loadOld('tangram-1452283152715.png')]).then(function() {
+            doDiff();
+            if (!(v > views.length)) {
                 nextView();
-            });
-        }
+            }
+        });
     }
 });
+
