@@ -194,10 +194,9 @@ function nextView () {
     v++;
     if (v < views.length) {
         var view = views[v];
-        // if (scene.config_path !== view.url) {
         scene.load(view.url).then(function() {
-            map.setView([view.location[0], view.location[1]], view.location[2]);
             scene.animated = false;
+            map.setView([view.location[0], view.location[1]], view.location[2]);
             scene.requestRedraw();
         });
     }
@@ -205,18 +204,15 @@ function nextView () {
 
 scene.subscribe({
     view_complete: function () {
-        // let the map load the default scene first
-        if (v < 0) { nextView(); }
-        // then load the first test case
-        else {
-            if (v < views.length) {
-                // when prep is done, screenshot is made, and oldimg is loaded...
-                Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
-                    // perform the diff
-                    doDiff();
-                    nextView();
-                });
-            }
+        // if the default scene rendered, move to the next one
+        if (v < 0) { return nextView();}
+        if (v < views.length) {
+            // when prep is done, screenshot is made, and oldimg is loaded...
+            Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
+                // perform the diff
+                doDiff();
+                nextView();
+            });
         }
     }
 });
