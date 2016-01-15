@@ -2,19 +2,19 @@
     "tests": {
         "tron-1": {
             "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
-            "location": "40.7139883550567, -74.00600910186769, 15"
+            "location": [40.7139883550567, -74.00600910186769, 15]
         },
         "blueprint-1": {
             "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
-            "location": "51.50286581276559,-0.12119293212890626,14"
+            "location": [51.50286581276559,-0.12119293212890626,14]
         },
         "tron-2": {
             "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
-            "location": "40.7139883550567, -74.00600910186769, 15"
+            "location": [40.7139883550567, -74.00600910186769, 15]
         },
         "blueprint-2": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
-			"location": "40.7139883550567, -74.00600910186769, 15"
+            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
+			"location": [40.7139883550567, -74.00600910186769, 15]
         }
     }
 }
