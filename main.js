@@ -36,7 +36,6 @@ readTextFile(testFile, function(text){
 
 // setup divs and canvases
 var prep = new Promise( function (resolve, reject) {
-    console.log('prep');
     // set sizes
     document.getElementById("map").style.height = size+"px";
     document.getElementById("map").style.width = size+"px";
@@ -103,7 +102,7 @@ var prep = new Promise( function (resolve, reject) {
         // setView expects format ([lat, long], zoom)
         map.setView(map_start_location.slice(0, 3), map_start_location[2]);
 
-        var hash = new L.Hash(map);
+        // var hash = new L.Hash(map);
 
         layer.addTo(map);
         
@@ -113,7 +112,6 @@ var prep = new Promise( function (resolve, reject) {
 
     resolve();
 });
-    console.log('map:', map);
 
 
 // load an image asynchronously with a Promise
@@ -196,16 +194,12 @@ function nextView () {
     v++;
     if (v < views.length) {
         var view = views[v];
-        if (scene.config_path !== view.url) {
-            scene.load(view.url).then(function() {
-                map.setView([view.location[0], view.location[1]], view.location[2]);
-                scene.requestRedraw();
-            });
-        }
-        else {
+        // if (scene.config_path !== view.url) {
+        scene.load(view.url).then(function() {
             map.setView([view.location[0], view.location[1]], view.location[2]);
+            scene.animated = false;
             scene.requestRedraw();
-        }
+        });
     }
 }
 
@@ -215,15 +209,14 @@ scene.subscribe({
         if (v < 0) { nextView(); }
         // then load the first test case
         else {
-            // when prep is done, screenshot is made, and oldimg is loaded...
-            Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
-                // perform the diff
-                doDiff();
-                // if more to do, do the next
-                if (v < views.length) {
+            if (v < views.length) {
+                // when prep is done, screenshot is made, and oldimg is loaded...
+                Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
+                    // perform the diff
+                    doDiff();
                     nextView();
-                }
-            });
+                });
+            }
         }
     }
 });
