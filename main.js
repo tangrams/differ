@@ -102,7 +102,7 @@ var prep = new Promise( function (resolve, reject) {
         // setView expects format ([lat, long], zoom)
         map.setView(map_start_location.slice(0, 3), map_start_location[2]);
 
-        // var hash = new L.Hash(map);
+        var hash = new L.Hash(map);
 
         layer.addTo(map);
         
@@ -188,12 +188,14 @@ function doDiff() {
     
 };
 
+// setup view counter
 var v = -1;
 
 function nextView () {
     v++;
     if (v < views.length) {
         var view = views[v];
+        // load and draw scene
         scene.load(view.url).then(function() {
             scene.animated = false;
             map.setView([view.location[0], view.location[1]], view.location[2]);
@@ -203,14 +205,16 @@ function nextView () {
 }
 
 scene.subscribe({
+    // when the scene has finished drawing
     view_complete: function () {
-        // if the default scene rendered, move to the next one
+        // if it was the default scene, move to the next one
         if (v < 0) { return nextView();}
-        if (v < views.length) {
+        else if (v < views.length) {
             // when prep is done, screenshot is made, and oldimg is loaded...
             Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
                 // perform the diff
                 doDiff();
+                // move along
                 nextView();
             });
         }
