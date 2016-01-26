@@ -234,11 +234,11 @@ function save( file) {
 
     data.append("image", file);
 
-    // data.append('image', );
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
     xhr.onload = function () {
-        window.location.href = ".#"+this.responseText;
+        // console.log('response:', this.responseText);
+        // window.location.href = ".#"+this.responseText;
     };
     xhr.send(data);
 }
