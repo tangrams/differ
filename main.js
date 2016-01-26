@@ -153,6 +153,8 @@ function screenshot () {
 
         // testing
         // saveAs(data.blob, 'tangram-' + (+new Date()) + '.png');
+        save(data.blob);
+
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
@@ -204,10 +206,11 @@ function nextView () {
     }
 }
 
+// subscribe to Tangram's published view_complete event to
+// load the next scene when the current scene is done drawing
 scene.subscribe({
-    // when the scene has finished drawing
     view_complete: function () {
-        // if it was the default scene, move to the next one
+        // if the current scene is the default, move to the next one
         if (v < 0) { return nextView();}
         else if (v < views.length) {
             // when prep is done, screenshot is made, and oldimg is loaded...
@@ -221,3 +224,21 @@ scene.subscribe({
     }
 });
 
+// save a file with a POST request to the server
+function save( file) {
+    var url = '/save';
+    var data = new FormData();
+
+    // // code
+    // data.append('code', _string);
+
+    data.append("image", file);
+
+    // data.append('image', );
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.onload = function () {
+        window.location.href = ".#"+this.responseText;
+    };
+    xhr.send(data);
+}
