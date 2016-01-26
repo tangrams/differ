@@ -14,8 +14,9 @@ Toward a render-testing framework
   - `http-server`
 - visit [http://localhost:8080](http://localhost:8080)
 
-### to generate new local images
+### to generate new reference maps
 
 - `npm install formidable`
 - `node server.js`
 - visit [http://localhost:8080](http://localhost:8080)
+- commit and push the images back to this repo
