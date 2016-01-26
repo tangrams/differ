@@ -16,16 +16,19 @@ var HTTP_PORT = 8080;
 var server = http.createServer( function( req , res ) {
     var parsedReq = url.parse(req.url);
 
+    // handle POST request
     if(parsedReq.pathname == "/save" && req.method.toLowerCase() == 'post') {
         var form = new formidable.IncomingForm();
+        // console.log('form:', form);
 
         form.uploadDir = WWW_ROOT + IMG_PATH;
         form.keepExtensions = true;
 
-        var filename = (new Date().getTime());
+        // var filename = (new Date().getTime());
 
         form.on('fileBegin', function(name, file) {
-            file.path = form.uploadDir + filename + '.png';
+            // file.path = form.uploadDir + filename + '.png';
+            file.path = form.uploadDir + file.name + '.png';
         });
 
         form.parse(req);
@@ -77,4 +80,5 @@ var server = http.createServer( function( req , res ) {
     });
     }
 }).listen(HTTP_PORT);
+
 console.log("Server started at http://localhost:" + HTTP_PORT);
