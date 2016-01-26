@@ -149,12 +149,7 @@ function loadOld (img) {
 function screenshot () {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        // saveAs(data.blob, views[v].name+'.png');
-
-        // testing
-        // saveAs(data.blob, 'tangram-' + (+new Date()) + '.png');
-        save(data.blob);
-
+        saveAs(data.blob, views[v].name);
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
@@ -225,14 +220,12 @@ scene.subscribe({
 });
 
 // save a file with a POST request to the server
-function save( file) {
+function saveAs( file, filename ) {
+    // console.log('saveAs:', filename);
     var url = '/save';
     var data = new FormData();
 
-    // // code
-    // data.append('code', _string);
-
-    data.append("image", file);
+    data.append("image", file, filename);
 
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
