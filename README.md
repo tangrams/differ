@@ -7,7 +7,11 @@ Toward a render-testing framework
 
 ### to compare local images to reference maps
 
-- `node -m httpserver`
+- start a local web server, either with node:
+  - `npm install http-server -g`
+  - `http-server`
+- or python:
+  - python -m simpleHTTPServer
 - visit http://localhost:8080
 
 ### to generate new local images
