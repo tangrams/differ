@@ -7,15 +7,15 @@ Toward a render-testing framework
 
 ### to compare local images to reference maps
 
-- start a local web server, either with node:
+- start a local web server, either with python:
+  - `python -m simpleHTTPServer`
+- or node:
   - `npm install http-server -g`
   - `http-server`
-- or python:
-  - python -m simpleHTTPServer
-- visit http://localhost:8080
+- visit [http://localhost:8080](http://localhost:8080)
 
 ### to generate new local images
 
 - `npm install formidable`
 - `node server.js`
-- visit http://localhost:8080
+- visit [http://localhost:8080](http://localhost:8080)
