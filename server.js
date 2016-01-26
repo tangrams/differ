@@ -2,9 +2,7 @@
 //
 var http = require("http");   // http server
 var fs = require('fs');       // filesystem.
-var path = require('path');   // used for traversing your OS.
 var url = require('url');     // utility for URLs
-var spawn = require('child_process').spawn; // running cmd
 var formidable = require('formidable');  // uploading files;
 
 // Settings
@@ -12,19 +10,6 @@ var formidable = require('formidable');  // uploading files;
 var WWW_ROOT = "./";
 var IMG_PATH = "images/";
 var HTTP_PORT = 8080;
-
-var status = {'printing' : false,
-'queue': [],
-};
-
-function saveFile( filename, content ){
-    fs.writeFile(filename, content, function(err) {
-        if(err) {
-            return console.log(err);
-        }
-    });
-}
-
 
 // WEB SERVER
 //
@@ -85,7 +70,7 @@ var server = http.createServer( function( req , res ) {
         }
 
         var fileBytes = fs.readFileSync(WWW_ROOT + fileToLoad);
-        var mimeType = mimeTypes[path.extname(fileToLoad).split(".")[1]]; // complicated, eh?
+        var mimeType = mimeTypes[fileToLoad.split(".")[1]]; // complicated, eh?
 
         res.writeHead(httpStatusCode,{'Content-type':mimeType});
         res.end(fileBytes);
