@@ -10,7 +10,7 @@ var formidable = require('formidable');  // uploading files;
 // Settings
 //
 var WWW_ROOT = "./";
-var LOG_PATH = "";
+var IMG_PATH = "images/";
 var HTTP_PORT = 8080;
 
 var status = {'printing' : false,
@@ -33,9 +33,8 @@ var server = http.createServer( function( req , res ) {
 
     if(parsedReq.pathname == "/save" && req.method.toLowerCase() == 'post') {
         var form = new formidable.IncomingForm();
-        // console.log('form:', form);
 
-        form.uploadDir = WWW_ROOT + LOG_PATH;
+        form.uploadDir = WWW_ROOT + IMG_PATH;
         form.keepExtensions = true;
 
         var filename = (new Date().getTime());
@@ -46,7 +45,6 @@ var server = http.createServer( function( req , res ) {
 
         form.parse(req);
 
-        // res.writeHead(200, {'content-type': 'text/html'});
         res.end();
 
     } else {
@@ -80,9 +78,10 @@ var server = http.createServer( function( req , res ) {
         // if it doesn't exist lets make sure we load error404.html
         if(!doesItExist) {
             console.log("[HTTP] :: Error loading :: " + WWW_ROOT + fileToLoad);
-
-            httpStatusCode = 404;
-            fileToLoad = "404.html";
+            // return a 404
+            res.writeHead(404);
+            res.end(0);
+            return;
         }
 
         var fileBytes = fs.readFileSync(WWW_ROOT + fileToLoad);
