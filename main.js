@@ -214,7 +214,7 @@ scene.subscribe({
         if (v < 0) { return nextView();}
         else if (v < views.length) {
             // when prep is done, screenshot is made, and oldimg is loaded...
-            Promise.all([prep,screenshot(),loadOld(views[v].name+'.png')]).then(function() {
+            Promise.all([prep,screenshot(),loadOld("images/"+views[v].name+'.png')]).then(function() {
                 // perform the diff
                 doDiff();
                 // move along
