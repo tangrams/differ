@@ -3,12 +3,16 @@
 /*global Tangram, gui */
 
 // initialize variables
-var views, map,
+var views, tests, map,
     newimg, newcanvas, newCtx, newData,
     oldimg, oldcanvas, oldCtx, oldData,
     diffcanvas, diffCtx, diff;
-var testFile = "./views.json";
-var size = 250;
+var testsFile = "./views.json";
+var imgDir = "images/";
+var imgType = ".png";
+var size = 250; // pixels
+
+tests = document.getElementById("tests");
 
 // load file
 function readTextFile(file, callback) {
@@ -27,7 +31,7 @@ function readTextFile(file, callback) {
 var prep = new Promise( function (resolve, reject) {
 
     // load and parse test json
-    readTextFile(testFile, function(text){
+    readTextFile(testsFile, function(text){
         var data = JSON.parse(text);
         // convert tests to an array for easier traversal
         views = Object.keys(data.tests).map(function (key) {
@@ -38,11 +42,11 @@ var prep = new Promise( function (resolve, reject) {
 
         // then initialize Tangram
         map = (function () {
-            console.log('views:', views);
+            // console.log('views:', views);
             var view = views[0];
-            console.log('view', view.location);
+            // console.log('view', view.location);
             var map_start_location = view.location;
-            console.log('map_start_location', map_start_location );
+            // console.log('map_start_location', map_start_location );
 
             /*** Map ***/
 
@@ -78,7 +82,7 @@ var prep = new Promise( function (resolve, reject) {
                 if (v < 0) { return nextView();}
                 else if (v < views.length) {
                     // when prep is done, screenshot is made, and oldimg is loaded...
-                    Promise.all([prep,screenshot(),loadOld("images/"+views[v].name+'.png')]).then(function() {
+                    Promise.all([prep,screenshot(),loadOld(imgDir+views[v].name+imgType)]).then(function() {
                         // perform the diff
                         doDiff();
                         // move along
@@ -94,11 +98,9 @@ var prep = new Promise( function (resolve, reject) {
     document.getElementById("map").style.height = size+"px";
     document.getElementById("map").style.width = size+"px";
 
-    document.getElementById("old").style.height = size+"px";
-    document.getElementById("old").style.width = size+"px";
-
-    document.getElementsByClassName("container")[0].style.height = size+"px";
-    document.getElementsByClassName("container")[0].style.width = size+"px";
+    // document.getElementById("new").style.width = size+"px";
+    // document.getElementById("old").style.width = size+"px";
+    // document.getElementById("diff").style.width = size+"px";
 
     // set up canvases
 
@@ -177,23 +179,74 @@ function doDiff() {
 
     // run the diff
     var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
-    console.log('view', views[v].name);
+    // console.log('view', views[v].name);
     console.log('% difference', Math.round(difference/(size*size)*100*100)/100);
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
+    var test = document.createElement('div');
+    test.className = 'test';
+
+    var title = document.createElement('div');
+    title.className = 'header';
+    title.innerHTML = views[v].name;
+
+    test.appendChild(title);
+
+    var columns = document.createElement('div');
+    columns.className = 'columns';
+
+        var newcolumn = document.createElement('div');
+        newcolumn.className = 'column';
+        newcolumn.innerHTML = "new";
+        columns.appendChild(newcolumn);
+
+        var oldcolumn = document.createElement('div');
+        oldcolumn.className = 'column';
+        oldcolumn.innerHTML = "old";
+        columns.appendChild(oldcolumn);
+
+        var diffcolumn = document.createElement('div');
+        diffcolumn.className = 'column';
+        diffcolumn.innerHTML = "diff";
+        columns.appendChild(diffcolumn);
+
+        var controls = document.createElement('div');
+        controls.className = 'controls';
+        controls.innerHTML = "controls";
+
+            var refreshButton =  document.createElement('button');
+            refreshButton.innerHTML = "refresh " + views[v].name;
+            controls.appendChild(refreshButton);
+
+            var exportButton =  document.createElement('button');
+            exportButton.innerHTML = "export " + views[v].name;
+            controls.appendChild(exportButton);
+
+            var exportAllButton =  document.createElement('button');
+            exportAllButton.innerHTML = "export all";
+            controls.appendChild(exportAllButton);
+
+        columns.appendChild(controls);
+
+    test.appendChild(columns);
+
+    test.id = views[v].name;
+    tests.insertBefore(test, tests.firstChild);
+
     // make imgs for new, old, and diff and attach them to the document
     newimg.width = size;
     newimg.height = size;
-    document.getElementById("new").insertBefore( newimg, document.getElementById("new").firstChild );
-
+    newcolumn.appendChild( newimg );
+    
     oldimg.width = size;
     oldimg.height = size;
-    document.getElementById("old").insertBefore( oldimg, document.getElementById("old").firstChild );
+    oldcolumn.appendChild( oldimg );
 
     var diffimg = document.createElement('img');
     diffimg.src = diffcanvas.toDataURL("image/png");
-    document.getElementById("diff").insertBefore( diffimg, document.getElementById("diff").firstChild );
+    diffcolumn.appendChild( diffimg );
+
     
 };
 
