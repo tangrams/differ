@@ -7,7 +7,7 @@ var views, map,
     newimg, newcanvas, newCtx, newData,
     oldimg, oldcanvas, oldCtx, oldData,
     diffcanvas, diffCtx, diff;
-var testFile = "views.json";
+var testFile = "./views.json";
 var size = 250;
 
 // load file
@@ -23,19 +23,73 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
-// load and parse test json
-readTextFile(testFile, function(text){
-    var data = JSON.parse(text);
-    // convert tests to an array for easier traversal
-    views = Object.keys(data.tests).map(function (key) {
-        // add test's name as a property of the test
-        data.tests[key].name = key;
-        return data.tests[key];
-    });
-});
-
 // setup divs and canvases
 var prep = new Promise( function (resolve, reject) {
+
+    // load and parse test json
+    readTextFile(testFile, function(text){
+        var data = JSON.parse(text);
+        // convert tests to an array for easier traversal
+        views = Object.keys(data.tests).map(function (key) {
+            // add test's name as a property of the test
+            data.tests[key].name = key;
+            return data.tests[key];
+        });
+
+        // then initialize Tangram
+        map = (function () {
+            console.log('views:', views);
+            var view = views[0];
+            console.log('view', view.location);
+            var map_start_location = view.location;
+            console.log('map_start_location', map_start_location );
+
+            /*** Map ***/
+
+            var map = L.map('map', {
+                keyboardZoomOffset : .05,
+                zoomControl: false,
+                attributionControl : false
+            });
+
+            var layer = Tangram.leafletLayer({
+                scene: view.url,
+                // highDensityDisplay: false
+            });
+
+            window.layer = layer;
+            var scene = layer.scene;
+            window.scene = scene;
+
+            // setView expects format ([lat, long], zoom)
+            map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+
+            layer.addTo(map);
+            
+            return map;
+
+        }());
+
+        // subscribe to Tangram's published view_complete event to
+        // load the next scene when the current scene is done drawing
+        scene.subscribe({
+            view_complete: function () {
+                // if the current scene is the default, move to the next one
+                if (v < 0) { return nextView();}
+                else if (v < views.length) {
+                    // when prep is done, screenshot is made, and oldimg is loaded...
+                    Promise.all([prep,screenshot(),loadOld("images/"+views[v].name+'.png')]).then(function() {
+                        // perform the diff
+                        doDiff();
+                        // move along
+                        nextView();
+                    });
+                }
+            }
+        });
+
+    });
+
     // set sizes
     document.getElementById("map").style.height = size+"px";
     document.getElementById("map").style.width = size+"px";
@@ -66,49 +120,6 @@ var prep = new Promise( function (resolve, reject) {
     diffcanvas.width = size;
     diffCtx = diffcanvas.getContext('2d');
     diff = diffCtx.createImageData(size, size);
-
-    map = (function () {
-        var map_start_location = [40.70531887544228, -74.00976419448853, 15]; // NYC
-
-        /*** URL parsing ***/
-
-        // leaflet-style URL hash pattern:
-        // #[zoom],[lat],[lng]
-        var url_hash = window.location.hash.slice(1, window.location.hash.length).split('/');
-
-        if (url_hash.length == 3) {
-            map_start_location = [url_hash[1],url_hash[2], url_hash[0]];
-            // convert from strings
-            map_start_location = map_start_location.map(Number);
-        }
-
-        /*** Map ***/
-
-        var map = L.map('map', {
-            keyboardZoomOffset : .05,
-            zoomControl: false,
-            attributionControl : false
-        });
-
-        var layer = Tangram.leafletLayer({
-            scene: 'scene.yaml',
-            // highDensityDisplay: false
-        });
-
-        window.layer = layer;
-        var scene = layer.scene;
-        window.scene = scene;
-
-        // setView expects format ([lat, long], zoom)
-        map.setView(map_start_location.slice(0, 3), map_start_location[2]);
-
-        var hash = new L.Hash(map);
-
-        layer.addTo(map);
-        
-        return map;
-
-    }());
 
     resolve();
 });
@@ -149,7 +160,7 @@ function loadOld (img) {
 function screenshot () {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        saveAs(data.blob, views[v].name);
+        // saveAs(data.blob, views[v].name);
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
@@ -157,7 +168,7 @@ function screenshot () {
     });
 };
 
-// perform the image comparison
+// perform the image comparison and update the html
 function doDiff() {
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
@@ -165,8 +176,9 @@ function doDiff() {
     var newData = newCtx.getImageData(0, 0, size, size);
 
     // run the diff
-    pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
-
+    var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
+    console.log('view', views[v].name);
+    console.log('% difference', Math.round(difference/(size*size)*100*100)/100);
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
@@ -186,7 +198,7 @@ function doDiff() {
 };
 
 // setup view counter
-var v = -1;
+var v = 0;
 
 function nextView () {
     v++;
@@ -200,24 +212,6 @@ function nextView () {
         });
     }
 }
-
-// subscribe to Tangram's published view_complete event to
-// load the next scene when the current scene is done drawing
-scene.subscribe({
-    view_complete: function () {
-        // if the current scene is the default, move to the next one
-        if (v < 0) { return nextView();}
-        else if (v < views.length) {
-            // when prep is done, screenshot is made, and oldimg is loaded...
-            Promise.all([prep,screenshot(),loadOld("images/"+views[v].name+'.png')]).then(function() {
-                // perform the diff
-                doDiff();
-                // move along
-                nextView();
-            });
-        }
-    }
-});
 
 // save a file with a POST request to the server
 function saveAs( file, filename ) {
