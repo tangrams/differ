@@ -42,13 +42,12 @@ var prep = new Promise( function (resolve, reject) {
 
         // clone views array
         queue = views.slice(0);
-
+        nextView = queue.shift(); // pop first
         // then initialize Tangram with the first view
         map = (function () {
             // console.log('views:', views);
-            var firstview = queue[0];
-            // console.log('firstview', firstview.location);
-            var map_start_location = firstview.location;
+            // console.log('nextView', nextView.location);
+            var map_start_location = nextView.location;
 
             /*** Map ***/
 
@@ -59,7 +58,7 @@ var prep = new Promise( function (resolve, reject) {
             });
 
             var layer = Tangram.leafletLayer({
-                scene: firstview.url,
+                scene: nextView.url,
                 // highDensityDisplay: false
             });
 
@@ -80,14 +79,21 @@ var prep = new Promise( function (resolve, reject) {
         // load the next scene when the current scene is done drawing
         scene.subscribe({
             view_complete: function () {
-                if (v < views.length) {
+                console.log('nextView:', nextView);
+                if (nextView) {
                     // when prep is done, screenshot is made, and oldImg is loaded...
-                    Promise.all([prep,screenshot(),loadOld(imgDir+views[v].name+imgType)]).then(function() {
+                    Promise.all([prep,screenshot(),loadOld(imgDir+nextView.name+imgType)]).then(function() {
                         // perform the diff
-                        doDiff(views[v]);
+                        doDiff(nextView);
                         // move along
-                        nextView();
+                        if (queue.length > 0) {
+                            nextView = queue.shift(); // pop first
+                            loadView(nextView);
+                        } else return;
                     });
+                } else {
+                    console.log('view_complete, no nextView');
+                    return viewComplete();
                 }
             }
         });
@@ -251,23 +257,17 @@ function doDiff( test ) {
     diffimg.src = diffCanvas.toDataURL("image/png");
     diffcolumn.appendChild( diffimg );
 
-    
 };
 
-// setup view counter
-var v = 0;
-
-function nextView () {
-    v++;
-    if (v < views.length) {
-        var view = views[v];
-        // load and draw scene
-        scene.load(view.url).then(function() {
-            scene.animated = false;
-            map.setView([view.location[0], view.location[1]], view.location[2]);
-            scene.requestRedraw();
-        });
-    }
+function loadView (view) {
+    // load and draw scene
+    scene.load(view.url).then(function() {
+        // if (view) console
+        if (!view) return;
+        scene.animated = false;
+        map.setView([view.location[0], view.location[1]], view.location[2]);
+        scene.requestRedraw();
+    });
 }
 
 // save a file with a POST request to the server
@@ -288,12 +288,28 @@ function saveAs( file, filename ) {
 
 function stop() {
     console.log('stop button');
-    v = views.length;
+    nextView = false;
+    queue = false;
+}
+
+// convert event to promise
+function viewComplete () {
+    console.log('viewComplete');
+    return new Promise(function(resolve, reject) {
+        console.log('viewComplete sent');
+        resolve();
+    });
 }
 
 function refreshAll() {
     console.log('refresh all button');
-    v = -1;
     tests.innerHTML = "";
-    setTimeout(function() {nextView()}, 500);
+    nextView = false;
+    queue = views.slice(0);
+    // if map is rendering, wait for it to finish, then start over
+    Promise.all([viewComplete]).then(function() {
+        console.log('viewComplete received');
+        // move along
+        loadView(queue.shift());
+    });
 }
