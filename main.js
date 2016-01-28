@@ -3,16 +3,16 @@
 /*global Tangram, gui */
 
 // initialize variables
-var views, tests, map,
-    newimg, newcanvas, newCtx, newData,
-    oldimg, oldcanvas, oldCtx, oldData,
-    diffcanvas, diffCtx, diff;
+var map, views, queue, nextView,
+    newImg, newCanvas, newCtx, newData,
+    oldImg, oldCanvas, oldCtx, oldData,
+    diffCanvas, diffCtx, diff;
 var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // pixels
 
-tests = document.getElementById("tests");
+var tests = document.getElementById("tests");
 
 // load file
 function readTextFile(file, callback) {
@@ -40,13 +40,15 @@ var prep = new Promise( function (resolve, reject) {
             return data.tests[key];
         });
 
-        // then initialize Tangram
+        // clone views array
+        queue = views.slice(0);
+
+        // then initialize Tangram with the first view
         map = (function () {
             // console.log('views:', views);
-            var view = views[0];
-            // console.log('view', view.location);
-            var map_start_location = view.location;
-            // console.log('map_start_location', map_start_location );
+            var firstview = queue[0];
+            // console.log('firstview', firstview.location);
+            var map_start_location = firstview.location;
 
             /*** Map ***/
 
@@ -57,7 +59,7 @@ var prep = new Promise( function (resolve, reject) {
             });
 
             var layer = Tangram.leafletLayer({
-                scene: view.url,
+                scene: firstview.url,
                 // highDensityDisplay: false
             });
 
@@ -79,7 +81,7 @@ var prep = new Promise( function (resolve, reject) {
         scene.subscribe({
             view_complete: function () {
                 if (v < views.length) {
-                    // when prep is done, screenshot is made, and oldimg is loaded...
+                    // when prep is done, screenshot is made, and oldImg is loaded...
                     Promise.all([prep,screenshot(),loadOld(imgDir+views[v].name+imgType)]).then(function() {
                         // perform the diff
                         doDiff(views[v]);
@@ -106,22 +108,22 @@ var prep = new Promise( function (resolve, reject) {
     // set up canvases
 
     // make canvas for the old image
-    oldcanvas = document.createElement('canvas');
-    oldcanvas.height = size;
-    oldcanvas.width = size;
-    oldCtx = oldcanvas.getContext('2d');
+    oldCanvas = document.createElement('canvas');
+    oldCanvas.height = size;
+    oldCanvas.width = size;
+    oldCtx = oldCanvas.getContext('2d');
 
     // make a canvas for the newly-drawn map image
-    newcanvas = document.createElement('canvas');
-    newcanvas.height = size;
-    newcanvas.width = size;
-    newCtx = newcanvas.getContext('2d');
+    newCanvas = document.createElement('canvas');
+    newCanvas.height = size;
+    newCanvas.width = size;
+    newCtx = newCanvas.getContext('2d');
 
     // make a canvas for the diff
-    diffcanvas = document.createElement('canvas');
-    diffcanvas.height = size;
-    diffcanvas.width = size;
-    diffCtx = diffcanvas.getContext('2d');
+    diffCanvas = document.createElement('canvas');
+    diffCanvas.height = size;
+    diffCanvas.width = size;
+    diffCtx = diffCanvas.getContext('2d');
     diff = diffCtx.createImageData(size, size);
 
     resolve();
@@ -145,13 +147,13 @@ function loadImage (url, target) {
 
 
 // load the old image
-var oldimg = new Image();
+var oldImg = new Image();
 function loadOld (img) {
     return loadImage(img).then(function(result){
         if (result.url) {
             // set the old image to be drawn to the canvas once the image loads
-            oldimg = result.image;
-            oldCtx.drawImage(oldimg, 0, 0, oldimg.width, oldimg.height, 0, 0, oldcanvas.width, oldcanvas.height);
+            oldImg = result.image;
+            oldCtx.drawImage(oldImg, 0, 0, oldImg.width, oldImg.height, 0, 0, oldCanvas.width, oldCanvas.height);
         }
         // make the data available to pixelmatch
         oldData = oldCtx.getImageData(0, 0, size, size);
@@ -166,23 +168,21 @@ function screenshot (save) {
         if (save) saveAs(data.blob, views[v].name);
 
         var urlCreator = window.URL || window.webkitURL;
-        newimg = new Image();
-        return loadImage(urlCreator.createObjectURL( data.blob ), newimg);
+        newImg = new Image();
+        return loadImage(urlCreator.createObjectURL( data.blob ), newImg);
     });
 };
 
 // perform the image comparison and update the html
 function doDiff( test ) {
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
-    newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
+    newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
     var newData = newCtx.getImageData(0, 0, size, size);
 
     // run the diff
     var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
-    // console.log('view', views[v].name);
     var diffValue = Math.round(difference/(size*size)*100*100)/100;
-    console.log('% difference', diffValue);
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
@@ -239,16 +239,16 @@ function doDiff( test ) {
     tests.insertBefore(testdiv, tests.firstChild);
 
     // make imgs for new, old, and diff and attach them to the document
-    newimg.width = size;
-    newimg.height = size;
-    newcolumn.appendChild( newimg );
+    newImg.width = size;
+    newImg.height = size;
+    newcolumn.appendChild( newImg );
     
-    oldimg.width = size;
-    oldimg.height = size;
-    oldcolumn.appendChild( oldimg );
+    oldImg.width = size;
+    oldImg.height = size;
+    oldcolumn.appendChild( oldImg );
 
     var diffimg = document.createElement('img');
-    diffimg.src = diffcanvas.toDataURL("image/png");
+    diffimg.src = diffCanvas.toDataURL("image/png");
     diffcolumn.appendChild( diffimg );
 
     
@@ -284,4 +284,16 @@ function saveAs( file, filename ) {
         // window.location.href = ".#"+this.responseText;
     };
     xhr.send(data);
+}
+
+function stop() {
+    console.log('stop button');
+    v = views.length;
+}
+
+function refreshAll() {
+    console.log('refresh all button');
+    v = -1;
+    tests.innerHTML = "";
+    setTimeout(function() {nextView()}, 500);
 }
