@@ -78,19 +78,20 @@ var prep = new Promise( function (resolve, reject) {
         // load the next scene when the current scene is done drawing
         scene.subscribe({
             view_complete: function () {
-                // if the current scene is the default, move to the next one
-                if (v < 0) { return nextView();}
-                else if (v < views.length) {
+                if (v < views.length) {
                     // when prep is done, screenshot is made, and oldimg is loaded...
                     Promise.all([prep,screenshot(),loadOld(imgDir+views[v].name+imgType)]).then(function() {
                         // perform the diff
-                        doDiff();
+                        doDiff(views[v]);
                         // move along
                         nextView();
                     });
                 }
             }
         });
+
+        // set page title
+        document.getElementById('title').innerHTML = testsFile;
 
     });
 
@@ -159,10 +160,10 @@ function loadOld (img) {
 };
 
 // take a screenshot
-function screenshot () {
+function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        // saveAs(data.blob, views[v].name);
+        if (save) saveAs(data.blob, views[v].name);
 
         var urlCreator = window.URL || window.webkitURL;
         newimg = new Image();
@@ -171,7 +172,7 @@ function screenshot () {
 };
 
 // perform the image comparison and update the html
-function doDiff() {
+function doDiff( test ) {
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newimg, 0, 0, newimg.width, newimg.height, 0, 0, newcanvas.width, newcanvas.height);
     // make the data available
@@ -180,31 +181,32 @@ function doDiff() {
     // run the diff
     var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
     // console.log('view', views[v].name);
-    console.log('% difference', Math.round(difference/(size*size)*100*100)/100);
+    var diffValue = Math.round(difference/(size*size)*100*100)/100;
+    console.log('% difference', diffValue);
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
-    var test = document.createElement('div');
-    test.className = 'test';
+    var testdiv = document.createElement('div');
+    testdiv.className = 'test';
 
     var title = document.createElement('div');
     title.className = 'header';
-    title.innerHTML = views[v].name;
+    title.innerHTML = test.name;
 
-    test.appendChild(title);
+    testdiv.appendChild(title);
 
     var columns = document.createElement('div');
     columns.className = 'columns';
-
-        var newcolumn = document.createElement('div');
-        newcolumn.className = 'column';
-        newcolumn.innerHTML = "new";
-        columns.appendChild(newcolumn);
 
         var oldcolumn = document.createElement('div');
         oldcolumn.className = 'column';
         oldcolumn.innerHTML = "old";
         columns.appendChild(oldcolumn);
+
+        var newcolumn = document.createElement('div');
+        newcolumn.className = 'column';
+        newcolumn.innerHTML = "new";
+        columns.appendChild(newcolumn);
 
         var diffcolumn = document.createElement('div');
         diffcolumn.className = 'column';
@@ -213,14 +215,16 @@ function doDiff() {
 
         var controls = document.createElement('div');
         controls.className = 'controls';
-        controls.innerHTML = "controls";
+        var diffPercent = 100 - Math.ceil(diffValue);
+        var threatLevel = diffPercent > 99 ? "green" : diffPercent > 98 ? "orange" : "red";
+        controls.innerHTML = "controls<br><div style='font-size: 48pt;color:"+threatLevel+"'>"+diffPercent+"% match</div><br>";
 
             var refreshButton =  document.createElement('button');
-            refreshButton.innerHTML = "refresh " + views[v].name;
+            refreshButton.innerHTML = "refresh " + test.name;
             controls.appendChild(refreshButton);
 
             var exportButton =  document.createElement('button');
-            exportButton.innerHTML = "export " + views[v].name;
+            exportButton.innerHTML = "export " + test.name;
             controls.appendChild(exportButton);
 
             var exportAllButton =  document.createElement('button');
@@ -229,10 +233,10 @@ function doDiff() {
 
         columns.appendChild(controls);
 
-    test.appendChild(columns);
+    testdiv.appendChild(columns);
 
-    test.id = views[v].name;
-    tests.insertBefore(test, tests.firstChild);
+    testdiv.id = test.name;
+    tests.insertBefore(testdiv, tests.firstChild);
 
     // make imgs for new, old, and diff and attach them to the document
     newimg.width = size;
@@ -268,7 +272,6 @@ function nextView () {
 
 // save a file with a POST request to the server
 function saveAs( file, filename ) {
-    // console.log('saveAs:', filename);
     var url = '/save';
     var data = new FormData();
 
