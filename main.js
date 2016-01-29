@@ -13,6 +13,7 @@ var imgType = ".png";
 var size = 250; // pixels
 var totalSum = 0, totalScore = 0;
 var tests = document.getElementById("tests");
+var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 
 // load file
@@ -185,15 +186,17 @@ function doDiff( test ) {
 
     // run the diff
     var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
+
+    // UPDATE READOUTS
+    var count = views.length-queue.length;
+    statusDiv.innerHTML = count + " of " + views.length;
+
     // calculate match percentage
     var match = 100-(difference/(size*size)*100*100)/100;
     var matchScore = Math.floor(match);
+
     // update master percentage
     totalSum += match;
-    // console.log('difference:', difference);
-    // console.log('totalSum:', totalSum);
-    var count = views.length-queue.length;
-    // console.log('count:', count);
     totalScore = Math.floor(totalSum/(100*count)*100);
     var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
     totalScoreDiv.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</div><br>";
@@ -241,15 +244,15 @@ function doDiff( test ) {
 
         var exportButton =  document.createElement('button');
         exportButton.innerHTML = "export " + test.name;
-        controls.appendChild(exportButton);
+        // controls.appendChild(exportButton);
 
         var exportAllButton =  document.createElement('button');
         exportAllButton.innerHTML = "export strip";
-        controls.appendChild(exportAllButton);
+        // controls.appendChild(exportAllButton);
 
         var exportAllButton =  document.createElement('button');
         exportAllButton.innerHTML = "export gif";
-        controls.appendChild(exportAllButton);
+        // controls.appendChild(exportAllButton);
 
     testdiv.appendChild(controls);
 
