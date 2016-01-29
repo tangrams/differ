@@ -1,0 +1,13 @@
+{
+  "name": "render-tests",
+  "description": "Tangram map tester",
+  "version": "0.0.1",
+  "repository": {
+	"type": "git",
+	"url": "https://github.com/tangrams/render-tests"
+  },
+  "dependencies": {
+    "formidable": "^1.0.14"
+  },
+  "license": "MIT"
+}
