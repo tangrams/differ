@@ -11,7 +11,7 @@ var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // pixels
-var totalSum = 0, totalScore = 0;
+var scores = [], totalScore = 0;
 var tests = document.getElementById("tests");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
@@ -84,7 +84,7 @@ var prep = new Promise( function (resolve, reject) {
                 // console.log('nextView:', nextView);
                 if (nextView) {
                     // when prep is done, screenshot is made, and oldImg is loaded...
-                    Promise.all([prep,screenshot(),loadOld(imgDir+nextView.name+imgType)]).then(function() {
+                    Promise.all([prep,screenshot(true),loadOld(imgDir+nextView.name+imgType)]).then(function() {
                         // perform the diff
                         doDiff(nextView);
                         // move along
@@ -145,14 +145,16 @@ function loadImage (url, target) {
             resolve({ error: error });
         };
         image.crossOrigin = 'anonymous';
+        // force-refresh any local images with a cache-buster
+        if (url.slice(-4) == ".png") url += "?" + new Date().getTime();
         image.src = url;
     });
 }
 
 
 // load the old image
-var oldImg = new Image();
 function loadOld (img) {
+    oldImg = new Image();
     return loadImage(img).then(function(result){
         if (result.url) {
             // set the old image to be drawn to the canvas once the image loads
@@ -196,7 +198,11 @@ function doDiff( test ) {
     var matchScore = Math.floor(match);
 
     // update master percentage
-    totalSum += match;
+    scores[test.name] = match;
+    var totalSum = 0;
+    for (var v in scores) {
+        totalSum += scores[v];
+    }
     totalScore = Math.floor(totalSum/(100*count)*100);
     var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
     totalScoreDiv.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</div><br>";
@@ -204,74 +210,8 @@ function doDiff( test ) {
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
-    // generate test output row
-    var testdiv = document.createElement('div');
-    testdiv.className = 'test';
-    testdiv.id = test.name;
-
-    var title = document.createElement('div');
-    title.className = 'testname';
-    title.innerHTML = test.name;
-    testdiv.appendChild(title);
-
-    var oldcolumn = document.createElement('span');
-    oldcolumn.className = 'column';
-    oldcolumn.id = "old";
-    oldcolumn.innerHTML = "old";
-    testdiv.appendChild(oldcolumn);
-
-    var newcolumn = document.createElement('span');
-    newcolumn.className = 'column';
-    newcolumn.id = "new";
-    newcolumn.innerHTML = "new";
-    testdiv.appendChild(newcolumn);
-
-    var diffcolumn = document.createElement('span');
-    diffcolumn.className = 'column';
-    diffcolumn.id = "diff";
-    diffcolumn.innerHTML = "diff";
-    testdiv.appendChild(diffcolumn);
-
-    // per-test controls
-    var controls = document.createElement('div');
-    controls.className = 'controls';
-    var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
-    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"% match</div><br>";
-
-        var refreshButton =  document.createElement('button');
-        refreshButton.innerHTML = "refresh " + test.name;
-        controls.appendChild(refreshButton);
-
-        var exportButton =  document.createElement('button');
-        exportButton.innerHTML = "export " + test.name;
-        // controls.appendChild(exportButton);
-
-        var exportAllButton =  document.createElement('button');
-        exportAllButton.innerHTML = "export strip";
-        // controls.appendChild(exportAllButton);
-
-        var exportAllButton =  document.createElement('button');
-        exportAllButton.innerHTML = "export gif";
-        // controls.appendChild(exportAllButton);
-
-    testdiv.appendChild(controls);
-
-    testdiv.id = test.name;
-    tests.insertBefore(testdiv, tests.firstChild);
-
-    // make imgs for new, old, and diff and attach them to the document
-    newImg.width = size;
-    newImg.height = size;
-    newcolumn.appendChild( newImg );
-    
-    oldImg.width = size;
-    oldImg.height = size;
-    oldcolumn.appendChild( oldImg );
-
-    var diffimg = document.createElement('img');
-    diffimg.src = diffCanvas.toDataURL("image/png");
-    diffcolumn.appendChild( diffimg );
-
+    // make an output row
+    makeRow(test, matchScore);
 };
 
 function loadView (view) {
@@ -316,6 +256,86 @@ function viewComplete () {
     });
 }
 
+function makeRow(test, matchScore) {
+    // check to see if div already exists (if re-running a test);
+    var testdiv = document.getElementById(test.name);
+
+    if (testdiv === null) {
+        // generate test output row
+        var testdiv = document.createElement('div');
+        testdiv.className = 'test';
+        testdiv.id = test.name;
+        tests.insertBefore(testdiv, tests.firstChild);
+    } else {
+        // clear it out
+        testdiv.innerHTML = "";
+    }
+    testdiv.style.minHeight = size+"px";
+
+    var title = document.createElement('div');
+    title.className = 'testname';
+    title.innerHTML = test.name;
+    testdiv.appendChild(title);
+
+    var oldcolumn = document.createElement('span');
+    oldcolumn.className = 'column';
+    oldcolumn.id = "old";
+    oldcolumn.innerHTML = "old";
+    testdiv.appendChild(oldcolumn);
+
+    var newcolumn = document.createElement('span');
+    newcolumn.className = 'column';
+    newcolumn.id = "new";
+    newcolumn.innerHTML = "new";
+    testdiv.appendChild(newcolumn);
+
+    var diffcolumn = document.createElement('span');
+    diffcolumn.className = 'column';
+    diffcolumn.id = "diff";
+    diffcolumn.innerHTML = "diff";
+    testdiv.appendChild(diffcolumn);
+
+    // per-test controls
+    var controls = document.createElement('div');
+    testdiv.appendChild(controls);
+
+    controls.className = 'controls';
+    var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
+    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"% match</div><br>";
+
+        var refreshButton =  document.createElement('button');
+        refreshButton.innerHTML = "refresh " + test.name;
+        controls.appendChild(refreshButton);
+        refreshButton.onclick = function() {refresh(test);}
+
+        var exportButton =  document.createElement('button');
+        exportButton.innerHTML = "export " + test.name;
+        // controls.appendChild(exportButton);
+
+        var exportStripButton =  document.createElement('button');
+        exportStripButton.innerHTML = "export strip";
+        exportStripButton.onclick = "export strip";
+        // controls.appendChild(exportStripButton);
+
+        var exportGifButton =  document.createElement('button');
+        exportGifButton.innerHTML = "export gif";
+        // controls.appendChild(exportGifButton);
+
+    // make imgs for new, old, and diff and attach them to the document
+    newImg.width = size;
+    newImg.height = size;
+    newcolumn.appendChild( newImg );
+    
+    oldImg.width = size;
+    oldImg.height = size;
+    oldcolumn.appendChild( oldImg );
+
+    var diffimg = document.createElement('img');
+    diffimg.src = diffCanvas.toDataURL("image/png");
+    diffcolumn.appendChild( diffimg );
+
+}
+
 function rerunAll() {
     console.log('refresh all button');
     tests.innerHTML = "";
@@ -324,10 +344,23 @@ function rerunAll() {
     totalSum = 0;
     totalScore = 0;
     queue = views.slice(0);
+    startRender();
+}
+
+function refresh(test) {
+    // console.log('refreshing:', test);
+    // var testdiv = document.getElementById(test.name);
+    // testdiv.innerHTML = "";
+    queue = [test];
+    startRender();
+}
+
+function startRender() {
     // if map is rendering, wait for it to finish, then start over
     Promise.all([viewComplete]).then(function() {
-        console.log('viewComplete received');
+        // console.log('viewComplete received');
         // move along
-        loadView(queue.shift());
+        nextView = queue.shift()
+        loadView(nextView);
     });
 }
