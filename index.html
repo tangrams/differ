@@ -13,65 +13,24 @@
     <title>Tangram</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
 
-    <style>
-        body {
-            margin: 10px;
-            border: 0px;
-            padding: 0px;
-            font-size: 18px;
-            font-family: sans-serif
-        }
-
-        .container {
-            float: left;
-            /*border: 2px solid red;*/
-        }
-
-        .container img {
-            /*border: 2px solid gold;*/
-            clear: left;
-            float: left;
-        }
-
-        #map {
-            background: rgba(0, 0, 0, 0);
-            visibility: hidden;
-            position: absolute;
-        }
-
-        .test {
-            clear: both;
-            float: left;
-        }
-
-        .header {
-            clear: both;
-        }
-
-        .columns {
-            /*clear: both;*/
-        }
-
-        .column {
-            width: 256px;
-            float: left;
-        }
-
-        .controls {
-            /*width: 256px;*/
-            float: left;
-        }
-
-    </style>
   </head>
 
   <body>
+    Now diffing:
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
     <div id="title" class="header">&nbsp;</div>
-    <div id="headers" class="header"><button onclick="refreshAll()">Refresh all</button><button onclick="stop()">Stop</button></div>
+    <div id="status" class="header">&nbsp;</div>
+    <div id="totalScore" class="header">&nbsp;</div>
+    <!-- controls -->
+    <div id="headers" class="header">
+        <!-- <button onclick="contactSheet()">Export contact sheet</button> -->
+        <!-- <button onclick="rerunAll()">Re-run all tests</button> -->
+        <!-- <button onclick="stop()">Stop tests</button> -->
+    </div>
     <div id="tests"></div>
 
     <!-- 3rd party libraries -->

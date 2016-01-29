@@ -1,0 +1,60 @@
+body {
+    margin: 10px;
+    border: 0px;
+    padding: 0px;
+    font-size: 18px;
+    font-family: sans-serif
+}
+
+.container {
+    float: left;
+    /*border: 2px solid red;*/
+}
+
+.container img {
+    /*border: 2px solid gold;*/
+    clear: left;
+    float: left;
+}
+
+#map {
+    background: rgba(0, 0, 0, 0);
+    visibility: hidden;
+    position: absolute;
+}
+
+.test {
+    clear: both;
+    float: left;
+    margin-top: .5em;
+}
+
+.header {
+    clear: both;
+}
+
+.testname {
+    clear: both;
+    font-size: 1.5em;
+}
+
+.column {
+    width: 256px;
+    float: left;
+}
+
+.controls {
+    /*width: 256px;*/
+    float: left;
+}
+
+.matchScore {
+    font-size: 3em;
+    margin-top: .25em;
+}
+
+button {
+    font-size: 1em;
+    float: left;
+    clear: left;
+}
