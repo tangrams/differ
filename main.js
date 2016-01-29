@@ -11,8 +11,9 @@ var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // pixels
-
+var totalSum = 0, totalScore = 0;
 var tests = document.getElementById("tests");
+var totalScoreDiv = document.getElementById("totalScore");
 
 // load file
 function readTextFile(file, callback) {
@@ -79,7 +80,7 @@ var prep = new Promise( function (resolve, reject) {
         // load the next scene when the current scene is done drawing
         scene.subscribe({
             view_complete: function () {
-                console.log('nextView:', nextView);
+                // console.log('nextView:', nextView);
                 if (nextView) {
                     // when prep is done, screenshot is made, and oldImg is loaded...
                     Promise.all([prep,screenshot(),loadOld(imgDir+nextView.name+imgType)]).then(function() {
@@ -106,10 +107,6 @@ var prep = new Promise( function (resolve, reject) {
     // set sizes
     document.getElementById("map").style.height = size+"px";
     document.getElementById("map").style.width = size+"px";
-
-    // document.getElementById("new").style.width = size+"px";
-    // document.getElementById("old").style.width = size+"px";
-    // document.getElementById("diff").style.width = size+"px";
 
     // set up canvases
 
@@ -171,7 +168,7 @@ function loadOld (img) {
 function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        if (save) saveAs(data.blob, views[v].name);
+        if (save) saveAs(data.blob, nextView.name);
 
         var urlCreator = window.URL || window.webkitURL;
         newImg = new Image();
@@ -188,58 +185,73 @@ function doDiff( test ) {
 
     // run the diff
     var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
-    var diffValue = Math.round(difference/(size*size)*100*100)/100;
+    // calculate match percentage
+    var match = 100-(difference/(size*size)*100*100)/100;
+    var matchScore = Math.floor(match);
+    // update master percentage
+    totalSum += match;
+    // console.log('difference:', difference);
+    // console.log('totalSum:', totalSum);
+    var count = views.length-queue.length;
+    // console.log('count:', count);
+    totalScore = Math.floor(totalSum/(100*count)*100);
+    var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
+    totalScoreDiv.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</div><br>";
+
     // put the diff in its canvas
     diffCtx.putImageData(diff, 0, 0);
 
+    // generate test output row
     var testdiv = document.createElement('div');
     testdiv.className = 'test';
+    testdiv.id = test.name;
 
     var title = document.createElement('div');
-    title.className = 'header';
+    title.className = 'testname';
     title.innerHTML = test.name;
-
     testdiv.appendChild(title);
 
-    var columns = document.createElement('div');
-    columns.className = 'columns';
+    var oldcolumn = document.createElement('span');
+    oldcolumn.className = 'column';
+    oldcolumn.id = "old";
+    oldcolumn.innerHTML = "old";
+    testdiv.appendChild(oldcolumn);
 
-        var oldcolumn = document.createElement('div');
-        oldcolumn.className = 'column';
-        oldcolumn.innerHTML = "old";
-        columns.appendChild(oldcolumn);
+    var newcolumn = document.createElement('span');
+    newcolumn.className = 'column';
+    newcolumn.id = "new";
+    newcolumn.innerHTML = "new";
+    testdiv.appendChild(newcolumn);
 
-        var newcolumn = document.createElement('div');
-        newcolumn.className = 'column';
-        newcolumn.innerHTML = "new";
-        columns.appendChild(newcolumn);
+    var diffcolumn = document.createElement('span');
+    diffcolumn.className = 'column';
+    diffcolumn.id = "diff";
+    diffcolumn.innerHTML = "diff";
+    testdiv.appendChild(diffcolumn);
 
-        var diffcolumn = document.createElement('div');
-        diffcolumn.className = 'column';
-        diffcolumn.innerHTML = "diff";
-        columns.appendChild(diffcolumn);
+    // per-test controls
+    var controls = document.createElement('div');
+    controls.className = 'controls';
+    var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
+    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"% match</div><br>";
 
-        var controls = document.createElement('div');
-        controls.className = 'controls';
-        var diffPercent = 100 - Math.ceil(diffValue);
-        var threatLevel = diffPercent > 99 ? "green" : diffPercent > 98 ? "orange" : "red";
-        controls.innerHTML = "controls<br><div style='font-size: 48pt;color:"+threatLevel+"'>"+diffPercent+"% match</div><br>";
+        var refreshButton =  document.createElement('button');
+        refreshButton.innerHTML = "refresh " + test.name;
+        controls.appendChild(refreshButton);
 
-            var refreshButton =  document.createElement('button');
-            refreshButton.innerHTML = "refresh " + test.name;
-            controls.appendChild(refreshButton);
+        var exportButton =  document.createElement('button');
+        exportButton.innerHTML = "export " + test.name;
+        controls.appendChild(exportButton);
 
-            var exportButton =  document.createElement('button');
-            exportButton.innerHTML = "export " + test.name;
-            controls.appendChild(exportButton);
+        var exportAllButton =  document.createElement('button');
+        exportAllButton.innerHTML = "export strip";
+        controls.appendChild(exportAllButton);
 
-            var exportAllButton =  document.createElement('button');
-            exportAllButton.innerHTML = "export all";
-            controls.appendChild(exportAllButton);
+        var exportAllButton =  document.createElement('button');
+        exportAllButton.innerHTML = "export gif";
+        controls.appendChild(exportAllButton);
 
-        columns.appendChild(controls);
-
-    testdiv.appendChild(columns);
+    testdiv.appendChild(controls);
 
     testdiv.id = test.name;
     tests.insertBefore(testdiv, tests.firstChild);
@@ -301,10 +313,13 @@ function viewComplete () {
     });
 }
 
-function refreshAll() {
+function rerunAll() {
     console.log('refresh all button');
     tests.innerHTML = "";
+    totalScoreDiv.innerHTML = "";
     nextView = false;
+    totalSum = 0;
+    totalScore = 0;
     queue = views.slice(0);
     // if map is rendering, wait for it to finish, then start over
     Promise.all([viewComplete]).then(function() {
