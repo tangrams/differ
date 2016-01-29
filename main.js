@@ -146,7 +146,7 @@ function loadImage (url, target) {
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
-        if (url.slice(-4) == ".png") url += "?" + new Date().getTime();
+        if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         image.src = url;
     });
 }
@@ -349,16 +349,13 @@ function rerunAll() {
 
 function refresh(test) {
     // console.log('refreshing:', test);
-    // var testdiv = document.getElementById(test.name);
-    // testdiv.innerHTML = "";
-    queue = [test];
+    queue.push(test);
     startRender();
 }
 
 function startRender() {
     // if map is rendering, wait for it to finish, then start over
     Promise.all([viewComplete]).then(function() {
-        // console.log('viewComplete received');
         // move along
         nextView = queue.shift()
         loadView(nextView);
