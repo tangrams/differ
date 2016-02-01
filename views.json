@@ -1,24 +1,16 @@
 {
     "tests": {
-        "tron-1": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
-            "location": [40.7139883550567, -74.00600910186769, 15]
+        "world-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/tangram/master/demos/scene.yaml",
+            "location": [0,0,0]
         },
-        "blueprint-1": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
-            "location": [51.50286581276559,-0.12119293212890626,14]
+        "cinnabar-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [0,0,1]
         },
-        "tron-2": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
-            "location": [40.7139883550567, -74.00600910186769, 15]
-        },
-        "blueprint-2": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
-            "location": [40.7139883550567, -74.00600910186769, 15]
-        },
-        "highways-1": {
-            "url": "https://raw.githubusercontent.com/tangrams/highways-demo/gh-pages/scene.yaml",
-            "location": [37.8034, -122.2714, 13.6]
+        "zinc-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
+            "location": [0,0,2]
         },
         "erasermap-1": {
             "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
@@ -30,7 +22,23 @@
         },
         "erasermap-3": {
             "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
-			"location": [37.78959, -122.38882, 16.825]
+            "location": [37.78959, -122.38882, 16.825]
+        },
+         "blueprint-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
+            "location": [51.50286581276559,-0.12119293212890626,14]
+        },
+        "blueprint-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
+            "location": [40.7139883550567, -74.00600910186769, 15]
+        },
+        "tron-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
+            "location": [40.7139883550567, -74.00600910186769, 16]
+        },
+         "tron-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/tron.yaml",
+            "location": [40.70531887544228, -74.0097749233246, 15]
         }
     }
 }
