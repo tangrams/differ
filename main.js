@@ -29,6 +29,21 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
+function parseView(view) {
+    // console.log('view:', view);
+    if (Object.prototype.toString.call(view["location"]) === '[object Array]') {
+        return view; // no parsing needed
+    } else if (typeof(view["location"]) === "string") { 
+        // parse string location as array of floats
+        var location = view["location"].split(/[ ,]+/);
+        location = location.map(parseFloat);
+        view["location"] = location;
+        return view;
+    } else {
+        console.log("Can't parse location:", view);
+    }
+}
+
 // setup divs and canvases
 var prep = new Promise( function (resolve, reject) {
 
@@ -44,7 +59,8 @@ var prep = new Promise( function (resolve, reject) {
 
         // clone views array
         queue = views.slice(0);
-        nextView = queue.shift(); // pop first
+        nextView = parseView(queue.shift()); // pop first and parse location
+
         // then initialize Tangram with the first view
         map = (function () {
             // console.log('views:', views);
@@ -89,7 +105,7 @@ var prep = new Promise( function (resolve, reject) {
                         doDiff(nextView);
                         // move along
                         if (queue.length > 0) {
-                            nextView = queue.shift(); // pop first
+                            nextView = parseView(queue.shift()); // pop first and parse location
                             loadView(nextView);
                         } else return;
                     });
@@ -133,7 +149,6 @@ var prep = new Promise( function (resolve, reject) {
     resolve();
 });
 
-
 // load an image asynchronously with a Promise
 function loadImage (url, target) {
     return new Promise(function(resolve, reject) {
@@ -160,9 +175,12 @@ function loadOld (img) {
             // set the old image to be drawn to the canvas once the image loads
             oldImg = result.image;
             oldCtx.drawImage(oldImg, 0, 0, oldImg.width, oldImg.height, 0, 0, oldCanvas.width, oldCanvas.height);
+            // make the data available to pixelmatch
+            oldData = oldCtx.getImageData(0, 0, size, size);
+        } else {
+            oldData = null;
+            diff = null;
         }
-        // make the data available to pixelmatch
-        oldData = oldCtx.getImageData(0, 0, size, size);
         return result;
     });
 };
@@ -185,17 +203,23 @@ function doDiff( test ) {
     newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
     var newData = newCtx.getImageData(0, 0, size, size);
-
-    // run the diff
-    var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
+    if (oldData) {
+        // run the diff
+        var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
+        // calculate match percentage
+        var match = 100-(difference/(size*size)*100*100)/100;
+        var matchScore = Math.floor(match);
+        // put the diff in its canvas
+        diffCtx.putImageData(diff, 0, 0);
+    } else {
+        // generating new image
+        match = 100;
+        matchScore = "";
+    }
 
     // UPDATE READOUTS
     var count = views.length-queue.length;
     statusDiv.innerHTML = count + " of " + views.length;
-
-    // calculate match percentage
-    var match = 100-(difference/(size*size)*100*100)/100;
-    var matchScore = Math.floor(match);
 
     // update master percentage
     scores[test.name] = match;
@@ -207,9 +231,6 @@ function doDiff( test ) {
     var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
     totalScoreDiv.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</div><br>";
 
-    // put the diff in its canvas
-    diffCtx.putImageData(diff, 0, 0);
-
     // make an output row
     makeRow(test, matchScore);
 };
@@ -217,7 +238,6 @@ function doDiff( test ) {
 function loadView (view) {
     // load and draw scene
     scene.load(view.url).then(function() {
-        // if (view) console
         if (!view) return;
         scene.animated = false;
         map.setView([view.location[0], view.location[1]], view.location[2]);
@@ -301,7 +321,14 @@ function makeRow(test, matchScore) {
 
     controls.className = 'controls';
     var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
-    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"% match</div><br>";
+    if (matchScore != "") {
+        matchScore += "% match";
+        var diffimg = document.createElement('img');
+        diffimg.src = diffCanvas.toDataURL("image/png");
+        diffcolumn.appendChild( diffimg );
+    }
+
+    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
         var refreshButton =  document.createElement('button');
         refreshButton.innerHTML = "refresh " + test.name;
@@ -329,10 +356,6 @@ function makeRow(test, matchScore) {
     oldImg.width = size;
     oldImg.height = size;
     oldcolumn.appendChild( oldImg );
-
-    var diffimg = document.createElement('img');
-    diffimg.src = diffCanvas.toDataURL("image/png");
-    diffcolumn.appendChild( diffimg );
 
 }
 
