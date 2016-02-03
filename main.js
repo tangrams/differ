@@ -179,7 +179,6 @@ function loadOld (img) {
             oldData = oldCtx.getImageData(0, 0, size, size);
         } else {
             oldData = null;
-            diff = null;
         }
         return result;
     });
@@ -280,8 +279,9 @@ function makeRow(test, matchScore) {
     // check to see if div already exists (if re-running a test);
     var testdiv = document.getElementById(test.name);
 
+    // if a row for this test doesn't already exist
     if (testdiv === null) {
-        // generate test output row
+        // generate one
         var testdiv = document.createElement('div');
         testdiv.className = 'test';
         testdiv.id = test.name;
@@ -323,30 +323,26 @@ function makeRow(test, matchScore) {
     var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
     if (matchScore != "") {
         matchScore += "% match";
-        var diffimg = document.createElement('img');
-        diffimg.src = diffCanvas.toDataURL("image/png");
-        diffcolumn.appendChild( diffimg );
+        var diffImg = document.createElement('img');
+        diffImg.src = diffCanvas.toDataURL("image/png");
+        diffcolumn.appendChild( diffImg );
     }
 
     controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
-        var refreshButton =  document.createElement('button');
-        refreshButton.innerHTML = "refresh " + test.name;
-        controls.appendChild(refreshButton);
-        refreshButton.onclick = function() {refresh(test);}
+    var refreshButton =  document.createElement('button');
+    refreshButton.innerHTML = "refresh " + test.name;
+    controls.appendChild(refreshButton);
+    refreshButton.onclick = function() {refresh(test);}
 
-        var exportButton =  document.createElement('button');
-        exportButton.innerHTML = "export " + test.name;
-        // controls.appendChild(exportButton);
+    var exportStripButton =  document.createElement('button');
+    exportStripButton.innerHTML = "export strip";
+    exportStripButton.onclick = "export strip";
+    // controls.appendChild(exportStripButton);
 
-        var exportStripButton =  document.createElement('button');
-        exportStripButton.innerHTML = "export strip";
-        exportStripButton.onclick = "export strip";
-        // controls.appendChild(exportStripButton);
-
-        var exportGifButton =  document.createElement('button');
-        exportGifButton.innerHTML = "export gif";
-        // controls.appendChild(exportGifButton);
+    var exportGifButton =  document.createElement('button');
+    exportGifButton.innerHTML = "export gif";
+    // controls.appendChild(exportGifButton);
 
     // make imgs for new, old, and diff and attach them to the document
     newImg.width = size;
@@ -356,6 +352,11 @@ function makeRow(test, matchScore) {
     oldImg.width = size;
     oldImg.height = size;
     oldcolumn.appendChild( oldImg );
+
+    var exportButton =  document.createElement('button');
+    exportButton.innerHTML = "export " + test.name;
+    exportButton.onclick = function() {makeStrip(oldImg, newImg, diffImg, size)};
+    controls.appendChild(exportButton);
 
 }
 
@@ -371,7 +372,6 @@ function rerunAll() {
 }
 
 function refresh(test) {
-    // console.log('refreshing:', test);
     queue.push(test);
     startRender();
 }
@@ -383,4 +383,17 @@ function startRender() {
         nextView = queue.shift()
         loadView(nextView);
     });
+}
+
+function makeStrip(img1, img2, img3, size) {
+    var half = size/2;
+    var c = document.createElement('canvas');
+    c.width = size*3;
+    c.height = size;
+    var ctx=c.getContext("2d");
+    ctx.drawImage(img1, 0, 0, half, half);
+    ctx.drawImage(img2, half, 0, half, half);
+    ctx.drawImage(img3, half*2, 0, half, half);
+    var img = c.toDataURL("image/png");
+    document.write('<img src="' + img + '" width='+size*3+' height='+size+'/>');
 }
