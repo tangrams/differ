@@ -8,9 +8,61 @@
             "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
             "location": [0,0,1]
         },
+        "cinnabar-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [40.70531887544228,-74.0097749233246,16]
+        },
+        "cinnabar-3": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [37.775,-122.419,16]
+        },
+        "cinnabar-4": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [40.038,-76.306,16]
+        },
+        "cinnabar-5": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [52.524,13.411,16]
+        },
         "zinc-1": {
             "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
             "location": [0,0,2]
+        },
+        "zinc-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
+            "location": [40.70531887544228,-74.0097749233246,16]
+        },
+        "zinc-3": {
+            "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
+            "location": [37.775,-122.419,16]
+        },
+        "zinc-4": {
+            "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
+            "location": [40.038,-76.306,16]
+        },
+        "zinc-5": {
+            "url": "https://raw.githubusercontent.com/tangrams/zinc-style/gh-pages/zinc-style.yaml",
+            "location": [52.524,13.411,16]
+        },
+        "refill-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/refill-style/gh-pages/refill-style.yaml",
+            "location": [0,0,0]
+        },
+        "refill-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/refill-style/gh-pages/refill-style.yaml",
+            "location": [40.70531887544228,-74.0097749233246,16]
+        },
+        "refill-3": {
+            "url": "https://raw.githubusercontent.com/tangrams/refill-style/gh-pages/refill-style.yaml",
+            "location": [37.775,-122.419,16]
+        },
+        "refill-4": {
+            "url": "https://raw.githubusercontent.com/tangrams/refill-style/gh-pages/refill-style.yaml",
+            "location": [40.038,-76.306,16]
+        },
+        "refill-5": {
+            "url": "https://raw.githubusercontent.com/tangrams/refill-style/gh-pages/refill-style.yaml",
+            "location": [52.524,13.411,16]
         },
         "erasermap-1": {
             "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
@@ -18,13 +70,21 @@
         },
         "erasermap-2": {
             "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
-            "location": [37.8034, -122.2714, 13.6]
+            "location": [40.70531887544228,-74.0097749233246,16]
         },
         "erasermap-3": {
             "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
-            "location": [37.78959, -122.38882, 16.825]
+            "location": [37.775,-122.419,16]
         },
-         "blueprint-1": {
+        "erasermap-4": {
+            "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
+            "location": [40.038,-76.306,16]
+        },
+        "erasermap-5": {
+            "url": "https://raw.githubusercontent.com/tangrams/eraser-map/gh-pages/eraser-map.yaml",
+            "location": [52.524,13.411,16]
+        },
+        "blueprint-1": {
             "url": "https://raw.githubusercontent.com/tangrams/tangram-sandbox/gh-pages/styles/blueprint.yaml",
             "location": [51.50286581276559,-0.12119293212890626,14]
         },
