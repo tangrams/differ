@@ -1,5 +1,5 @@
-# render-tests
-Toward a render-testing framework
+# differ
+A map-render-testing framework for Tangram
 
 ### requirements
 
@@ -16,7 +16,7 @@ Toward a render-testing framework
 
 ### to generate new reference maps
 
-- `npm install formidable`
+- `npm install`
 - `node server.js`
 - visit [http://localhost:8080](http://localhost:8080)
 - commit and push the images back to this repo
