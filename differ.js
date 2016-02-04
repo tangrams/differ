@@ -6,7 +6,7 @@
 var map, views, queue, nextView,
     newImg, newCanvas, newCtx, newData,
     oldImg, oldCanvas, oldCtx, oldData,
-    diffCanvas, diffCtx, diff;
+    diffImg, diffCanvas, diffCtx, diff;
 var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
@@ -279,7 +279,7 @@ function makeRow(test, matchScore) {
     // check to see if div already exists (if re-running a test);
     var testdiv = document.getElementById(test.name);
 
-    // if a row for this test doesn't already exist
+    // if a row for this test doesn't already exist:
     if (testdiv === null) {
         // generate one
         var testdiv = document.createElement('div');
@@ -315,15 +315,26 @@ function makeRow(test, matchScore) {
     diffcolumn.innerHTML = "diff";
     testdiv.appendChild(diffcolumn);
 
-    // per-test controls
+    // insert old and new images
+    newImg.width = size;
+    newImg.height = size;
+    newcolumn.appendChild( newImg );
+    
+    oldImg.width = size;
+    oldImg.height = size;
+    oldcolumn.appendChild( oldImg );
+
+    // CONTROLS //
+
     var controls = document.createElement('div');
+    controls.className = 'controls';
     testdiv.appendChild(controls);
 
-    controls.className = 'controls';
-    var threatLevel = matchScore > 99 ? "green" : matchScore > 98 ? "orange" : "red";
+    var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
+
     if (matchScore != "") {
         matchScore += "% match";
-        var diffImg = document.createElement('img');
+        diffImg = document.createElement('img');
         diffImg.src = diffCanvas.toDataURL("image/png");
         diffcolumn.appendChild( diffImg );
     }
@@ -344,20 +355,32 @@ function makeRow(test, matchScore) {
     exportGifButton.innerHTML = "export gif";
     // controls.appendChild(exportGifButton);
 
-    // make imgs for new, old, and diff and attach them to the document
-    newImg.width = size;
-    newImg.height = size;
-    newcolumn.appendChild( newImg );
-    
-    oldImg.width = size;
-    oldImg.height = size;
-    oldcolumn.appendChild( oldImg );
-
     var exportButton =  document.createElement('button');
     exportButton.innerHTML = "export " + test.name;
-    exportButton.onclick = function() {makeStrip(oldImg, newImg, diffImg, size)};
+    // store current value of these global variables
+    exportButton.oldimg = oldImg;
+    exportButton.newimg = newImg;
+    exportButton.diffimg = diffImg;
+    exportButton.onclick = function() {
+        var img = makeStrip(this.oldimg, this.newimg, this.diffimg, size);
+
+        var data = '<img src="' + img + '"/>';
+        var myWindow = window.open("data:text/html," + encodeURIComponent(data));
+    };
     controls.appendChild(exportButton);
 
+}
+
+function makeStrip(img1, img2, img3, size) {
+    var c = document.createElement('canvas');
+    c.width = size*3;
+    c.height = size;
+    var ctx=c.getContext("2d");
+
+    ctx.drawImage(img1, 0, 0, size, size);
+    ctx.drawImage(img2, size, 0, size, size);
+    ctx.drawImage(img3, size*2, 0, size, size);
+    return c.toDataURL("image/png");
 }
 
 function rerunAll() {
@@ -385,15 +408,3 @@ function startRender() {
     });
 }
 
-function makeStrip(img1, img2, img3, size) {
-    var half = size/2;
-    var c = document.createElement('canvas');
-    c.width = size*3;
-    c.height = size;
-    var ctx=c.getContext("2d");
-    ctx.drawImage(img1, 0, 0, half, half);
-    ctx.drawImage(img2, half, 0, half, half);
-    ctx.drawImage(img3, half*2, 0, half, half);
-    var img = c.toDataURL("image/png");
-    document.write('<img src="' + img + '" width='+size*3+' height='+size+'/>');
-}
