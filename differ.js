@@ -11,7 +11,8 @@ var map, views, queue, nextView,
 var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
-var size = 250; // pixels
+var size = 250; // physical pixels
+var lsize = 250 * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
 var tests = document.getElementById("tests");
 var statusDiv = document.getElementById("status");
@@ -130,22 +131,22 @@ var prep = new Promise( function (resolve, reject) {
 
     // make canvas for the old image
     oldCanvas = document.createElement('canvas');
-    oldCanvas.height = size;
-    oldCanvas.width = size;
+    oldCanvas.height = lsize;
+    oldCanvas.width = lsize;
     oldCtx = oldCanvas.getContext('2d');
 
     // make a canvas for the newly-drawn map image
     newCanvas = document.createElement('canvas');
-    newCanvas.height = size;
-    newCanvas.width = size;
+    newCanvas.height = lsize;
+    newCanvas.width = lsize;
     newCtx = newCanvas.getContext('2d');
 
     // make a canvas for the diff
     diffCanvas = document.createElement('canvas');
-    diffCanvas.height = size;
-    diffCanvas.width = size;
+    diffCanvas.height = lsize;
+    diffCanvas.width = lsize;
     diffCtx = diffCanvas.getContext('2d');
-    diff = diffCtx.createImageData(size, size);
+    diff = diffCtx.createImageData(lsize, lsize);
 
     resolve();
 });
@@ -177,7 +178,7 @@ function loadOld (img) {
             oldImg = result.image;
             oldCtx.drawImage(oldImg, 0, 0, oldImg.width, oldImg.height, 0, 0, oldCanvas.width, oldCanvas.height);
             // make the data available to pixelmatch
-            oldData = oldCtx.getImageData(0, 0, size, size);
+            oldData = oldCtx.getImageData(0, 0, lsize, lsize);
         } else {
             oldData = null;
         }
@@ -202,12 +203,12 @@ function doDiff( test ) {
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
-    var newData = newCtx.getImageData(0, 0, size, size);
+    var newData = newCtx.getImageData(0, 0, lsize, lsize);
     if (oldData) {
         // run the diff
-        var difference = pixelmatch(newData.data, oldData.data, diff.data, size, size, {threshold: 0.1});
+        var difference = pixelmatch(newData.data, oldData.data, diff.data, lsize, lsize, {threshold: 0.1});
         // calculate match percentage
-        var match = 100-(difference/(size*size)*100*100)/100;
+        var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
         // put the diff in its canvas
         diffCtx.putImageData(diff, 0, 0);
@@ -342,6 +343,8 @@ function makeRow(test, matchScore) {
         matchScore += "% match";
         diffImg = document.createElement('img');
         diffImg.src = diffCanvas.toDataURL("image/png");
+        diffImg.width = size;
+        diffImg.height = size;
         diffcolumn.appendChild( diffImg );
     }
 
@@ -352,11 +355,6 @@ function makeRow(test, matchScore) {
     controls.appendChild(refreshButton);
     refreshButton.onclick = function() {refresh(test);}
 
-    var exportStripButton =  document.createElement('button');
-    exportStripButton.innerHTML = "export strip";
-    exportStripButton.onclick = "export strip";
-    // controls.appendChild(exportStripButton);
-
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "export gif";
     // controls.appendChild(exportGifButton);
@@ -365,7 +363,7 @@ function makeRow(test, matchScore) {
     exportButton.innerHTML = "export " + test.name;
     // store current value of these global variables
     exportButton.onclick = function() {
-        var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], size);
+        var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], lsize);
         popup(img);
     };
     controls.appendChild(exportButton);
@@ -380,7 +378,18 @@ function makeStrip(images, size) {
     for (var x in images) {
         ctx.drawImage(images[x], size * x, 0, size, size);
     }
-    return c.toDataURL("image/png");
+    var result = c.toDataURL("image/png");
+    var z = window.devicePixelRatio;
+    if (z != 1.0) { // handle retina etc
+        var temp = new Image();
+        return result;
+        temp.src = result;
+        c.width = size*images.length/z;
+        c.height = size/z;
+        ctx.drawImage(temp, 0, 0, c.width, c.height);
+        result = c.toDataURL("image/png");
+    }
+    return result;
 }
 
 function popup(img) {
