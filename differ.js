@@ -362,7 +362,7 @@ function makeRow(test, matchScore) {
     exportButton.newimg = newImg;
     exportButton.diffimg = diffImg;
     exportButton.onclick = function() {
-        var img = makeStrip(this.oldimg, this.newimg, this.diffimg, size);
+        var img = makeStrip([this.oldimg, this.newimg, this.diffimg], size);
 
         var data = '<img src="' + img + '"/>';
         var myWindow = window.open("data:text/html," + encodeURIComponent(data));
@@ -371,15 +371,14 @@ function makeRow(test, matchScore) {
 
 }
 
-function makeStrip(img1, img2, img3, size) {
+function makeStrip(images, size) {
     var c = document.createElement('canvas');
-    c.width = size*3;
+    c.width = size*images.length;
     c.height = size;
     var ctx=c.getContext("2d");
-
-    ctx.drawImage(img1, 0, 0, size, size);
-    ctx.drawImage(img2, size, 0, size, size);
-    ctx.drawImage(img3, size*2, 0, size, size);
+    for (var x in images) {
+        ctx.drawImage(images[x], size * x, 0, size, size);
+    }
     return c.toDataURL("image/png");
 }
 
