@@ -364,7 +364,7 @@ function makeRow(test, matchScore) {
     // store current value of these global variables
     exportButton.onclick = function() {
         var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], lsize);
-        popup(img);
+        popup(img, size * 3, size);
     };
     controls.appendChild(exportButton);
 
@@ -378,42 +378,32 @@ function makeStrip(images, size) {
     for (var x in images) {
         ctx.drawImage(images[x], size * x, 0, size, size);
     }
-    var result = c.toDataURL("image/png");
-    var z = window.devicePixelRatio;
-    if (z != 1.0) { // handle retina etc
-        var temp = new Image();
-        return result;
-        temp.src = result;
-        c.width = size*images.length/z;
-        c.height = size/z;
-        ctx.drawImage(temp, 0, 0, c.width, c.height);
-        result = c.toDataURL("image/png");
-    }
-    return result;
+    return c.toDataURL("image/png");
 }
 
-function popup(img) {
-    var data = '<img src="' + img + '"/>';
+function popup(img, width, height) {
+    console.log('window.devicePixelRatio:', size/window.devicePixelRatio);
+
+    var data = '<img width='+width+' height='+height+' src="' + img + '"/>';
     var myWindow = window.open("data:text/html," + encodeURIComponent(data));
 }
 
 function makeContactSheet() {
     var c = document.createElement('canvas');
-    c.width = size*3;
-    c.height = size*views.length;
+    c.width = lsize*3;
+    c.height = lsize*views.length;
     var ctx=c.getContext("2d");
     var i = 0;
     for (var x in images) {
         var img = new Image();
         if (!images.hasOwnProperty(x)) continue; // sigh
-        var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], size);
+        var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
         img.src = strip;
-        ctx.drawImage(img, 0, size * i, size * 3, size);
+        ctx.drawImage(img, 0, lsize * i, lsize * 3, lsize);
         i++;
     }
     var sheet = c.toDataURL("image/png");
-    popup(sheet);
-    // return c.toDataURL("image/png");
+    popup(sheet, size * 3, size * images.length);
 }
 
 function rerunAll() {
