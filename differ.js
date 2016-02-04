@@ -6,7 +6,8 @@
 var map, views, queue, nextView,
     newImg, newCanvas, newCtx, newData,
     oldImg, oldCanvas, oldCtx, oldData,
-    diffImg, diffCanvas, diffCtx, diff;
+    diffImg, diffCanvas, diffCtx, diff,
+    images = {};
 var testsFile = "./views.json";
 var imgDir = "images/";
 var imgType = ".png";
@@ -232,6 +233,11 @@ function doDiff( test ) {
 
     // make an output row
     makeRow(test, matchScore);
+
+    images[test.name] = {};
+    images[test.name].oldImg = oldImg;
+    images[test.name].newImg = newImg;
+    images[test.name].diffImg = diffImg;
 };
 
 function loadView (view) {
@@ -358,14 +364,9 @@ function makeRow(test, matchScore) {
     var exportButton =  document.createElement('button');
     exportButton.innerHTML = "export " + test.name;
     // store current value of these global variables
-    exportButton.oldimg = oldImg;
-    exportButton.newimg = newImg;
-    exportButton.diffimg = diffImg;
     exportButton.onclick = function() {
-        var img = makeStrip([this.oldimg, this.newimg, this.diffimg], size);
-
-        var data = '<img src="' + img + '"/>';
-        var myWindow = window.open("data:text/html," + encodeURIComponent(data));
+        var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], size);
+        popup(img);
     };
     controls.appendChild(exportButton);
 
@@ -380,6 +381,30 @@ function makeStrip(images, size) {
         ctx.drawImage(images[x], size * x, 0, size, size);
     }
     return c.toDataURL("image/png");
+}
+
+function popup(img) {
+    var data = '<img src="' + img + '"/>';
+    var myWindow = window.open("data:text/html," + encodeURIComponent(data));
+}
+
+function makeContactSheet() {
+    var c = document.createElement('canvas');
+    c.width = size*3;
+    c.height = size*views.length;
+    var ctx=c.getContext("2d");
+    var i = 0;
+    for (var x in images) {
+        var img = new Image();
+        if (!images.hasOwnProperty(x)) continue; // sigh
+        var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], size);
+        img.src = strip;
+        ctx.drawImage(img, 0, size * i, size * 3, size);
+        i++;
+    }
+    var sheet = c.toDataURL("image/png");
+    popup(sheet);
+    // return c.toDataURL("image/png");
 }
 
 function rerunAll() {
