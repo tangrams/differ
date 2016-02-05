@@ -355,18 +355,22 @@ function makeRow(test, matchScore) {
     controls.appendChild(refreshButton);
     refreshButton.onclick = function() {refresh(test);}
 
-    var exportGifButton =  document.createElement('button');
-    exportGifButton.innerHTML = "export gif";
-    // controls.appendChild(exportGifButton);
-
     var exportButton =  document.createElement('button');
-    exportButton.innerHTML = "export " + test.name;
+    exportButton.innerHTML = "make PNG";
     // store current value of these global variables
     exportButton.onclick = function() {
         var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], lsize);
         popup(img, size * 3, size);
     };
     controls.appendChild(exportButton);
+
+    var exportGifButton =  document.createElement('button');
+    exportGifButton.innerHTML = "make GIF";
+    exportGifButton.onclick = function() {
+        var img = makeGif([images[test.name].oldImg, images[test.name].newImg]);
+    };
+    controls.appendChild(exportGifButton);
+
 
 }
 
@@ -381,9 +385,26 @@ function makeStrip(images, size) {
     return c.toDataURL("image/png");
 }
 
-function popup(img, width, height) {
-    console.log('window.devicePixelRatio:', size/window.devicePixelRatio);
+function makeGif(images) {
+    var gif = new GIF({
+      workers: 1,
+      quality: 10,
+      width: lsize,
+      height: lsize,
+    });
 
+    for (var y in images) {
+        gif.addFrame(images[y]);
+    }
+
+    gif.on('finished', function(blob) {
+        window.open(URL.createObjectURL(blob));
+    });
+
+    gif.render();
+}
+
+function popup(img, width, height) {
     var data = '<img width='+width+' height='+height+' src="' + img + '"/>';
     var myWindow = window.open("data:text/html," + encodeURIComponent(data));
 }
