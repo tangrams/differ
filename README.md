@@ -20,3 +20,8 @@ A map-render-testing framework for Tangram
 - `node server.js`
 - visit [http://localhost:8080](http://localhost:8080)
 - commit and push the images back to this repo
+
+### todo
+
+- get working in browsers besides Chrome
+- animated gifs
