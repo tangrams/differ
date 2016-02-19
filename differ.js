@@ -8,7 +8,7 @@ var map, views, queue, nextView,
     oldImg, oldCanvas, oldCtx, oldData,
     diffImg, diffCanvas, diffCtx, diff,
     images = {};
-var testsFile = "./views.json";
+var testsFile = "views.json";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
@@ -17,6 +17,15 @@ var scores = [], totalScore = 0;
 var tests = document.getElementById("tests");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
+
+// parse URL to check for test json passed in the hash
+// eg: http://localhost:8080/#test.json
+function getValuesFromUrl() {
+    var url_hash = window.location.hash.slice(1, window.location.hash.length);
+    if (url_hash != "") return url_hash;
+    else return testsFile;
+}
+testsFile = getValuesFromUrl();
 
 // load file
 function readTextFile(file, callback) {
@@ -119,7 +128,7 @@ var prep = new Promise( function (resolve, reject) {
         });
 
         // set page title
-        document.getElementById('title').innerHTML = testsFile;
+        document.getElementById('title').innerHTML = "<a href='"+testsFile+"'>"+testsFile+"</a>";
 
     });
 
