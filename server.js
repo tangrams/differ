@@ -72,7 +72,12 @@ var server = http.createServer( function( req , res ) {
             return;
         }
 
-        var fileBytes = fs.readFileSync(WWW_ROOT + fileToLoad);
+        console.log("fileToLoad:", fileToLoad);
+        if (fileToLoad == "") {
+            var fileBytes = fs.readFileSync(WWW_ROOT + "index.html" + fileToLoad);
+        } else {
+            var fileBytes = fs.readFileSync(WWW_ROOT + fileToLoad);
+        }
         var mimeType = mimeTypes[fileToLoad.split(".")[1]]; // complicated, eh?
 
         res.writeHead(httpStatusCode,{'Content-type':mimeType});
