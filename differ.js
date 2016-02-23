@@ -15,17 +15,26 @@ var size = 250; // physical pixels
 var lsize = 250 * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
 var tests = document.getElementById("tests");
+var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 
-// parse URL to check for test json passed in the hash
+// parse URL to check for test json passed in the query
 // eg: http://localhost:8080/#test.json
 function getValuesFromUrl() {
-    var url_hash = window.location.hash.slice(1, window.location.hash.length);
-    if (url_hash != "") return url_hash;
+    var url_query = window.location.search.slice(1, window.location.search.length);
+    if (url_query != "") return url_query;
     else return testsFile;
 }
 testsFile = getValuesFromUrl();
+console.log('testsFile', testsFile);
+// load from url
+function loadButton() {
+    var url = window.location;
+    var newlocation = "?" + document.getElementById("loadtext").value;
+    console.log('newlocation:', newlocation);
+    window.location = newlocation;
+}
 
 // load file
 function readTextFile(file, callback) {
@@ -33,9 +42,17 @@ function readTextFile(file, callback) {
     rawFile.overrideMimeType("application/json");
     rawFile.open("GET", file, true);
     rawFile.onreadystatechange = function() {
+        console.log('readyState:', rawFile.readyState);
         if (rawFile.readyState === 4 && rawFile.status == "200") {
+            console.log('rawFile.responseText:', rawFile.responseText);
             callback(rawFile.responseText);
         }
+        else if (rawFile.readyState === 4 && rawFile.status == "404") {
+            console.error("404 – can't load file", file);
+            // set page title
+            alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
+        }
+
     }
     rawFile.send(null);
 }
@@ -57,10 +74,16 @@ function parseView(view) {
 
 // setup divs and canvases
 var prep = new Promise( function (resolve, reject) {
-
     // load and parse test json
     readTextFile(testsFile, function(text){
-        var data = JSON.parse(text);
+        try {
+            var data = JSON.parse(text);
+        } catch(e) {
+            console.log('e:', e);
+            // set page title
+            alertDiv.innerHTML = "Can't parse JSON:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
+            return false;
+        }
         // convert tests to an array for easier traversal
         views = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
@@ -128,7 +151,7 @@ var prep = new Promise( function (resolve, reject) {
         });
 
         // set page title
-        document.getElementById('title').innerHTML = "<a href='"+testsFile+"'>"+testsFile+"</a>";
+        alertDiv.innerHTML = "Now diffing:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
 
     });
 
