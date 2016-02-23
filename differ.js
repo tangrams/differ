@@ -20,14 +20,31 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 
 // parse URL to check for test json passed in the query
-// eg: http://localhost:8080/#test.json
+// eg: http://localhost:8080/?test.json
 function getValuesFromUrl() {
     var url_query = window.location.search.slice(1, window.location.search.length);
     if (url_query != "") return url_query;
     else return testsFile;
 }
+
 testsFile = getValuesFromUrl();
+var testsDir = "";
 console.log('testsFile', testsFile);
+var parseURL = document.createElement('a');
+parseURL.href = testsFile;
+console.log('testsDir', parseURL.host, parseURL.pathname);
+
+
+document.getElementById("loadtext").onkeypress = function(e){
+    if (!e) e = window.event;
+    var keyCode = e.keyCode || e.which;
+    if (keyCode == '13'){
+      // Enter pressed
+      loadButton();
+      return false;
+    }
+  }
+
 // load from url
 function loadButton() {
     var url = window.location;
@@ -42,9 +59,9 @@ function readTextFile(file, callback) {
     rawFile.overrideMimeType("application/json");
     rawFile.open("GET", file, true);
     rawFile.onreadystatechange = function() {
-        console.log('readyState:', rawFile.readyState);
+        // console.log('readyState:', rawFile.readyState);
         if (rawFile.readyState === 4 && rawFile.status == "200") {
-            console.log('rawFile.responseText:', rawFile.responseText);
+            // console.log('rawFile.responseText:', rawFile.responseText);
             callback(rawFile.responseText);
         }
         else if (rawFile.readyState === 4 && rawFile.status == "404") {
