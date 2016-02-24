@@ -49,7 +49,12 @@ document.getElementById("loadtext").onkeypress = function(e){
 function readTextFile(file, callback) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
+    try {
+        console.log("???");
     rawFile.open("GET", file, true);
+} catch (e) {
+    console.error("!!!", e);
+}
     rawFile.onreadystatechange = function() {
         // console.log('readyState:', rawFile.readyState);
         if (rawFile.readyState === 4 && rawFile.status == "200") {
@@ -60,6 +65,11 @@ function readTextFile(file, callback) {
             console.error("404 – can't load file", file);
             // set page title
             alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
+        } else {
+            alertDiv.innerHTML = "Had trouble loading that file.";
+            if (parseURL.host == "github.com") {
+                alertDiv.innerHTML += "<br>I notice you're trying to load a file from github, make sure you're using the \"raw\" file!"
+            }
         }
 
     }
