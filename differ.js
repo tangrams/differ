@@ -522,7 +522,10 @@ function download(url, type) {
     var a = document.createElement('a');
     a.href = url;
     a.download = "differ-"+new Date().getTime()+"."+type;
+    document.body.appendChild(a); // necessary for Firefox
     a.click();
+    document.body.removeChild(a);
+
 }
 
 function rerunAll() {
