@@ -231,7 +231,6 @@ function loadImage (url, target) {
     });
 }
 
-
 // load the old image
 function loadOld (img) {
     oldImg = new Image();
@@ -365,7 +364,9 @@ function makeRow(test, matchScore) {
 
     var title = document.createElement('div');
     title.className = 'testname';
-    title.innerHTML = test.name;
+    // make test title a link to a live version of the test"
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1]
+    title.innerHTML = "<a target='_blank' href='"+testlink+"'>"+test.name+"</a>";
     testdiv.appendChild(title);
 
     var oldcolumn = document.createElement('span');
@@ -482,7 +483,11 @@ function makeContactSheet() {
     for (var x in images) {
         var img = new Image();
         if (!images.hasOwnProperty(x)) continue; // sigh
-        var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
+        try {
+            var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
+        } catch (e) {
+            console.error(e);
+        }
         img.src = strip;
         ctx.drawImage(img, 0, lsize * i, lsize * 3, lsize);
         i++;
