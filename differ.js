@@ -488,7 +488,8 @@ function makeContactSheet() {
         i++;
     }
     var sheet = c.toDataURL("image/png");
-    popup(sheet, size * 3, size * images.length);
+    download(sheet, "png");
+    // popup(sheet, size * 3, size * images.length);
 }
 
 function makeInfoJSON() {
@@ -506,7 +507,17 @@ function makeInfoJSON() {
     // saveImage(newJSON, "output.json");
     // window.open(URL.createObjectURL(j));
     var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
-    window.open(url, '_blank');
+    download(url, "json");
+
+    // var w = window.open(url, 'test');
+    // w.location.href="output.json#";
+}
+
+function download(url, type) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = "differ-"+new Date().getTime()+"."+type;
+    a.click();
 }
 
 function rerunAll() {
