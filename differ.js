@@ -8,25 +8,73 @@ var map, views, queue, nextView,
     oldImg, oldCanvas, oldCtx, oldData,
     diffImg, diffCanvas, diffCtx, diff,
     images = {};
-var testsFile = "./views.json";
+var testsFile = "";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = 250 * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
+var useragent = document.getElementById("useragent");
 var tests = document.getElementById("tests");
+var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
+var data;
+var loadTime = Date();
+
+useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
+// parse URL to check for test json passed in the query
+// eg: http://localhost:8080/?test.json
+function parseQuery() {
+    var url_query = window.location.search.slice(1, window.location.search.length);
+    if (url_query != "") return url_query;
+    else return testsFile;
+}
+
+testsFile = parseQuery();
+var parseURL = document.createElement('a');
+var testsDir = testsFile.substring(0, testsFile.lastIndexOf('/')) + "/";
+var testsFilename = testsFile.substring(testsFile.lastIndexOf('/')+1, testsFile.length);
+imgDir = testsDir+imgDir;
+// console.log('testsDir:', testsDir);
+// console.log('testsFilename:', testsFilename);
+
+// handle enter key in filename input
+document.getElementById("loadtext").onkeypress = function(e){
+    if (!e) e = window.event;
+    var keyCode = e.keyCode || e.which;
+    if (keyCode == '13') { // Enter pressed
+        loadButton();
+        return false;
+    }
+}
 
 // load file
 function readTextFile(file, callback) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
-    rawFile.open("GET", file, true);
+    try {
+        rawFile.open("GET", file, true);
+    } catch (e) {
+        console.error("Error opening file:", e);
+    }
     rawFile.onreadystatechange = function() {
+        // console.log('readyState:', rawFile.readyState);
         if (rawFile.readyState === 4 && rawFile.status == "200") {
+            // console.log('rawFile.responseText:', rawFile.responseText);
             callback(rawFile.responseText);
         }
+        else if (rawFile.readyState === 4 && rawFile.status == "404") {
+            console.error("404 – can't load file", file);
+            // set page title
+            alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFilename+"</a>";
+        } else if (rawFile.readyState === 4) {
+            alertDiv.innerHTML += "Had trouble loading that file.<br>";
+            if (parseURL.host == "github.com") {
+                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
+            }
+        }
+
     }
     rawFile.send(null);
 }
@@ -48,10 +96,25 @@ function parseView(view) {
 
 // setup divs and canvases
 var prep = new Promise( function (resolve, reject) {
-
     // load and parse test json
     readTextFile(testsFile, function(text){
-        var data = JSON.parse(text);
+        if (testsFile == "") return false;
+        try {
+            data = JSON.parse(text);
+        } catch(e) {
+            console.log('Error parsing json:', e);
+            // set page title
+            alertDiv.innerHTML += "Can't parse JSON:<br><a href='"+testsFile+"'>"+testsFilename+"</a><br>"+e+"<br>";
+            return false;
+        }
+
+        // extract test origin metadata
+        try {
+            metadata = data.origin;
+        } catch (e) {
+            alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
+        }
+
         // convert tests to an array for easier traversal
         views = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
@@ -119,7 +182,7 @@ var prep = new Promise( function (resolve, reject) {
         });
 
         // set page title
-        document.getElementById('title').innerHTML = testsFile;
+        alertDiv.innerHTML += "Now diffing: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
 
     });
 
@@ -168,7 +231,6 @@ function loadImage (url, target) {
     });
 }
 
-
 // load the old image
 function loadOld (img) {
     oldImg = new Image();
@@ -180,6 +242,7 @@ function loadOld (img) {
             // make the data available to pixelmatch
             oldData = oldCtx.getImageData(0, 0, lsize, lsize);
         } else {
+            oldImg.style.display = "none";
             oldData = null;
         }
         return result;
@@ -190,7 +253,7 @@ function loadOld (img) {
 function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        if (save) saveAs(data.blob, nextView.name);
+        if (save) saveImage(data.blob, nextView.name);
 
         var urlCreator = window.URL || window.webkitURL;
         newImg = new Image();
@@ -200,6 +263,10 @@ function screenshot (save) {
 
 // perform the image comparison and update the html
 function doDiff( test ) {
+    // UPDATE READOUTS
+    var count = views.length-queue.length;
+    statusDiv.innerHTML = count + " of " + views.length;
+
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
@@ -217,10 +284,6 @@ function doDiff( test ) {
         match = 100;
         matchScore = "";
     }
-
-    // UPDATE READOUTS
-    var count = views.length-queue.length;
-    statusDiv.innerHTML = count + " of " + views.length;
 
     // update master percentage
     scores[test.name] = match;
@@ -251,8 +314,8 @@ function loadView (view) {
     });
 }
 
-// save a file with a POST request to the server
-function saveAs( file, filename ) {
+// save an image with a POST request to the server
+function saveImage( file, filename ) {
     var url = '/save';
     var data = new FormData();
 
@@ -301,7 +364,9 @@ function makeRow(test, matchScore) {
 
     var title = document.createElement('div');
     title.className = 'testname';
-    title.innerHTML = test.name;
+    // make test title a link to a live version of the test"
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1]
+    title.innerHTML = "<a target='_blank' href='"+testlink+"'>"+test.name+"</a>";
     testdiv.appendChild(title);
 
     var oldcolumn = document.createElement('span');
@@ -418,13 +483,49 @@ function makeContactSheet() {
     for (var x in images) {
         var img = new Image();
         if (!images.hasOwnProperty(x)) continue; // sigh
-        var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
+        try {
+            var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
+        } catch (e) {
+            console.error(e);
+        }
         img.src = strip;
         ctx.drawImage(img, 0, lsize * i, lsize * 3, lsize);
         i++;
     }
     var sheet = c.toDataURL("image/png");
-    popup(sheet, size * 3, size * images.length);
+    download(sheet, "png");
+    // popup(sheet, size * 3, size * images.length);
+}
+
+function makeInfoJSON() {
+    var j = {};
+    j.origin = {
+        "useragent": navigator.userAgent,
+        "devicePixelRatio": window.devicePixelRatio,
+        "time": loadTime,
+        "testFile": testsFile
+    };
+    j.tests = data.tests;
+    var newJSON = JSON.stringify(j, null, 2);
+    // console.log(newJSON);
+    // var myWindow = window.open("data:text/html," + newJSON);
+    // saveImage(newJSON, "output.json");
+    // window.open(URL.createObjectURL(j));
+    var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
+    download(url, "json");
+
+    // var w = window.open(url, 'test');
+    // w.location.href="output.json#";
+}
+
+function download(url, type) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = "differ-"+new Date().getTime()+"."+type;
+    document.body.appendChild(a); // necessary for Firefox
+    a.click();
+    document.body.removeChild(a);
+
 }
 
 function rerunAll() {

@@ -15,20 +15,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
 
+    <script>
+    // load scene from url
+    function loadButton() {
+        var url = window.location;
+        var newlocation = "?" + document.getElementById("loadtext").value;
+        console.log('newlocation:', newlocation);
+        window.location = newlocation;
+    }
+    </script>
   </head>
 
   <body>
-    Tangram begs to Differ.<br><br>
-    Now diffing:
+    ~ Tangram begs to Differ ~<br><br>
+    Load url: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button>
+    <div id="examples">
+        Example urls:<br>
+        <a href="/?views.json">views.json</a><br>
+        <a href="/?https://gist.githubusercontent.com/meetar/a7629802b06d3c260064/raw/6c0b9d149e1800eed11afd9cf498f8590ec9ced3/test-views.json">test-views.json</a><br>
+        <a href="/?https://raw.githubusercontent.com/tangrams/differ/master/test/test.json">test.json</a><br>
+        <a href="/?https://gist.githubusercontent.com/meetar/4063a564e99c224ecbfd/raw/29b02d70293de17fa7283e2465a0b99e61eef7ed/problem.json">problem.json</a>
+    </div>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
-    <div id="title" class="header">&nbsp;</div>
+    <div id="alert" class="header">Enter a local filename or URL to start diffing.<br></div>
+    <div id="useragent" class="header"></div>
     <div id="status" class="header">&nbsp;</div>
     <div id="totalScore" class="header">&nbsp;</div>
     <!-- controls -->
     <div id="headers" class="header">
         <button onclick="makeContactSheet()">Export contact sheet</button>
+        <button onclick="makeInfoJSON()">Export info json</button>
         <!-- <button onclick="rerunAll()">Re-run all tests</button> -->
         <!-- <button onclick="stop()">Stop tests</button> -->
     </div>
