@@ -14,25 +14,29 @@ var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = 250 * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
+var useragent = document.getElementById("useragent");
 var tests = document.getElementById("tests");
 var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 
+
+useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 // parse URL to check for test json passed in the query
 // eg: http://localhost:8080/?test.json
-function getValuesFromUrl() {
+function parseQuery() {
     var url_query = window.location.search.slice(1, window.location.search.length);
     if (url_query != "") return url_query;
     else return testsFile;
 }
 
-testsFile = getValuesFromUrl();
-var testsDir = "";
-console.log('testsFile', testsFile);
+testsFile = parseQuery();
 var parseURL = document.createElement('a');
-parseURL.href = testsFile;
-console.log('testsDir', parseURL.host, parseURL.pathname);
+var testsDir = testsFile.substring(0, testsFile.lastIndexOf('/')) + "/";
+var testsFilename = testsFile.substring(testsFile.lastIndexOf('/')+1, testsFile.length);
+imgDir = testsDir+imgDir;
+console.log('testsDir:', testsDir);
+console.log('testsFilename:', testsFilename);
 
 
 document.getElementById("loadtext").onkeypress = function(e){
@@ -50,11 +54,10 @@ function readTextFile(file, callback) {
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
     try {
-        console.log("???");
-    rawFile.open("GET", file, true);
-} catch (e) {
-    console.error("!!!", e);
-}
+        rawFile.open("GET", file, true);
+    } catch (e) {
+        console.error("Error opening file:", e);
+    }
     rawFile.onreadystatechange = function() {
         // console.log('readyState:', rawFile.readyState);
         if (rawFile.readyState === 4 && rawFile.status == "200") {
@@ -64,11 +67,11 @@ function readTextFile(file, callback) {
         else if (rawFile.readyState === 4 && rawFile.status == "404") {
             console.error("404 – can't load file", file);
             // set page title
-            alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
-        } else {
-            alertDiv.innerHTML = "Had trouble loading that file.";
+            alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFilename+"</a>";
+        } else if (rawFile.readyState === 4) {
+            alertDiv.innerHTML += "Had trouble loading that file.<br>";
             if (parseURL.host == "github.com") {
-                alertDiv.innerHTML += "<br>I notice you're trying to load a file from github, make sure you're using the \"raw\" file!"
+                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
             }
         }
 
@@ -99,11 +102,24 @@ var prep = new Promise( function (resolve, reject) {
         try {
             var data = JSON.parse(text);
         } catch(e) {
-            console.log('e:', e);
+            console.log('Error parsing json:', e);
             // set page title
-            alertDiv.innerHTML = "Can't parse JSON:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
+            alertDiv.innerHTML += "Can't parse JSON:<br><a href='"+testsFile+"'>"+testsFilename+"</a><br>"+e+"<br>";
             return false;
         }
+
+        // convert tests to an array for easier traversal
+        try {
+            meta = Object.keys(data.origin).map(function (key) {
+                // add test's name as a property of the test
+                data.meta[key].name = key;
+                return data.meta[key];
+            });
+        } catch (e) {
+            alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
+            console.log("!",e);
+        }
+
         // convert tests to an array for easier traversal
         views = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
@@ -171,7 +187,7 @@ var prep = new Promise( function (resolve, reject) {
         });
 
         // set page title
-        alertDiv.innerHTML = "Now diffing:<br><a href='"+testsFile+"'>"+testsFile+"</a>";
+        alertDiv.innerHTML += "Now diffing: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
 
     });
 
@@ -232,6 +248,7 @@ function loadOld (img) {
             // make the data available to pixelmatch
             oldData = oldCtx.getImageData(0, 0, lsize, lsize);
         } else {
+            oldImg.style.display = "none";
             oldData = null;
         }
         return result;

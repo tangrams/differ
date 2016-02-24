@@ -29,11 +29,16 @@
   <body>
     Tangram begs to Differ.<br><br>
     Load url: <input id="loadtext" value="views.json"></input><br>
+    Example urls:<br>
+    <a href="/?views.json">views.json</a><br>
+    <a href="/?https://gist.githubusercontent.com/meetar/a7629802b06d3c260064/raw/6c0b9d149e1800eed11afd9cf498f8590ec9ced3/test-views.json">test-views.json</a><br>
+    <a href="/?https://raw.githubusercontent.com/tangrams/differ/master/test/test.json">test.json</a><br>
     <button onclick="loadButton()">do it</button><br><br>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
-    <div id="alert" class="header">Howdy! Enter a local filename or URL above to start diffing</div>
+    <div id="alert" class="header">Enter a local filename or URL to start diffing.<br></div>
+    <div id="useragent" class="header"></div>
     <div id="status" class="header">&nbsp;</div>
     <div id="totalScore" class="header">&nbsp;</div>
     <!-- controls -->
