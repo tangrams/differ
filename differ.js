@@ -20,6 +20,7 @@ var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var data;
+var loadTime = Date();
 
 useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 // parse URL to check for test json passed in the query
@@ -35,15 +36,14 @@ var parseURL = document.createElement('a');
 var testsDir = testsFile.substring(0, testsFile.lastIndexOf('/')) + "/";
 var testsFilename = testsFile.substring(testsFile.lastIndexOf('/')+1, testsFile.length);
 imgDir = testsDir+imgDir;
-console.log('testsDir:', testsDir);
-console.log('testsFilename:', testsFilename);
+// console.log('testsDir:', testsDir);
+// console.log('testsFilename:', testsFilename);
 
-
+// handle enter key in filename input
 document.getElementById("loadtext").onkeypress = function(e){
     if (!e) e = window.event;
     var keyCode = e.keyCode || e.which;
-    if (keyCode == '13'){
-        // Enter pressed
+    if (keyCode == '13') { // Enter pressed
         loadButton();
         return false;
     }
@@ -254,7 +254,7 @@ function loadOld (img) {
 function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        if (save) saveAs(data.blob, nextView.name);
+        if (save) saveImage(data.blob, nextView.name);
 
         var urlCreator = window.URL || window.webkitURL;
         newImg = new Image();
@@ -315,8 +315,8 @@ function loadView (view) {
     });
 }
 
-// save a file with a POST request to the server
-function saveAs( file, filename ) {
+// save an image with a POST request to the server
+function saveImage( file, filename ) {
     var url = '/save';
     var data = new FormData();
 
@@ -496,13 +496,14 @@ function makeInfoJSON() {
     j.origin = {
         "useragent": navigator.userAgent,
         "devicePixelRatio": window.devicePixelRatio,
-        "time": new Date().getTime(),
+        "time": loadTime,
         "testFile": testsFile
     };
+    j.tests = data.tests;
     var newJSON = JSON.stringify(j, null, 2);
     // console.log(newJSON);
     // var myWindow = window.open("data:text/html," + newJSON);
-    // saveAs(newJSON, "output.json");
+    // saveImage(newJSON, "output.json");
     // window.open(URL.createObjectURL(j));
     var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
     window.open(url, '_blank');

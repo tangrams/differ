@@ -27,13 +27,14 @@
   </head>
 
   <body>
-    Tangram begs to Differ.<br><br>
-    Load url: <input id="loadtext" value="views.json"></input><br>
-    Example urls:<br>
-    <a href="/?views.json">views.json</a><br>
-    <a href="/?https://gist.githubusercontent.com/meetar/a7629802b06d3c260064/raw/6c0b9d149e1800eed11afd9cf498f8590ec9ced3/test-views.json">test-views.json</a><br>
-    <a href="/?https://raw.githubusercontent.com/tangrams/differ/master/test/test.json">test.json</a><br>
-    <button onclick="loadButton()">do it</button><br><br>
+    ~ Tangram begs to Differ ~<br><br>
+    Load url: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button>
+    <div id="examples">
+        Example urls:<br>
+        <a href="/?views.json">views.json</a><br>
+        <a href="/?https://gist.githubusercontent.com/meetar/a7629802b06d3c260064/raw/6c0b9d149e1800eed11afd9cf498f8590ec9ced3/test-views.json">test-views.json</a><br>
+        <a href="/?https://raw.githubusercontent.com/tangrams/differ/master/test/test.json">test.json</a>
+    </div>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
