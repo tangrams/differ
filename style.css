@@ -41,7 +41,7 @@ button {
     clear: none;
 }
 
-#examples, a {
+#examples, #examples a {
     font-size: .9em;
     color: #ccc;
 }
@@ -72,8 +72,9 @@ button {
 }
 
 .column {
-    width: 256px;
+    width: 250px;
     float: left;
+    margin: 1px;
 }
 
 .controls {
