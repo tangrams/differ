@@ -8,7 +8,7 @@ var map, views, queue, nextView,
     oldImg, oldCanvas, oldCtx, oldData,
     diffImg, diffCanvas, diffCtx, diff,
     images = {};
-var testsFile = "views.json";
+var testsFile = "";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
@@ -39,18 +39,10 @@ document.getElementById("loadtext").onkeypress = function(e){
     if (!e) e = window.event;
     var keyCode = e.keyCode || e.which;
     if (keyCode == '13'){
-      // Enter pressed
-      loadButton();
-      return false;
+        // Enter pressed
+        loadButton();
+        return false;
     }
-  }
-
-// load from url
-function loadButton() {
-    var url = window.location;
-    var newlocation = "?" + document.getElementById("loadtext").value;
-    console.log('newlocation:', newlocation);
-    window.location = newlocation;
 }
 
 // load file
@@ -93,6 +85,7 @@ function parseView(view) {
 var prep = new Promise( function (resolve, reject) {
     // load and parse test json
     readTextFile(testsFile, function(text){
+        if (testsFile == "") return false;
         try {
             var data = JSON.parse(text);
         } catch(e) {
@@ -249,6 +242,10 @@ function screenshot (save) {
 
 // perform the image comparison and update the html
 function doDiff( test ) {
+    // UPDATE READOUTS
+    var count = views.length-queue.length;
+    statusDiv.innerHTML = count + " of " + views.length;
+
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
@@ -266,10 +263,6 @@ function doDiff( test ) {
         match = 100;
         matchScore = "";
     }
-
-    // UPDATE READOUTS
-    var count = views.length-queue.length;
-    statusDiv.innerHTML = count + " of " + views.length;
 
     // update master percentage
     scores[test.name] = match;

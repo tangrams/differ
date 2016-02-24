@@ -15,11 +15,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
 
+    <script>
+    // load scene from url
+    function loadButton() {
+        var url = window.location;
+        var newlocation = "?" + document.getElementById("loadtext").value;
+        console.log('newlocation:', newlocation);
+        window.location = newlocation;
+    }
+    </script>
   </head>
 
   <body>
     Tangram begs to Differ.<br><br>
-    Load url: <textarea id="loadtext"></textarea><br>
+    Load url: <input id="loadtext" value="views.json"></input><br>
     <button onclick="loadButton()">do it</button><br><br>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>

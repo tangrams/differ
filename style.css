@@ -58,3 +58,7 @@ button {
     float: left;
     clear: left;
 }
+
+#loadtext {
+    width: 50%;
+}
