@@ -19,7 +19,7 @@ var tests = document.getElementById("tests");
 var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
-
+var data;
 
 useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 // parse URL to check for test json passed in the query
@@ -100,7 +100,7 @@ var prep = new Promise( function (resolve, reject) {
     readTextFile(testsFile, function(text){
         if (testsFile == "") return false;
         try {
-            var data = JSON.parse(text);
+            data = JSON.parse(text);
         } catch(e) {
             console.log('Error parsing json:', e);
             // set page title
@@ -108,16 +108,11 @@ var prep = new Promise( function (resolve, reject) {
             return false;
         }
 
-        // convert tests to an array for easier traversal
+        // extract test origin metadata
         try {
-            meta = Object.keys(data.origin).map(function (key) {
-                // add test's name as a property of the test
-                data.meta[key].name = key;
-                return data.meta[key];
-            });
+            metadata = data.origin;
         } catch (e) {
             alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
-            console.log("!",e);
         }
 
         // convert tests to an array for easier traversal
@@ -494,6 +489,23 @@ function makeContactSheet() {
     }
     var sheet = c.toDataURL("image/png");
     popup(sheet, size * 3, size * images.length);
+}
+
+function makeInfoJSON() {
+    var j = {};
+    j.origin = {
+        "useragent": navigator.userAgent,
+        "devicePixelRatio": window.devicePixelRatio,
+        "time": new Date().getTime(),
+        "testFile": testsFile
+    };
+    var newJSON = JSON.stringify(j, null, 2);
+    // console.log(newJSON);
+    // var myWindow = window.open("data:text/html," + newJSON);
+    // saveAs(newJSON, "output.json");
+    // window.open(URL.createObjectURL(j));
+    var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
+    window.open(url, '_blank');
 }
 
 function rerunAll() {
