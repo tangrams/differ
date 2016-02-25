@@ -299,8 +299,26 @@ function doDiff( test ) {
     images[test.name] = {};
     images[test.name].oldImg = oldImg;
     images[test.name].newImg = newImg;
-    images[test.name].diffImg = diffImg;
-    images[test.name].strip = makeStrip([oldImg, newImg, diffImg], lsize);
+    // console.log(diffImg.src);
+
+    // var url = c.toDataURL('image/png');
+    var data = atob(diffImg.src.slice(22));
+    var buffer = new Uint8Array(data.length);
+    for (var j = 0; j < data.length; ++j) {
+        buffer[j] = data.charCodeAt(j);
+    }
+    var blob = new Blob([buffer], { type: 'image/png' });
+    var urlCreator = window.URL || window.webkitURL;
+    var diffblob = urlCreator.createObjectURL( blob );
+    var diff2 = new Image();
+    diff2.onload = function() {
+        console.log('diff2 loaded');
+        images[test.name].diffImg = diff2;
+        images[test.name].strip = makeStrip([oldImg, newImg, diff2], lsize);
+    }
+    diff2.src = diffblob;
+    // console.log('diffImg:', diffImg);
+
 };
 
 function loadView (view) {
@@ -330,7 +348,6 @@ function saveImage( file, filename ) {
 }
 
 function stop() {
-    console.log('stop button');
     nextView = false;
     queue = false;
 }
@@ -430,7 +447,7 @@ function makeRow(test, matchScore) {
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "make GIF";
     exportGifButton.onclick = function() {
-        makeGif([images[test.name].oldImg, images[test.name].newImg]);
+        makeGif([images[test.name].oldImg, images[test.name].newImg], test.name);
     };
     controls.appendChild(exportGifButton);
 
@@ -438,17 +455,21 @@ function makeRow(test, matchScore) {
 }
 
 function makeStrip(images, size) {
+    console.log('makestrip:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
     var ctx=c.getContext("2d");
     for (var x = 0; x < images.length; x++) {
-        ctx.drawImage(images[x], size * x, 0, size, size);
+        // console.log(x, images[x]);
+        // console.log(size*x);
+        // ctx.drawImage(images[x], size * x, 0, size, size);
+        ctx.drawImage(images[x], size * x, 0);
     }
     return c.toDataURL("image/png");
 }
 
-function makeGif(images) {
+function makeGif(images, name) {
     var gif = new GIF({
       workers: 1,
       quality: 10,
@@ -461,7 +482,7 @@ function makeGif(images) {
     }
 
     gif.on('finished', function(blob) {
-        window.open(URL.createObjectURL(blob));
+        saveAs(blob, name+".gif");
     });
 
     gif.render();
@@ -483,17 +504,17 @@ function makeContactSheet() {
     var l = Object.keys(images).length;
     var loaded = 0;
     for (var x in images) {
-        console.log(i, x, '>');
+        // console.log(i, x, '>');
         var img = new Image();
         img.i = i;
         img.id = x;
         img.onload = function() {
-            console.log(this.i, this.id, 'loaded');
+            // console.log(this.i, this.id, 'loaded');
             // ctx.drawImage(this, 0, lsize * i, lsize * 3, lsize);
             // ctx.drawImage(this, 0, lsize * this.i);
             ctx.drawImage(this, 0, lsize * this.i);
             // if that's the last image, write the whole thing out
-            console.log(this.i, l);
+            // console.log(this.i, l);
             if (loaded == l - 1) {
                 // Get data URL, convert to blob
                 // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
