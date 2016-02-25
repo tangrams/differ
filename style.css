@@ -5,7 +5,19 @@ body {
     border: 0px;
     padding: 0px;
     font-size: 18px;
-    font-family: sans-serif
+    font-family: sans-serif;
+    max-width: 1080px;
+    margin: auto;
+}
+
+.title {
+    font-family:courier;
+    width: 100%;
+    margin: 0, auto;
+    margin-bottom: 1em;
+    text-align: center;
+    padding: 1em;
+    border: 2px solid blue;
 }
 
 .container {
@@ -41,13 +53,23 @@ button {
     clear: none;
 }
 
-#examples, #examples a {
+#examples {
+    margin-top: 1em;
     font-size: .9em;
-    color: #ccc;
+}
+
+#examples a {
+    color: #aaa;
 }
 
 #alert {
     margin-top: 1em;
+    color: red;
+}
+
+#useragent {
+    margin-top: 1em;
+    font-size: .8em;
 }
 
 #map {
