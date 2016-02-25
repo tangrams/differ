@@ -28,8 +28,7 @@
 
   <body>
     <div class="title">~~~ Tangram begs to Differ ~~~</div>
-    Load url: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button><br>
-    Enter a local filename or URL to start diffing.<br>
+    Test file: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button>
     <div id="examples">
         Example urls:<br>
         <a href="?views.json">views.json</a> 
@@ -40,16 +39,22 @@
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
-    <div id="useragent" class="header"></div>
-    <div id="alert" class="header"></div>
-    <div id="status" class="header">&nbsp;</div>
-    <div id="totalScore" class="header">&nbsp;</div>
-    <!-- controls -->
-    <div id="headers" class="header">
-        <button onclick="makeContactSheet()">Export contact sheet</button>
-        <button onclick="makeInfoJSON()">Export info json</button>
-        <button onclick="stop()">Stop tests</button>
+    <div style="width:100%">
+        <div style="width:66%; float: left">
+            <div id="useragent"></div>
+            <div id="alert"></div>
+            <div id="status">&nbsp;</div>
+        </div>
+        <div class="column" style="width:33%; float:right">
+            total score:<br>
+            <span id="totalScore" class="header">&nbsp;</span>
+            <button onclick="makeContactSheet()">Export contact sheet</button>
+            <button onclick="makeInfoJSON()">Export info json</button>
+            <button onclick="stop()">Stop tests</button>
+        </div>
+    
     </div>
+    <!-- controls -->
     <div id="tests"></div>
 
     <!-- 3rd party libraries -->
@@ -69,11 +74,6 @@
     
     <!-- differ code -->
     <script src="differ.js"></script>
-
-    <!-- Adding a script block to post message to the parent container (think iframed demos) -->
-    <script type="text/javascript">
-      window.addEventListener("hashchange",function(){parent.postMessage(window.location.hash, "*")});
-    </script>
 
   </body>
 </html>
