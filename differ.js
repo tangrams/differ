@@ -293,7 +293,7 @@ function doDiff( test ) {
     }
     totalScore = Math.floor(totalSum/(100*count)*100);
     var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    totalScoreDiv.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</div><br>";
+    totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
     // make an output row
     makeRow(test, matchScore);
@@ -480,6 +480,7 @@ function makeContactSheet() {
     c.height = lsize*views.length;
     var ctx=c.getContext("2d");
     var i = 0;
+    // assemble strips
     for (var x in images) {
         var img = new Image();
         if (!images.hasOwnProperty(x)) continue; // sigh
@@ -492,9 +493,20 @@ function makeContactSheet() {
         ctx.drawImage(img, 0, lsize * i, lsize * 3, lsize);
         i++;
     }
-    var sheet = c.toDataURL("image/png");
-    download(sheet, "png");
-    // popup(sheet, size * 3, size * images.length);
+
+    // Get data URL, convert to blob
+    // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
+    // Adapted from: https://gist.github.com/unconed/4370822
+    console.log('c.toDataURL:', c.toDataURL);
+    var url = c.toDataURL('image/png');
+    var data = atob(url.slice(22));
+    var buffer = new Uint8Array(data.length);
+    for (var i = 0; i < data.length; ++i) {
+        buffer[i] = data.charCodeAt(i);
+    }
+    var blob = new Blob([buffer], { type: 'image/png' });
+    // use FileSaver.js
+    saveAs(blob, 'differ-' + (+new Date()) + '.png');
 }
 
 function makeInfoJSON() {
@@ -507,25 +519,18 @@ function makeInfoJSON() {
     };
     j.tests = data.tests;
     var newJSON = JSON.stringify(j, null, 2);
-    // console.log(newJSON);
-    // var myWindow = window.open("data:text/html," + newJSON);
-    // saveImage(newJSON, "output.json");
-    // window.open(URL.createObjectURL(j));
     var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
     download(url, "json");
-
-    // var w = window.open(url, 'test');
-    // w.location.href="output.json#";
 }
 
 function download(url, type) {
+    // var w = window.open(url, '_blank');
     var a = document.createElement('a');
     a.href = url;
     a.download = "differ-"+new Date().getTime()+"."+type;
     document.body.appendChild(a); // necessary for Firefox
     a.click();
     document.body.removeChild(a);
-
 }
 
 function rerunAll() {
