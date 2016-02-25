@@ -21,8 +21,10 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var data;
 var loadTime = Date();
+var write = false; // write new map images to disk
 
 useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
+
 // parse URL to check for test json passed in the query
 // eg: http://localhost:8080/?test.json
 function parseQuery() {
@@ -36,8 +38,6 @@ var parseURL = document.createElement('a');
 var testsDir = testsFile.substring(0, testsFile.lastIndexOf('/')) + "/";
 var testsFilename = testsFile.substring(testsFile.lastIndexOf('/')+1, testsFile.length);
 imgDir = testsDir+imgDir;
-// console.log('testsDir:', testsDir);
-// console.log('testsFilename:', testsFilename);
 
 // handle enter key in filename input
 document.getElementById("loadtext").onkeypress = function(e){
@@ -59,14 +59,12 @@ function readTextFile(file, callback) {
         console.error("Error opening file:", e);
     }
     rawFile.onreadystatechange = function() {
-        // console.log('readyState:', rawFile.readyState);
+        // readyState 4 = done
         if (rawFile.readyState === 4 && rawFile.status == "200") {
-            // console.log('rawFile.responseText:', rawFile.responseText);
             callback(rawFile.responseText);
         }
         else if (rawFile.readyState === 4 && rawFile.status == "404") {
             console.error("404 – can't load file", file);
-            // set page title
             alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFilename+"</a>";
         } else if (rawFile.readyState === 4) {
             alertDiv.innerHTML += "Had trouble loading that file.<br>";
@@ -79,22 +77,24 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
+// parse view object and adjust map
 function parseView(view) {
-    // console.log('view:', view);
     if (Object.prototype.toString.call(view["location"]) === '[object Array]') {
         return view; // no parsing needed
     } else if (typeof(view["location"]) === "string") { 
         // parse string location as array of floats
         var location = view["location"].split(/[ ,]+/);
         location = location.map(parseFloat);
+        // add location as property of view
         view["location"] = location;
+        // return updated view object
         return view;
     } else {
         console.log("Can't parse location:", view);
     }
 }
 
-// setup divs and canvases
+// setup output divs and canvases
 var prep = new Promise( function (resolve, reject) {
     // load and parse test json
     readTextFile(testsFile, function(text){
@@ -128,8 +128,6 @@ var prep = new Promise( function (resolve, reject) {
 
         // then initialize Tangram with the first view
         map = (function () {
-            // console.log('views:', views);
-            // console.log('nextView', nextView.location);
             var map_start_location = nextView.location;
 
             /*** Map ***/
@@ -165,7 +163,7 @@ var prep = new Promise( function (resolve, reject) {
                 // console.log('nextView:', nextView);
                 if (nextView) {
                     // when prep is done, screenshot is made, and oldImg is loaded...
-                    Promise.all([prep,screenshot(true),loadOld(imgDir+nextView.name+imgType)]).then(function() {
+                    Promise.all([prep,screenshot(write),loadOld(imgDir+nextView.name+imgType)]).then(function() {
                         // perform the diff
                         doDiff(nextView);
                         // move along
@@ -249,7 +247,7 @@ function loadOld (img) {
     });
 };
 
-// take a screenshot
+// capture the current tangram map
 function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
@@ -302,6 +300,7 @@ function doDiff( test ) {
     images[test.name].oldImg = oldImg;
     images[test.name].newImg = newImg;
     images[test.name].diffImg = diffImg;
+    images[test.name].strip = makeStrip([oldImg, newImg, diffImg], lsize);
 };
 
 function loadView (view) {
@@ -424,15 +423,14 @@ function makeRow(test, matchScore) {
     exportButton.innerHTML = "make PNG";
     // store current value of these global variables
     exportButton.onclick = function() {
-        var img = makeStrip([images[test.name].oldImg, images[test.name].newImg, images[test.name].diffImg], lsize);
-        popup(img, size * 3, size);
+        popup(images[test.name].strip, size * 3, size);
     };
     controls.appendChild(exportButton);
 
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "make GIF";
     exportGifButton.onclick = function() {
-        var img = makeGif([images[test.name].oldImg, images[test.name].newImg]);
+        makeGif([images[test.name].oldImg, images[test.name].newImg]);
     };
     controls.appendChild(exportGifButton);
 
@@ -444,7 +442,7 @@ function makeStrip(images, size) {
     c.width = size*images.length;
     c.height = size;
     var ctx=c.getContext("2d");
-    for (var x in images) {
+    for (var x = 0; x < images.length; x++) {
         ctx.drawImage(images[x], size * x, 0, size, size);
     }
     return c.toDataURL("image/png");
@@ -458,7 +456,7 @@ function makeGif(images) {
       height: lsize,
     });
 
-    for (var y in images) {
+    for (var y = 0; y < images.length; y++) {
         gif.addFrame(images[y]);
     }
 
@@ -479,35 +477,44 @@ function makeContactSheet() {
     c.width = lsize*3;
     c.height = lsize*views.length;
     var ctx=c.getContext("2d");
-    var i = 0;
+
     // assemble strips
+    var i = 0;
+    var l = Object.keys(images).length;
+    var loaded = 0;
     for (var x in images) {
+        console.log(i, x, '>');
         var img = new Image();
-        if (!images.hasOwnProperty(x)) continue; // sigh
-        try {
-            var strip = makeStrip([images[x].oldImg, images[x].newImg, images[x].diffImg], lsize);
-        } catch (e) {
-            console.error(e);
+        img.i = i;
+        img.id = x;
+        img.onload = function() {
+            console.log(this.i, this.id, 'loaded');
+            // ctx.drawImage(this, 0, lsize * i, lsize * 3, lsize);
+            // ctx.drawImage(this, 0, lsize * this.i);
+            ctx.drawImage(this, 0, lsize * this.i);
+            // if that's the last image, write the whole thing out
+            console.log(this.i, l);
+            if (loaded == l - 1) {
+                // Get data URL, convert to blob
+                // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
+                // Adapted from: https://gist.github.com/unconed/4370822
+                var url = c.toDataURL('image/png');
+                var data = atob(url.slice(22));
+                var buffer = new Uint8Array(data.length);
+                for (var j = 0; j < data.length; ++j) {
+                    buffer[j] = data.charCodeAt(j);
+                }
+                var blob = new Blob([buffer], { type: 'image/png' });
+                // use FileSaver.js
+                saveAs(blob, 'differ-' + (+new Date()) + '.png');
+            }
+            loaded++;
         }
-        img.src = strip;
-        ctx.drawImage(img, 0, lsize * i, lsize * 3, lsize);
+        img.src = images[x].strip;
         i++;
     }
-
-    // Get data URL, convert to blob
-    // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
-    // Adapted from: https://gist.github.com/unconed/4370822
-    console.log('c.toDataURL:', c.toDataURL);
-    var url = c.toDataURL('image/png');
-    var data = atob(url.slice(22));
-    var buffer = new Uint8Array(data.length);
-    for (var i = 0; i < data.length; ++i) {
-        buffer[i] = data.charCodeAt(i);
-    }
-    var blob = new Blob([buffer], { type: 'image/png' });
-    // use FileSaver.js
-    saveAs(blob, 'differ-' + (+new Date()) + '.png');
 }
+
 
 function makeInfoJSON() {
     var j = {};
