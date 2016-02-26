@@ -9,6 +9,7 @@ var map, views, queue, nextView,
     diffImg, diffCanvas, diffCtx, diff,
     images = {};
 var testsFile = "";
+var queryFile = "";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
@@ -19,25 +20,45 @@ var tests = document.getElementById("tests");
 var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
-var data;
+var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
 
-useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
+// useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 
 // parse URL to check for test json passed in the query
 // eg: http://localhost:8080/?test.json
 function parseQuery() {
-    var url_query = window.location.search.slice(1, window.location.search.length);
-    if (url_query != "") return url_query;
+    var url = window.location.search.slice(1, window.location.search.length);
+    if (url != "") {
+        return convertGithub(url);
+    }
     else return testsFile;
 }
 
+function convertGithub(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    queryFile = url;
+    if (a.hostname == "github.com") {
+        a.hostname = "raw.githubusercontent.com";
+        a.pathname = a.pathname.replace("/blob", "");
+    }
+    return a.href;
+}
+
 testsFile = parseQuery();
+
 var parseURL = document.createElement('a');
-var testsDir = testsFile.substring(0, testsFile.lastIndexOf('/')) + "/";
-var testsFilename = testsFile.substring(testsFile.lastIndexOf('/')+1, testsFile.length);
+var testsDir = splitURL(testsFile).dir;
+var testsFilename = splitURL(testsFile).file;
 imgDir = testsDir+imgDir;
+
+function splitURL(url) {
+    var dir = url.substring(0, url.lastIndexOf('/')) + "/";
+    var file = url.substring(url.lastIndexOf('/')+1, url.length);
+    return {"dir" : dir, "file": file};
+}
 
 // handle enter key in filename input
 document.getElementById("loadtext").onkeypress = function(e){
@@ -113,6 +134,7 @@ var prep = new Promise( function (resolve, reject) {
             metadata = data.origin;
         } catch (e) {
             alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
+            console.log('metadata problem:', e);
         }
 
         // convert tests to an array for easier traversal
@@ -180,7 +202,7 @@ var prep = new Promise( function (resolve, reject) {
         });
 
         // set page title
-        alertDiv.innerHTML += "Now diffing: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
+        alertDiv.innerHTML += "Now diffing: <a href='"+queryFile+"'>"+testsFilename+"</a><br>";
 
     });
 
@@ -312,7 +334,6 @@ function doDiff( test ) {
     var diffblob = urlCreator.createObjectURL( blob );
     var diff2 = new Image();
     diff2.onload = function() {
-        console.log('diff2 loaded');
         images[test.name].diffImg = diff2;
         images[test.name].strip = makeStrip([oldImg, newImg, diff2], lsize);
     }
@@ -381,8 +402,10 @@ function makeRow(test, matchScore) {
     var title = document.createElement('div');
     title.className = 'testname';
     // make test title a link to a live version of the test"
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1]
-    title.innerHTML = "<a target='_blank' href='"+testlink+"'>"+test.name+"</a>";
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1];
+    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test.name+"</a>";
+
+    title.innerHTML += " <a target='_blank' href='"+test.url+"'>"+splitURL(test.url).file+"</a>";
     testdiv.appendChild(title);
 
     var oldcolumn = document.createElement('span');

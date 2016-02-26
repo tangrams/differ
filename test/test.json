@@ -7,11 +7,11 @@
 
     "tests": {
         "world-2": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram/master/demos/scene.yaml",
+            "url": "https://github.com/tangrams/blob/tangram/master/demos/scene.yaml",
             "location": [0,0,0]
         },
         "cinnabar-2": {
-            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "url": "https://github.com/tangrams/blob/cinnabar-style/gh-pages/cinnabar-style.yaml",
             "location": [0,0,1]
         }
    }
