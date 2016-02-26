@@ -455,7 +455,7 @@ function makeRow(test, matchScore) {
 }
 
 function makeStrip(images, size) {
-    console.log('makestrip:', images);
+    // console.log('makestrip:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
@@ -494,14 +494,17 @@ function popup(img, width, height) {
 }
 
 function makeContactSheet() {
+
+    // count available strips
+    var len = Object.keys(images).length;
+
     var c = document.createElement('canvas');
     c.width = lsize*3;
-    c.height = lsize*views.length;
+    c.height = lsize*len;
     var ctx=c.getContext("2d");
 
     // assemble strips
     var i = 0;
-    var l = Object.keys(images).length;
     var loaded = 0;
     for (var x in images) {
         // console.log(i, x, '>');
@@ -515,7 +518,7 @@ function makeContactSheet() {
             ctx.drawImage(this, 0, lsize * this.i);
             // if that's the last image, write the whole thing out
             // console.log(this.i, l);
-            if (loaded == l - 1) {
+            if (loaded == len - 1) {
                 // Get data URL, convert to blob
                 // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
                 // Adapted from: https://gist.github.com/unconed/4370822
