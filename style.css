@@ -1,17 +1,20 @@
 /*border: 2px solid gold;*/
 
 body {
-    margin: 10px;
-    border: 0px;
-    padding: 0px;
-    font-size: 18px;
-    font-family: sans-serif;
+    /*width: 1080;*/
     max-width: 1080px;
     margin: auto;
 }
 
+#header {
+    width: 100%;
+    margin: 0, auto;
+    /*margin-bottom: 1em;*/
+    text-align: center;
+    /*padding: 1em;*/
+}
+
 .title {
-    font-family:courier;
     width: 100%;
     margin: 0, auto;
     margin-bottom: 1em;
@@ -19,21 +22,28 @@ body {
     padding: 1em;
 }
 
+#content {
+    max-width: 1080;
+}
+
 .container {
     float: left;
 }
 
-.container img {
-    clear: left;
-    float: left;
+.column {
+    overflow: hidden;
+}
+
+.column img {
+    max-width: 100%;
+    height: auto;
 }
 
 #loadtext {
     width: 50%;
     font-size: 1em;
     border: 1px solid #ccc;
-    margin-bottom: 1em;
-    margin-left: 1em;
+    margin: 1em;
     padding-left: 5px;
     line-height: 1.5em;
 }
@@ -76,7 +86,11 @@ button {
     position: absolute;
 }
 
+#tests {
+    margin: auto;
+}
 .test {
+    width: 100%;
     clear: both;
     float: left;
     margin-top: .5em;
@@ -92,13 +106,12 @@ button {
 }
 
 .column {
-    width: 250px;
+    width: 25%;
     float: left;
-    margin: 2px;
 }
 
 .controls {
-    /*width: 256px;*/
+    width: 25%;
     float: left;
 }
 

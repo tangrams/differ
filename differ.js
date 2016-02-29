@@ -13,7 +13,7 @@ var queryFile = "";
 var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
-var lsize = 250 * window.devicePixelRatio; // logical pixels
+var lsize = size * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
 var useragent = document.getElementById("useragent");
 var tests = document.getElementById("tests");
@@ -397,7 +397,6 @@ function makeRow(test, matchScore) {
         // clear it out
         testdiv.innerHTML = "";
     }
-    testdiv.style.minHeight = size+"px";
 
     var title = document.createElement('div');
     title.className = 'testname';
@@ -411,19 +410,19 @@ function makeRow(test, matchScore) {
     var oldcolumn = document.createElement('span');
     oldcolumn.className = 'column';
     oldcolumn.id = "old";
-    oldcolumn.innerHTML = "old";
+    oldcolumn.innerHTML = "old<br>";
     testdiv.appendChild(oldcolumn);
 
     var newcolumn = document.createElement('span');
     newcolumn.className = 'column';
     newcolumn.id = "new";
-    newcolumn.innerHTML = "new";
+    newcolumn.innerHTML = "new<br>";
     testdiv.appendChild(newcolumn);
 
     var diffcolumn = document.createElement('span');
     diffcolumn.className = 'column';
     diffcolumn.id = "diff";
-    diffcolumn.innerHTML = "diff";
+    diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
     // insert old and new images
@@ -437,7 +436,7 @@ function makeRow(test, matchScore) {
 
     // CONTROLS //
 
-    var controls = document.createElement('div');
+    var controls = document.createElement('span');
     controls.className = 'controls';
     testdiv.appendChild(controls);
 

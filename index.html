@@ -1,16 +1,11 @@
-<!doctype html>
-<!--
-    Tangram: real-time WebGL rendering for OpenStreetMap
-
-    http://github.com/tangrams/tangram
-    http://mapzen.com
--->
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tangram Differ</title>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>Differ · Mapzen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://mapzen.com/common/styleguide/styles/styleguide.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
@@ -27,7 +22,9 @@
   </head>
 
   <body>
-    <div class="title">~~~ Tangram begs to Differ ~~~</div>
+  <div id="content" style="margin: auto">
+    <div id="header">
+        <h1>Tangram Differ</h1>
     Test file: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button>
     <div id="examples">
         Example urls:<br>
@@ -36,23 +33,23 @@
         <a href="?https://github.com/tangrams/differ/blob/gh-pages/test/test.json">test.json</a> 
         <a href="?https://gist.githubusercontent.com/meetar/4063a564e99c224ecbfd/raw/29b02d70293de17fa7283e2465a0b99e61eef7ed/problem.json">problem.json</a>
     </div>
+    </div>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
     <!-- headers -->
-    <div style="width:100%">
-        <div style="width:66%; float: left">
+    <div style="width: 100%">
+        <div style="width:75%; float: left">
             <div id="useragent"></div>
             <div id="alert"></div>
             <div id="status">&nbsp;</div>
         </div>
-        <div class="column" style="width:33%; float:right">
+        <div style="width:25%; float: right">
             total score:<br>
             <span id="totalScore" class="header">&nbsp;</span>
             <button onclick="makeContactSheet()">Export contact sheet</button>
             <button onclick="makeInfoJSON()">Export info json</button>
             <button onclick="stop()">Stop tests</button>
         </div>
-    
     </div>
     <!-- controls -->
     <div id="tests"></div>
@@ -75,5 +72,14 @@
     <!-- differ code -->
     <script src="differ.js"></script>
 
-  </body>
+
+
+
+
+
+
+      </div>
+  </div>
+  <script src="https://mapzen.com/common/styleguide/scripts/mapzen-styleguide.min.js"></script>
+</body>
 </html>
