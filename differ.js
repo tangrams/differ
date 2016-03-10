@@ -141,6 +141,7 @@ var prep = new Promise( function (resolve, reject) {
         views = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
             data.tests[key].name = key;
+
             return data.tests[key];
         });
 
@@ -161,7 +162,7 @@ var prep = new Promise( function (resolve, reject) {
             });
 
             var layer = Tangram.leafletLayer({
-                scene: nextView.url,
+                scene: convertGithub(nextView.url),
                 // highDensityDisplay: false
             });
 
@@ -321,7 +322,6 @@ function doDiff( test ) {
     images[test.name] = {};
     images[test.name].oldImg = oldImg;
     images[test.name].newImg = newImg;
-    // console.log(diffImg.src);
 
     // var url = c.toDataURL('image/png');
     var data = atob(diffImg.src.slice(22));
@@ -338,13 +338,12 @@ function doDiff( test ) {
         images[test.name].strip = makeStrip([oldImg, newImg, diff2], lsize);
     }
     diff2.src = diffblob;
-    // console.log('diffImg:', diffImg);
 
 };
 
 function loadView (view) {
     // load and draw scene
-    scene.load(view.url).then(function() {
+    scene.load(convertGithub(view.url)).then(function() {
         if (!view) return;
         scene.animated = false;
         map.setView([view.location[0], view.location[1]], view.location[2]);
@@ -363,7 +362,6 @@ function saveImage( file, filename ) {
     xhr.open('POST', url, true);
     xhr.onload = function () {
         // console.log('response:', this.responseText);
-        // window.location.href = ".#"+this.responseText;
     };
     xhr.send(data);
 }
@@ -375,9 +373,9 @@ function stop() {
 
 // convert event to promise
 function viewComplete () {
-    console.log('viewComplete');
+    // console.log('viewComplete');
     return new Promise(function(resolve, reject) {
-        console.log('viewComplete sent');
+        // console.log('viewComplete sent');
         resolve();
     });
 }
@@ -477,15 +475,11 @@ function makeRow(test, matchScore) {
 }
 
 function makeStrip(images, size) {
-    // console.log('makestrip:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
     var ctx=c.getContext("2d");
     for (var x = 0; x < images.length; x++) {
-        // console.log(x, images[x]);
-        // console.log(size*x);
-        // ctx.drawImage(images[x], size * x, 0, size, size);
         ctx.drawImage(images[x], size * x, 0);
     }
     return c.toDataURL("image/png");
@@ -529,17 +523,12 @@ function makeContactSheet() {
     var i = 0;
     var loaded = 0;
     for (var x in images) {
-        // console.log(i, x, '>');
         var img = new Image();
         img.i = i;
         img.id = x;
         img.onload = function() {
-            // console.log(this.i, this.id, 'loaded');
-            // ctx.drawImage(this, 0, lsize * i, lsize * 3, lsize);
-            // ctx.drawImage(this, 0, lsize * this.i);
             ctx.drawImage(this, 0, lsize * this.i);
             // if that's the last image, write the whole thing out
-            // console.log(this.i, l);
             if (loaded == len - 1) {
                 // Get data URL, convert to blob
                 // Strip host/mimetype/etc., convert base64 to binary without UTF-8 mangling
@@ -587,7 +576,6 @@ function download(url, type) {
 }
 
 function rerunAll() {
-    console.log('refresh all button');
     tests.innerHTML = "";
     totalScoreDiv.innerHTML = "";
     nextView = false;
