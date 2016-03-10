@@ -22,7 +22,7 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var data, metadata;
 var loadTime = Date();
-var write = false; // write new map images to disk
+var write = true; // write new map images to disk
 
 // useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 
@@ -104,8 +104,16 @@ function parseView(view) {
         return view; // no parsing needed
     } else if (typeof(view["location"]) === "string") { 
         // parse string location as array of floats
-        var location = view["location"].split(/[ ,]+/);
+        // console.log('loc:', view["location"]);
+        if (view["location"].indexOf(',') > 0 ) { // comma-delimited
+            var location = view["location"].split(/[ ,]+/);
+        } else if (view["location"].indexOf('/') > 0 ) { // slash-delimited
+            location = view["location"].split(/[\/]+/);
+            location = [location[1], location[2], location[0]]; // re-order
+        }
+        // console.log('location:', location);
         location = location.map(parseFloat);
+        // console.log('location:', location);
         // add location as property of view
         view["location"] = location;
         // return updated view object
@@ -152,6 +160,8 @@ var prep = new Promise( function (resolve, reject) {
         // then initialize Tangram with the first view
         map = (function () {
             var map_start_location = nextView.location;
+            // var map_start_location = convertGithub(nextView.location);
+            console.log('map_start_location:', map_start_location);
 
             /*** Map ***/
 
