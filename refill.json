@@ -1,0 +1,86 @@
+{
+    "origin": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.54 Safari/537.36",
+        "devicepixelratio": 2,
+        "time": "Wed Feb 24 2016 13:37:28 GMT-0500 (EST)"
+    },
+
+    "tests": {
+        "sf19": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "19/37.77500/-122.41900"
+        },
+        "sf18": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "18/37.77500/-122.41900"
+        },
+        "sf17": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "17/37.77500/-122.41900"
+        },
+        "sf16": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "16/37.77500/-122.41900"
+        },
+        "sf15": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "15/37.77500/-122.41900"
+        },
+        "sf14": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "14/37.77500/-122.41900"
+        },
+        "sf13": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "13/37.77500/-122.41900"
+        },
+        "sf12": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "12/37.77500/-122.41900"
+        },
+        "sf11": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "11/37.77500/-122.41900"
+        },
+        "sf10": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "10/37.77500/-122.41900"
+        },
+        "sf9": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "9/37.77500/-122.41900"
+        },
+        "sf8": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "8/37.77500/-122.41900"
+        },
+        "sf7": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "7/37.77500/-122.41900"
+        },
+        "sf6": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "6/37.77500/-122.41900"
+        },
+        "sf5": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "5/37.77500/-122.41900"
+        },
+        "sf4": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "4/37.77500/-122.41900"
+        },
+        "sf3": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "3/37.77500/-122.41900"
+        },
+        "sf2": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "2/37.77500/-122.41900"
+        },
+        "sf1": {
+            "url": "https://github.com/tangrams/refill-style/blob/857e1439ae947057bdcfaea7b5eb958628dc7c26/refill-style.yaml",
+            "location": "1/37.77500/-122.41900"
+        }
+   }
+}

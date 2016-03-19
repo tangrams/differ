@@ -22,7 +22,7 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var data, metadata;
 var loadTime = Date();
-var write = true; // write new map images to disk
+var write = false; // write new map images to disk
 
 // useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 
@@ -374,6 +374,15 @@ function saveImage( file, filename ) {
         // console.log('response:', this.responseText);
     };
     xhr.send(data);
+}
+
+// save all new images
+function write() {
+    for (var img in images) {
+        img = images[x];
+        images[test.name].newImg = newImg;
+        saveImage(test.image, test.name);
+    }
 }
 
 function stop() {
