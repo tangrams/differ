@@ -39,7 +39,7 @@ body {
     height: auto;
 }
 
-#loadtext {
+.slot {
     width: 50%;
     font-size: 1em;
     border: 1px solid #ccc;
@@ -57,9 +57,13 @@ button {
     float: left;
 }
 
-#gobutton {
+.goButton {
     float: none;
     clear: none;
+}
+
+button.chooser {
+    float: none;
 }
 
 #examples {
