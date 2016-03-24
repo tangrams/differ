@@ -148,11 +148,11 @@ function doTest() {
         var loc = parseView(test1.location); // parse location
         // console.log('loc:', loc);
         loadView(test1, loc).then(function(result){
-            console.log('loadView 1 result:', result);
+            // console.log('loadView 1 result:', result);
             console.log('starting test2');
             // if there's an image for slot2, load it
             var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-            console.log('img2url:', img2URL);
+            // console.log('img2url:', img2URL);
             drawImageToCanvas(img2URL, canvas2).then(function(result){
                 console.log('test2 drawimage success:', result);
             }, function(err) {
@@ -163,14 +163,14 @@ function doTest() {
                 var loc = parseView(test2.location); // parse location
                 // console.log('loc:', loc);
                 loadView(test2, loc).then(function(result){
-                    console.log('loadView 2 result:', result)
+                    // console.log('loadView 2 result:', result)
                 });
             });
         });
     // debugger;
 
     // Promise.all([prepAll,screenshot(write),loadOld(nextView.name+imgType)]).then(function() {
-    });
+    }).then(function(){console.log('last then');});
 }
 
 // load file
@@ -314,7 +314,7 @@ function prepAll() {
 
 }
 
-// load an image asynchronously with a Promise
+// load an image
 function loadImage (url, target) {
     return new Promise(function(resolve, reject) {
         var image = target || new Image();
@@ -334,24 +334,21 @@ function loadImage (url, target) {
 // draw an image file to a canvas
 function drawImageToCanvas (img, canvas) {
     return new Promise(function(resolve, reject) {
-        var context = canvas.getContext("2d");
-        var imgObj = new Image();
+        // try to load the image
         return loadImage(img).then(function(result){
-            if (result.url) {
-                // set the old image to be drawn to the canvas once the image loads
-                imgObj = result.image;
-                context.drawImage(imgObj,
-                                  0, 0, imgObj.width, imgObj.height,
-                                  0, 0, canvas.width, canvas.height);
-                // make the data available to pixelmatch
-                oldData = context.getImageData(0, 0, lsize, lsize);
-            } else {
-                imgObj.style.display = "none";
-                oldData = null;
-            }
+            // draw image to the canvas
+            var context = canvas.getContext("2d");
+            var imgObj = new Image();
+            imgObj = result.image;
+            context.drawImage(imgObj,
+                              0, 0, imgObj.width, imgObj.height,
+                              0, 0, canvas.width, canvas.height);
+            // make the data available to pixelmatch
+            oldData = context.getImageData(0, 0, lsize, lsize);
             resolve(result);
         }, function(err) {
-            // console.log('loadimage err:', err);
+            // imgObj.style.display = "none";
+            oldData = null;
             reject(err);
         });
     });
@@ -443,7 +440,8 @@ function loadView (view, location) {
         var url = convertGithub(view.url);
         scene.load(url).then(function() {
             scene.animated = false;
-            map.setView(location);
+            map.setView([location[0], location[1]], location[2]);
+            scene.requestRedraw();
             // Promise.all([drawMap(),viewComplete]).then(function(result){
             Promise.all([viewComplete]).then(function(result){
                 resolve('loadview resolved result');
