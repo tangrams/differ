@@ -139,14 +139,14 @@ function doTest() {
     // console.log('img1url:', img1URL);
     console.log('starting test1');
     loadImage(img1URL).then(function(result){
-        console.log("then1");
+        // console.log("then1");
         // console.log('loadimage result:', result);
         // console.log('result.imge:', result.image);
         drawImageToCanvas(result.image, canvas1).then(function(result){
            // console.log('test1 drawimage success:', result);
         });
     }).catch(function(err) {
-        console.log("catch2");
+        // console.log("catch2");
         // failed
         // console.log('test1 drawimage failed:', err);
         // no image? no worries
@@ -154,18 +154,18 @@ function doTest() {
         var loc = parseView(test1.location); // parse location
         // console.log('loc:', loc);
         return loadView(test1, loc).then(function(result){
-            console.log("then3");
+            // console.log("then3");
 
             // grab screenshot and put it in slot1
             screenshot(img1, false).then(function(result){
-                console.log('screenshot result:', result);
-                drawImageToCanvas(result.img, canvas1);
+                console.log('screenshot result:', result, result.img);
+                drawImageToCanvas(result.image, canvas1);
             });
         });
             // resolve();
         // });
     }).then(function(result) {
-        console.log('then4');
+        // console.log('then4');
         // console.log('then 1 result:', result);
         // console.log('loadView 1 result:', result);
         // console.log('starting test2');
@@ -173,12 +173,12 @@ function doTest() {
         var img2URL = splitURL(test2.url).dir + test2.name + imgType;
         // console.log('img2url:', img2URL);
         loadImage(img2URL).then(function(result){
-            console.log('then5');
+            // console.log('then5');
             drawImageToCanvas(result.image, canvas2).then(function(result){
                 console.log('test2 drawimage success:', result);
             });
         }).catch(function(err){
-            console.log('catch6');
+            // console.log('catch6');
             // console.log('loadimg2 err? err!', err);
              // failed
             // console.log('test2 drawimage failed:', err);
@@ -187,12 +187,12 @@ function doTest() {
             var loc = parseView(test2.location); // parse location
             // console.log('loc:', loc);
             loadView(test2, loc).then(function(result){
-                console.log('then7');
+                // console.log('then7');
 
                 // grab screenshot and put it in slot1
                 screenshot(img2, false).then(function(result){
                     console.log('screenshot result:', result);
-                    drawImageToCanvas(result.img, canvas2);
+                    drawImageToCanvas(result.image, canvas2);
                 });
                 // console.log('loadView 2 result:', result)
             });
@@ -366,6 +366,7 @@ function loadImage (url, target) {
 
 // draw an image object to a canvas
 function drawImageToCanvas (img, canvas) {
+    console.log('drawImageToCanvas', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
@@ -376,8 +377,8 @@ function drawImageToCanvas (img, canvas) {
                           0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
         img1Data = context.getImageData(0, 0, lsize, lsize);
-        console.log('drawImageToCanvas result:', result);
-        resolve(result);
+        // console.log('drawImageToCanvas result:', result);
+        resolve();
     }, function(err) {
         // imgObj.style.display = "none";
         console.log('drawImageToCanvas err:', err);
@@ -471,7 +472,7 @@ var viewComplete = new Promise(function(resolve, reject){
 });
 
 function loadView (view, location) {
-    console.log('loadView:', view.name, "at", location);
+    // console.log('loadView:', view.name, "at", location);
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
         // load and draw scene
