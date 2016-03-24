@@ -69,7 +69,7 @@ function splitURL(url) {
 
 // parse url and load the appropriate file
 function loadFile(slotID) {
-    console.log('loading', slotID);
+    // console.log('loading', slotID);
     var slot = document.getElementById(slotID);
     var url = slot.value;
     // console.log('url:', url);
@@ -108,14 +108,14 @@ function loadFile(slotID) {
             return data.tests[key];
         });
 
-        console.log(slotID, "loaded!");
+        // console.log(slotID, "loaded!");
         var button;
         if (slotID == "slot1") button = document.getElementById('loadButton1');
         else button = document.getElementById('loadButton2');
         button.innerHTML = "Loaded!";
 
         if (Object.keys(slots).length == 2) {
-            console.log('Two views loaded, proceeding');
+            // console.log('Two views loaded, proceeding');
             proceed();
         }
 
@@ -124,7 +124,6 @@ function loadFile(slotID) {
 
 function proceed() {
     prepAll();
-
     doTest();
 }
 
@@ -145,8 +144,9 @@ function doTest() {
         console.log('test1 drawimage failed:', err);
         // no image? no worries
         // load the view and make a new image
-        nextView = parseView(test1.location); // pop first and parse location
-        loadView(nextView);
+        var loc = parseView(test1.location); // parse location
+        console.log('loc:', loc);
+        loadView(test1, loc);
     }).
     then(function(result) {
         // if there's an image for slot2, load it
@@ -159,10 +159,12 @@ function doTest() {
             console.log('test2 drawimage failed:', err);
             // no image? no worries
             // load the view and make a new image
-            nextView = parseView(test2.location); // pop first and parse location
-            loadView(nextView);
+            var loc = parseView(test2.location); // parse location
+            console.log('loc:', loc);
+            loadView(test2, loc);
         });
     });
+    // debugger;
 
     // Promise.all([prepAll,screenshot(write),loadOld(nextView.name+imgType)]).then(function() {
 
@@ -199,7 +201,7 @@ function readTextFile(file, callback) {
 
 // parse view object and adjust map
 function parseView(view) {
-    console.log('parseview:', view);
+    // console.log('parseview:', view);
     if (Object.prototype.toString.call(view) === '[object Array]') {
         return view; // no parsing needed
     } else if (typeof(view) === "string") { 
@@ -262,14 +264,13 @@ function diffSay(txt) {
 function prepAll() {
 
     // clone views array
-    console.log('slots:')
+    // console.log('slots:')
     var tests1 = slots.slot1.tests.slice(0);
     var tests2 = slots.slot2.tests.slice(0);
 
     // console.log('test1:', tests1);
     // console.log('test2:', tests2);
-    // subscribe to Tangram's published view_complete event to
-    // load the next scene when the current scene is done drawing
+    // subscribe to Tangram's published view_complete event
     scene.subscribe({
         view_complete: function () {
             viewComplete();
@@ -423,13 +424,23 @@ function doDiff( test ) {
 
 };
 
-function loadView (view) {
-    // load and draw scene
-    scene.load(convertGithub(view.url)).then(function() {
-        if (!view) return;
-        scene.animated = false;
-        map.setView([view.location[0], view.location[1]], view.location[2]);
-        scene.requestRedraw();
+function loadView (view, location) {
+    return new Promise(function(resolve, reject) {
+        // load and draw scene
+        console.log('scene:', scene);
+        var url = convertGithub(view.url);
+        scene.load(url).then(function() {
+            // if (!view) return;
+            scene.animated = false;
+            map.setView(location);
+            drawMap().then(function(result){
+                console.log('loadview success');
+                resolve;
+            }, function(err) {
+                console.log('loadview error');
+                reject(err);
+            });
+        });
     });
 }
 
@@ -462,8 +473,40 @@ function stop() {
     queue = false;
 }
 
+function drawMap() {
+    return new Promise(function(resolve, reject) {
+
+        scene.requestRedraw();
+        Promise.all([viewComplete]).then(function() {
+            console.log('drawMap complete');
+            resolve;
+        });
+    });
+}
 // convert tangram's view_complete event to promise
 function viewComplete () {
+    return new Promise(function(resolve, reject) {
+    // console.log('nextView:', nextView);
+        resolve;
+    //     if (nextView) {
+    //         // when prep is done, screenshot is made, and oldImg is loaded...
+    //         Promise.all([prepAll,screenshot(write),loadOld(nextView.name+imgType)]).then(function() {
+    //             // perform the diff
+    //             doDiff(nextView);
+    //             // move along
+    //             if (queue.length > 0) {
+    //                 nextView = parseView(queue.shift()); // pop first and parse location
+    //                 loadView(nextView);
+    //             } else return;
+    //         });
+    //     } else {
+    //         console.log('view_complete, no nextView');
+    //         return viewComplete();
+    //     }
+    });
+}
+
+function oldviewComplete () {
     // console.log('nextView:', nextView);
     if (nextView) {
         // when prep is done, screenshot is made, and oldImg is loaded...
