@@ -138,44 +138,63 @@ function doTest() {
     var img1URL = splitURL(test1.url).dir + test1.name + imgType;
     // console.log('img1url:', img1URL);
     console.log('starting test1');
-    drawImageToCanvas(img1URL, canvas1).then(function(result){
-        console.log('test1 drawimage success:', result);
-    }, function(err) {
+    loadImage(img1URL).then(function(result){
+        console.log("then1");
+        // console.log('loadimage result:', result);
+        // console.log('result.imge:', result.image);
+        drawImageToCanvas(result.image, canvas1).then(function(result){
+           // console.log('test1 drawimage success:', result);
+        });
+    }).catch(function(err) {
+        console.log("catch2");
         // failed
-        console.log('test1 drawimage failed:', err);
+        // console.log('test1 drawimage failed:', err);
         // no image? no worries
         // load the view and make a new image
         var loc = parseView(test1.location); // parse location
         // console.log('loc:', loc);
-        loadView(test1, loc).then(function(result){
+        return loadView(test1, loc).then(function(result){
+            console.log("then3");
 
             // grab screenshot and put it in slot1
             screenshot(img1, false).then(function(result){
                 console.log('screenshot result:', result);
                 drawImageToCanvas(result.img, canvas1);
             });
-            // console.log('loadView 1 result:', result);
-            console.log('starting test2');
-            // if there's an image for slot2, load it
-            var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-            // console.log('img2url:', img2URL);
-            drawImageToCanvas(img2URL, canvas2).then(function(result){
+        });
+            // resolve();
+        // });
+    }).then(function(result) {
+        console.log('then4');
+        // console.log('then 1 result:', result);
+        // console.log('loadView 1 result:', result);
+        // console.log('starting test2');
+        // if there's an image for slot2, load it
+        var img2URL = splitURL(test2.url).dir + test2.name + imgType;
+        // console.log('img2url:', img2URL);
+        loadImage(img2URL).then(function(result){
+            console.log('then5');
+            drawImageToCanvas(result.image, canvas2).then(function(result){
                 console.log('test2 drawimage success:', result);
-            }, function(err) {
-                // failed
-                console.log('test2 drawimage failed:', err);
-                // no image? no worries
-                // load the view and make a new image
-                var loc = parseView(test2.location); // parse location
-                // console.log('loc:', loc);
-                loadView(test2, loc).then(function(result){
-                    // grab screenshot and put it in slot1
-                    screenshot(img2, false).then(function(result){
-                        console.log('screenshot result:', result);
-                        drawImageToCanvas(result.img, canvas2);
-                    });
-                    // console.log('loadView 2 result:', result)
+            });
+        }).catch(function(err){
+            console.log('catch6');
+            // console.log('loadimg2 err? err!', err);
+             // failed
+            // console.log('test2 drawimage failed:', err);
+            // no image? no worries
+            // load the view and make a new image
+            var loc = parseView(test2.location); // parse location
+            // console.log('loc:', loc);
+            loadView(test2, loc).then(function(result){
+                console.log('then7');
+
+                // grab screenshot and put it in slot1
+                screenshot(img2, false).then(function(result){
+                    console.log('screenshot result:', result);
+                    drawImageToCanvas(result.img, canvas2);
                 });
+                // console.log('loadView 2 result:', result)
             });
         });
     });
@@ -322,47 +341,48 @@ function prepAll() {
 
 }
 
-// load an image
+// load an image from a file
 function loadImage (url, target) {
-    console.log('loadImage:', typeof url, url);
+    // console.log('loadImage:', typeof url, url);
     return new Promise(function(resolve, reject) {
         var image = target || new Image();
+        // set up events
         image.onload = function() {
             resolve({ url: url, image: image });
         };
         image.onerror = function(error) {
-            reject({ error: error });
+            reject({ test: "test", error: error });
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
-        console.log('url?', url);
+        // console.log('url?', url);
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
+        // try to load the image
         image.src = url;
+    }).catch(function(err){
+        // console.log('err? err!', err);
     });
 }
 
-// draw an image file to a canvas
+// draw an image object to a canvas
 function drawImageToCanvas (img, canvas) {
     return new Promise(function(resolve, reject) {
-        // try to load the image
-        return loadImage(img).then(function(result){
-            // draw image to the canvas
-            var context = canvas.getContext("2d");
-            var imgObj = new Image();
-            imgObj = result.image;
-            context.drawImage(imgObj,
-                              0, 0, imgObj.width, imgObj.height,
-                              0, 0, canvas.width, canvas.height);
-            // make the data available to pixelmatch
-            img1Data = context.getImageData(0, 0, lsize, lsize);
-            console.log('loadImage result:', result);
-            resolve(result);
-        }, function(err) {
-            // imgObj.style.display = "none";
-            console.log('loadImage err:', err);
-            img1Data = null;
-            reject(err);
-        });
+        // draw image to the canvas
+        var context = canvas.getContext("2d");
+        var imgObj = new Image();
+        imgObj = img;
+        context.drawImage(imgObj,
+                          0, 0, imgObj.width, imgObj.height,
+                          0, 0, canvas.width, canvas.height);
+        // make the data available to pixelmatch
+        img1Data = context.getImageData(0, 0, lsize, lsize);
+        console.log('drawImageToCanvas result:', result);
+        resolve(result);
+    }, function(err) {
+        // imgObj.style.display = "none";
+        console.log('drawImageToCanvas err:', err);
+        img1Data = null;
+        reject(err);
     });
 };
 
@@ -440,8 +460,14 @@ function doDiff( test ) {
 // convert Tangram's view_complete event to resolve a promise
 var viewCompleteResolve, viewCompleteReject;
 var viewComplete = new Promise(function(resolve, reject){
-    viewCompleteResolve = function(){console.log('viewCompleteResolve');resolve();};
-    viewCompleteReject = function(){console.log('viewCompleteReject');reject();};
+    viewCompleteResolve = function(){
+        // console.log('viewCompleteResolve');
+        resolve();
+    };
+    viewCompleteReject = function(){
+        // console.log('viewCompleteReject');
+        reject();
+    };
 });
 
 function loadView (view, location) {

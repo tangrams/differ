@@ -7,7 +7,7 @@
 
     "tests": {
         "world-1": {
-            "url": "https://raw.githubusercontent.com/tangrams/tangram/master/demos/scene.yaml",
+            "url": "scene.yaml",
             "location": [0,0,0]
         },
         "cinnabar-1": {

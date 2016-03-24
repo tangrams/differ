@@ -25,13 +25,13 @@ layers:
         draw:
             polygons:
                 order: function() { return feature.sort_key; }
-                color: '#353535'
+                color: purple
     earth:
         data: { source: osm }
         draw:
             polygons:
                 order: function() { return feature.sort_key; }
-                color: '#555'
+                color: orange
     landuse:
         data: { source: osm }
         draw:
