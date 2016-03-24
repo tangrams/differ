@@ -5,8 +5,8 @@
 // initialize variables
 var map, slots = {}, queue, nextView,
     canvas1, ctx1, canvas2, ctx2,
-    newImg, newCanvas, newCtx, newData,
-    oldImg, oldCanvas, oldCtx, oldData,
+    img1, img1Canvas, img1Ctx, img1Data,
+    img2, img2Canvas, img2Ctx, img2Data,
     diffImg, diffCanvas, diffCtx, diff,
     images = {};
 var testsFile = "";
@@ -148,6 +148,12 @@ function doTest() {
         var loc = parseView(test1.location); // parse location
         // console.log('loc:', loc);
         loadView(test1, loc).then(function(result){
+
+            // grab screenshot and put it in slot1
+            screenshot(img1, false).then(function(result){
+                console.log('screenshot result:', result);
+                drawImageToCanvas(result.img, canvas1);
+            });
             // console.log('loadView 1 result:', result);
             console.log('starting test2');
             // if there's an image for slot2, load it
@@ -163,14 +169,16 @@ function doTest() {
                 var loc = parseView(test2.location); // parse location
                 // console.log('loc:', loc);
                 loadView(test2, loc).then(function(result){
+                    // grab screenshot and put it in slot1
+                    screenshot(img2, false).then(function(result){
+                        console.log('screenshot result:', result);
+                        drawImageToCanvas(result.img, canvas2);
+                    });
                     // console.log('loadView 2 result:', result)
                 });
             });
         });
-    // debugger;
-
-    // Promise.all([prepAll,screenshot(write),loadOld(nextView.name+imgType)]).then(function() {
-    }).then(function(){console.log('last then');});
+    });
 }
 
 // load file
@@ -293,13 +301,13 @@ function prepAll() {
 
     // set up canvases
 
-    // make canvas for the old image
+    // make canvas for slot1
     canvas1 = document.createElement('canvas');
     canvas1.height = lsize;
     canvas1.width = lsize;
     ctx1 = canvas1.getContext('2d');
 
-    // make a canvas for the newly-drawn map image
+    // make a canvas for slot2
     canvas2 = document.createElement('canvas');
     canvas2.height = lsize;
     canvas2.width = lsize;
@@ -316,6 +324,7 @@ function prepAll() {
 
 // load an image
 function loadImage (url, target) {
+    console.log('loadImage:', typeof url, url);
     return new Promise(function(resolve, reject) {
         var image = target || new Image();
         image.onload = function() {
@@ -326,6 +335,7 @@ function loadImage (url, target) {
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
+        console.log('url?', url);
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         image.src = url;
     });
@@ -344,25 +354,27 @@ function drawImageToCanvas (img, canvas) {
                               0, 0, imgObj.width, imgObj.height,
                               0, 0, canvas.width, canvas.height);
             // make the data available to pixelmatch
-            oldData = context.getImageData(0, 0, lsize, lsize);
+            img1Data = context.getImageData(0, 0, lsize, lsize);
+            console.log('loadImage result:', result);
             resolve(result);
         }, function(err) {
             // imgObj.style.display = "none";
-            oldData = null;
+            console.log('loadImage err:', err);
+            img1Data = null;
             reject(err);
         });
     });
 };
 
 // capture the current tangram map
-function screenshot (save) {
+function screenshot (img, save) { // image() object, boolean
     return scene.screenshot().then(function(data) {
         // save it to a file
         if (save) saveImage(data.blob, nextView.name);
 
         var urlCreator = window.URL || window.webkitURL;
-        newImg = new Image();
-        return loadImage(urlCreator.createObjectURL( data.blob ), newImg);
+        img = new Image();
+        return loadImage(urlCreator.createObjectURL( data.blob ), img);
     });
 };
 
@@ -441,7 +453,7 @@ function loadView (view, location) {
         scene.load(url).then(function() {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
-            scene.requestRedraw();
+            // scene.requestRedraw();
             // Promise.all([drawMap(),viewComplete]).then(function(result){
             Promise.all([viewComplete]).then(function(result){
                 resolve('loadview resolved result');
