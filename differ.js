@@ -5,9 +5,9 @@
 // initialize variables
 var map, slots = {}, queue, nextView,
     canvas1, ctx1, canvas2, ctx2,
-    img1, img1Canvas, img1Ctx, img1Data,
-    img2, img2Canvas, img2Ctx, img2Data,
-    diffImg, diffCanvas, diffCtx, diff,
+    img1 = new Image(), img1Canvas, img1Ctx, img1Data,
+    img2 = new Image(), img2Canvas, img2Ctx, img2Data,
+    diffImg = new Image(), diffCanvas, diffCtx, diff,
     images = {};
 var testsFile = "";
 var queryFile = "";
@@ -267,31 +267,33 @@ function drawImageToCanvas (img, canvas) {
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
-        var imgObj = new Image();
-        imgObj = img;
+        // var imgObj = new Image();
+        var imgObj = img;
         context.drawImage(imgObj,
                           0, 0, imgObj.width, imgObj.height,
                           0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
-        img1Data = context.getImageData(0, 0, lsize, lsize);
+        var data = context.getImageData(0, 0, lsize, lsize);
+        // console.log('data:', data);
         // console.log('drawImageToCanvas result:', result);
-        resolve('drawimagetocanvas done!');
+        resolve(data);
+        // resolve('drawimagetocanvas done!');
     }, function(err) {
         // imgObj.style.display = "none";
         // console.log('drawImageToCanvas err:', err);
-        img1Data = null;
+        data = null;
         reject(err);
     });
 };
 
 // capture the current tangram map
-function screenshot (img, save) { // image() object, boolean
+function screenshot (save) { // image() object, boolean
     return scene.screenshot().then(function(data) {
         // save it to a file
         if (save) saveImage(data.blob, nextView.name);
 
         var urlCreator = window.URL || window.webkitURL;
-        img = new Image();
+        var img = new Image();
         return loadImage(urlCreator.createObjectURL( data.blob ), img);
     });
 };
@@ -332,10 +334,11 @@ function doTest() {
     // if there's an image for slot1, load it
     var img1URL = splitURL(test1.url).dir + test1.name + imgType;
     // console.log('img1url:', img1URL);
-    loadImage(img1URL).then(function(result){
+    return loadImage(img1URL).then(function(result){
         // console.log('loadimage result:', result);
         return drawImageToCanvas(result.image, canvas1).then(function(result){
-           console.log('test1 drawimage success:', result);
+            // console.log('test1 drawimage success:', result);
+            return img1Data = result;
         });
     }).catch(function(err) {
         // console.log('test1 drawimage failed:', err);
@@ -344,20 +347,23 @@ function doTest() {
         return loadView(test1, loc).then(function(result){
             // console.log('loadview result:', result);
             // grab screenshot and put it in slot1
-            return screenshot(img1, false).then(function(result){
-                // console.log('screenshot result:', result);
-                return drawImageToCanvas(result.image, canvas1);
+            return screenshot(false).then(function(result){
+                console.log('screenshot result:', result);
+                img1 = result.image;
+                console.log('img1:', img1);
+                return drawImageToCanvas(result.image, canvas1).then(function(result){
+                    return img1Data = result;
+                });
             });
         });
     }).then(function(result) {
         // console.log('then 1 result:', result);
         // if there's an image for slot2, load it
         var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-        // console.log('img2url:', img2URL);
+        console.log('img2url:', img2URL);
         return loadImage(img2URL).then(function(result){
             return drawImageToCanvas(result.image, canvas2).then(function(result){
-                // console.log('test2 drawimage success:', result);
-                return('test2 then return');
+                return img2Data = result;
             });
         });
     }).catch(function(err){
@@ -366,19 +372,23 @@ function doTest() {
         var loc = parseView(test2.location);
         return loadView(test2, loc).then(function(result){
             // take screenshot of the map
-            return screenshot(img2, false).then(function(result){
+            return screenshot(false).then(function(result){
                 // console.log('screenshot result:', result);
+                img2 = result.image;
+                console.log('img2:', img2);
                 // put it in canvas2
-                return drawImageToCanvas(result.image, canvas2);
+                return drawImageToCanvas(result.image, canvas2).then(function(result){
+                    return img2Data = result;
+                });
             }).then(function(result) {
-                // console.log('last result:', result);
+                console.log('last result:', result);
                 return('last return');
             });
         });
     }).then(function(result) {
         // console.log('final then result:', result);
         // console.log('canvases:', canvas1, canvas2);
-        doDiff();
+        doDiff(test1);
     });
 }
 
@@ -391,16 +401,18 @@ function proceed() {
 // perform the image comparison and update the html
 function doDiff( test ) {
     // UPDATE READOUTS
-    var count = views.length-queue.length;
-    statusDiv.innerHTML = count + " of " + views.length;
+    // var count = views.length-queue.length;
+    // statusDiv.innerHTML = count + " of " + views.length;
 
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
-    newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
+    // newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
-    var newData = newCtx.getImageData(0, 0, lsize, lsize);
-    if (oldData) {
+    // var newData = newCtx.getImageData(0, 0, lsize, lsize);
+    console.log('img1Data:', img1Data);
+    if (img1Data && img2Data) {
         // run the diff
-        var difference = pixelmatch(newData.data, oldData.data, diff.data, lsize, lsize, {threshold: 0.1});
+        var difference = pixelmatch(img1Data.data, img2Data.data, diff.data, lsize, lsize, {threshold: 0.1});
+        console.log('difference:',difference);
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
@@ -418,19 +430,22 @@ function doDiff( test ) {
     for (var v in scores) {
         totalSum += scores[v];
     }
-    totalScore = Math.floor(totalSum/(100*count)*100);
-    var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
+    // totalScore = Math.floor(totalSum/(100*count)*100);
+    // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
+    // totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
     // make an output row
     makeRow(test, matchScore);
 
     images[test.name] = {};
-    images[test.name].oldImg = oldImg;
-    images[test.name].newImg = newImg;
+    images[test.name].img1 = img1;
+    images[test.name].img2 = img2;
 
     // var url = c.toDataURL('image/png');
+    // console.log('diffImg:', diffImg);
+    console.log('diffImg.src:', diffImg.src);
     var data = atob(diffImg.src.slice(22));
+    // console.log('data:', data);
     var buffer = new Uint8Array(data.length);
     for (var j = 0; j < data.length; ++j) {
         buffer[j] = data.charCodeAt(j);
@@ -441,7 +456,7 @@ function doDiff( test ) {
     var diff2 = new Image();
     diff2.onload = function() {
         images[test.name].diffImg = diff2;
-        images[test.name].strip = makeStrip([oldImg, newImg, diff2], lsize);
+        images[test.name].strip = makeStrip([img1, img2, diff2], lsize);
     }
     diff2.src = diffblob;
 
@@ -475,7 +490,7 @@ function loadView (view, location) {
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw();
             // console.log('viewComplete:', viewComplete);
-            // Promise.all([viewComplete]).then(function(result){
+            // Promise.all([drawMap(),viewComplete]).then(function(result){
             viewComplete.then(function(result){
                 resetViewComplete();
                 resolve('loadview resolved result');
@@ -549,17 +564,17 @@ function makeRow(test, matchScore) {
     title.innerHTML += " <a target='_blank' href='"+test.url+"'>"+splitURL(test.url).file+"</a>";
     testdiv.appendChild(title);
 
-    var oldcolumn = document.createElement('span');
-    oldcolumn.className = 'column';
-    oldcolumn.id = "old";
-    oldcolumn.innerHTML = "old<br>";
-    testdiv.appendChild(oldcolumn);
+    var column1 = document.createElement('span');
+    column1.className = 'column';
+    column1.id = "column1";
+    column1.innerHTML = "1<br>";
+    testdiv.appendChild(column1);
 
-    var newcolumn = document.createElement('span');
-    newcolumn.className = 'column';
-    newcolumn.id = "new";
-    newcolumn.innerHTML = "new<br>";
-    testdiv.appendChild(newcolumn);
+    var column2 = document.createElement('span');
+    column2.className = 'column';
+    column2.id = "column2";
+    column2.innerHTML = "2<br>";
+    testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
     diffcolumn.className = 'column';
@@ -568,13 +583,14 @@ function makeRow(test, matchScore) {
     testdiv.appendChild(diffcolumn);
 
     // insert old and new images
-    newImg.width = size;
-    newImg.height = size;
-    newcolumn.appendChild( newImg );
+    console.log("img1:", img1);
+    img1.width = size;
+    img1.height = size;
+    column1.appendChild( img1 );
     
-    oldImg.width = size;
-    oldImg.height = size;
-    oldcolumn.appendChild( oldImg );
+    img2.width = size;
+    img2.height = size;
+    column2.appendChild( img2 );
 
     // CONTROLS //
 
@@ -614,11 +630,10 @@ function makeRow(test, matchScore) {
         makeGif([images[test.name].oldImg, images[test.name].newImg], test.name);
     };
     controls.appendChild(exportGifButton);
-
-
 }
 
 function makeStrip(images, size) {
+    console.log('makeStrip');
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
