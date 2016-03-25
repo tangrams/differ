@@ -38,6 +38,41 @@ map = prepMap();
 //     else return testsFile;
 // }
 
+function diffSay(txt) {
+    alertDiv.innerHTML += txt;
+}
+
+function prepMap() {
+    // initialize Tangram
+    map = (function () {
+        /*** Map ***/
+
+        var map = L.map('map', {
+            keyboardZoomOffset : .05,
+            zoomControl: false,
+            attributionControl : false
+        });
+
+        var layer = Tangram.leafletLayer({
+            scene: null,
+            // highDensityDisplay: false
+        });
+
+        window.layer = layer;
+        var scene = layer.scene;
+        window.scene = scene;
+
+        // setView expects format ([lat, long], zoom)
+        // map.setView(map_start_location.slice(0, 3), map_start_location[2]);
+
+        layer.addTo(map);
+
+        return map;
+
+    }());
+    return map;
+}
+
 function convertGithub(url) {
     var a = document.createElement('a');
     a.href = url;
@@ -65,6 +100,35 @@ function splitURL(url) {
     var dir = url.substring(0, url.lastIndexOf('/')) + "/";
     var file = url.substring(url.lastIndexOf('/')+1, url.length);
     return {"dir" : dir, "file": file};
+}
+
+// load file
+function readTextFile(file, callback) {
+    var filename = splitURL(file).file;
+    var rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    try {
+        rawFile.open("GET", file, true);
+    } catch (e) {
+        console.error("Error opening file:", e);
+    }
+    rawFile.onreadystatechange = function() {
+        // readyState 4 = done
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+        }
+        else if (rawFile.readyState === 4 && rawFile.status == "404") {
+            console.error("404 – can't load file", file);
+            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
+        } else if (rawFile.readyState === 4) {
+            alertDiv.innerHTML += "Had trouble loading that file.<br>";
+            if (parseURL.host == "github.com") {
+                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
+            }
+        }
+
+    }
+    rawFile.send(null);
 }
 
 // parse url and load the appropriate file
@@ -122,173 +186,6 @@ function loadFile(slotID) {
     });
 }
 
-function proceed() {
-    prepAll();
-    doTest();
-}
-
-function doTest() {
-    // load next test in the lists
-    var test1 = slots.slot1.tests.shift();
-    // console.log('test1:', test1);
-    var test2 = slots.slot2.tests.shift();
-    // console.log('test2:', test2);
-
-    // if there's an image for slot1, load it
-    var img1URL = splitURL(test1.url).dir + test1.name + imgType;
-    // console.log('img1url:', img1URL);
-    console.log('starting test1');
-    loadImage(img1URL).then(function(result){
-        // console.log("then1");
-        // console.log('loadimage result:', result);
-        // console.log('result.imge:', result.image);
-        drawImageToCanvas(result.image, canvas1).then(function(result){
-           // console.log('test1 drawimage success:', result);
-        });
-    }).catch(function(err) {
-        // console.log("catch2");
-        // failed
-        // console.log('test1 drawimage failed:', err);
-        // no image? no worries
-        // load the view and make a new image
-        var loc = parseView(test1.location); // parse location
-        // console.log('loc:', loc);
-        return loadView(test1, loc).then(function(result){
-            // console.log("then3");
-
-            // grab screenshot and put it in slot1
-            screenshot(img1, false).then(function(result){
-                console.log('screenshot result:', result, result.img);
-                drawImageToCanvas(result.image, canvas1);
-            });
-        });
-            // resolve();
-        // });
-    }).then(function(result) {
-        // console.log('then4');
-        // console.log('then 1 result:', result);
-        // console.log('loadView 1 result:', result);
-        // console.log('starting test2');
-        // if there's an image for slot2, load it
-        var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-        // console.log('img2url:', img2URL);
-        loadImage(img2URL).then(function(result){
-            // console.log('then5');
-            drawImageToCanvas(result.image, canvas2).then(function(result){
-                console.log('test2 drawimage success:', result);
-            });
-        }).catch(function(err){
-            // console.log('catch6');
-            // console.log('loadimg2 err? err!', err);
-             // failed
-            // console.log('test2 drawimage failed:', err);
-            // no image? no worries
-            // load the view and make a new image
-            var loc = parseView(test2.location); // parse location
-            // console.log('loc:', loc);
-            loadView(test2, loc).then(function(result){
-                // console.log('then7');
-
-                // grab screenshot and put it in slot1
-                screenshot(img2, false).then(function(result){
-                    console.log('screenshot result:', result);
-                    drawImageToCanvas(result.image, canvas2);
-                });
-                // console.log('loadView 2 result:', result)
-            });
-        });
-    });
-}
-
-// load file
-function readTextFile(file, callback) {
-    var filename = splitURL(file).file;
-    var rawFile = new XMLHttpRequest();
-    rawFile.overrideMimeType("application/json");
-    try {
-        rawFile.open("GET", file, true);
-    } catch (e) {
-        console.error("Error opening file:", e);
-    }
-    rawFile.onreadystatechange = function() {
-        // readyState 4 = done
-        if (rawFile.readyState === 4 && rawFile.status == "200") {
-            callback(rawFile.responseText);
-        }
-        else if (rawFile.readyState === 4 && rawFile.status == "404") {
-            console.error("404 – can't load file", file);
-            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
-        } else if (rawFile.readyState === 4) {
-            alertDiv.innerHTML += "Had trouble loading that file.<br>";
-            if (parseURL.host == "github.com") {
-                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
-            }
-        }
-
-    }
-    rawFile.send(null);
-}
-
-// parse view object and adjust map
-function parseView(view) {
-    // console.log('parseview:', view);
-    if (Object.prototype.toString.call(view) === '[object Array]') {
-        return view; // no parsing needed
-    } else if (typeof(view) === "string") { 
-        // parse string location as array of floats
-        // console.log('loc:', view);
-        if (view.indexOf(',') > 0 ) { // comma-delimited
-            var location = view.split(/[ ,]+/);
-        } else if (view.indexOf('/') > 0 ) { // slash-delimited
-            location = view.split(/[\/]+/);
-            location = [location[1], location[2], location[0]]; // re-order
-        }
-        // console.log('location:', location);
-        location = location.map(parseFloat);
-        // console.log('location:', location);
-        // add location as property of view
-        view = location;
-        // return updated view object
-        return view;
-    } else {
-        console.log("Can't parse location:", view);
-    }
-}
-
-function prepMap() {
-    // initialize Tangram
-    map = (function () {
-        /*** Map ***/
-
-        var map = L.map('map', {
-            keyboardZoomOffset : .05,
-            zoomControl: false,
-            attributionControl : false
-        });
-
-        var layer = Tangram.leafletLayer({
-            scene: null,
-            // highDensityDisplay: false
-        });
-
-        window.layer = layer;
-        var scene = layer.scene;
-        window.scene = scene;
-
-        // setView expects format ([lat, long], zoom)
-        // map.setView(map_start_location.slice(0, 3), map_start_location[2]);
-
-        layer.addTo(map);
-        
-        return map;
-
-    }());
-    return map;
-}
-
-function diffSay(txt) {
-    alertDiv.innerHTML += txt;
-}
 
 // setup output divs and canvases
 function prepAll() {
@@ -366,7 +263,7 @@ function loadImage (url, target) {
 
 // draw an image object to a canvas
 function drawImageToCanvas (img, canvas) {
-    console.log('drawImageToCanvas', img, canvas);
+    // console.log('drawImageToCanvas', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
@@ -378,10 +275,10 @@ function drawImageToCanvas (img, canvas) {
         // make the data available to pixelmatch
         img1Data = context.getImageData(0, 0, lsize, lsize);
         // console.log('drawImageToCanvas result:', result);
-        resolve();
+        resolve('drawimagetocanvas done!');
     }, function(err) {
         // imgObj.style.display = "none";
-        console.log('drawImageToCanvas err:', err);
+        // console.log('drawImageToCanvas err:', err);
         img1Data = null;
         reject(err);
     });
@@ -398,6 +295,98 @@ function screenshot (img, save) { // image() object, boolean
         return loadImage(urlCreator.createObjectURL( data.blob ), img);
     });
 };
+
+// parse view object and adjust map
+function parseView(view) {
+    // console.log('parseview:', view);
+    if (Object.prototype.toString.call(view) === '[object Array]') {
+        return view; // no parsing needed
+    } else if (typeof(view) === "string") {
+        // parse string location as array of floats
+        // console.log('loc:', view);
+        if (view.indexOf(',') > 0 ) { // comma-delimited
+            var location = view.split(/[ ,]+/);
+        } else if (view.indexOf('/') > 0 ) { // slash-delimited
+            location = view.split(/[\/]+/);
+            location = [location[1], location[2], location[0]]; // re-order
+        }
+        // console.log('location:', location);
+        location = location.map(parseFloat);
+        // console.log('location:', location);
+        // add location as property of view
+        view = location;
+        // return updated view object
+        return view;
+    } else {
+        console.log("Can't parse location:", view);
+    }
+}
+
+function doTest() {
+    // load next test in the lists
+    var test1 = slots.slot1.tests.shift();
+    // console.log('test1:', test1);
+    var test2 = slots.slot2.tests.shift();
+    // console.log('test2:', test2);
+
+    // if there's an image for slot1, load it
+    var img1URL = splitURL(test1.url).dir + test1.name + imgType;
+    // console.log('img1url:', img1URL);
+    loadImage(img1URL).then(function(result){
+        // console.log('loadimage result:', result);
+        return drawImageToCanvas(result.image, canvas1).then(function(result){
+           console.log('test1 drawimage success:', result);
+        });
+    }).catch(function(err) {
+        // console.log('test1 drawimage failed:', err);
+        // no image? load the view and make a new image
+        var loc = parseView(test1.location);
+        return loadView(test1, loc).then(function(result){
+            // console.log('loadview result:', result);
+            // grab screenshot and put it in slot1
+            return screenshot(img1, false).then(function(result){
+                // console.log('screenshot result:', result);
+                return drawImageToCanvas(result.image, canvas1);
+            });
+        });
+    }).then(function(result) {
+        // console.log('then 1 result:', result);
+        // if there's an image for slot2, load it
+        var img2URL = splitURL(test2.url).dir + test2.name + imgType;
+        // console.log('img2url:', img2URL);
+        return loadImage(img2URL).then(function(result){
+            return drawImageToCanvas(result.image, canvas2).then(function(result){
+                // console.log('test2 drawimage success:', result);
+                return('test2 then return');
+            });
+        });
+    }).catch(function(err){
+        // console.log('loadimg2 err? err!', err);
+        // no image? load the view and make a new one
+        var loc = parseView(test2.location);
+        return loadView(test2, loc).then(function(result){
+            // take screenshot of the map
+            return screenshot(img2, false).then(function(result){
+                // console.log('screenshot result:', result);
+                // put it in canvas2
+                return drawImageToCanvas(result.image, canvas2);
+            }).then(function(result) {
+                // console.log('last result:', result);
+                return('last return');
+            });
+        });
+    }).then(function(result) {
+        // console.log('final then result:', result);
+        // console.log('canvases:', canvas1, canvas2);
+        doDiff();
+    });
+}
+
+
+function proceed() {
+    prepAll();
+    doTest();
+}
 
 // perform the image comparison and update the html
 function doDiff( test ) {
@@ -458,18 +447,22 @@ function doDiff( test ) {
 
 };
 
-// convert Tangram's view_complete event to resolve a promise
+// use Tangram's view_complete event to resolve a promise
 var viewCompleteResolve, viewCompleteReject;
-var viewComplete = new Promise(function(resolve, reject){
-    viewCompleteResolve = function(){
-        // console.log('viewCompleteResolve');
-        resolve();
-    };
-    viewCompleteReject = function(){
-        // console.log('viewCompleteReject');
-        reject();
-    };
-});
+var viewComplete;
+function resetViewComplete() {
+    viewComplete = new Promise(function(resolve, reject){
+        viewCompleteResolve = function(){
+            // console.log('viewCompleteResolve');
+            resolve();
+        };
+        viewCompleteReject = function(){
+            // console.log('viewCompleteReject');
+            reject();
+        };
+    });
+}
+resetViewComplete();
 
 function loadView (view, location) {
     // console.log('loadView:', view.name, "at", location);
@@ -481,8 +474,10 @@ function loadView (view, location) {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw();
-            // Promise.all([drawMap(),viewComplete]).then(function(result){
-            Promise.all([viewComplete]).then(function(result){
+            // console.log('viewComplete:', viewComplete);
+            // Promise.all([viewComplete]).then(function(result){
+            viewComplete.then(function(result){
+                resetViewComplete();
                 resolve('loadview resolved result');
             }).catch(function(err) {
                 reject(err);
