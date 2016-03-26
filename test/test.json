@@ -8,7 +8,7 @@
     "tests": {
         "world-2": {
             "url": "https://github.com/tangrams/blob/tangram/master/demos/scene.yaml",
-            "location": [0,0,0]
+            "location": [0,0,4]
         },
         "cinnabar-2": {
             "url": "https://github.com/tangrams/blob/cinnabar-style/gh-pages/cinnabar-style.yaml",
