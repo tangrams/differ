@@ -2,7 +2,14 @@
 /*jslint browser: true*/
 /*global Tangram, gui */
 
+
+
+
+
+//
 // initialize variables
+//
+
 var map, slots = {}, queue, nextView,
     canvas1, ctx1, canvas2, ctx2,
     img1 = new Image(), img1Canvas, img1Ctx, img1Data,
@@ -24,7 +31,14 @@ var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
 
-map = prepMap();
+
+
+
+
+
+//
+// helper functions
+//
 
 // useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 
@@ -38,9 +52,80 @@ map = prepMap();
 //     else return testsFile;
 // }
 
+// add text to the output div
 function diffSay(txt) {
     alertDiv.innerHTML += txt;
 }
+
+// convert github links to raw github files
+function convertGithub(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    queryFile = url;
+    if (a.hostname == "github.com") {
+        a.hostname = "raw.githubusercontent.com";
+        a.pathname = a.pathname.replace("/blob", "");
+    }
+    return a.href;
+}
+
+// testsFile = parseQuery();
+
+// handle enter key in filename input
+function catchEnter(e){
+    if (!e) e = window.event;
+    var keyCode = e.keyCode || e.which;
+    if (keyCode == '13') { // Enter pressed
+        loadFile(e.target.id);
+        return false;
+    }
+}
+
+// split a URL string into directory and file names
+function splitURL(url) {
+    var dir = url.substring(0, url.lastIndexOf('/')) + "/";
+    var file = url.substring(url.lastIndexOf('/')+1, url.length);
+    return {"dir" : dir, "file": file};
+}
+
+// load a file from a URL
+function readTextFile(file, callback) {
+    var filename = splitURL(file).file;
+    var rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    try {
+        rawFile.open("GET", file, true);
+    } catch (e) {
+        console.error("Error opening file:", e);
+    }
+    rawFile.onreadystatechange = function() {
+        // readyState 4 = done
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+        }
+        else if (rawFile.readyState === 4 && rawFile.status == "404") {
+            console.error("404 – can't load file", file);
+            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
+        } else if (rawFile.readyState === 4) {
+            alertDiv.innerHTML += "Had trouble loading that file.<br>";
+            if (parseURL.host == "github.com") {
+                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
+            }
+        }
+
+    }
+    rawFile.send(null);
+}
+
+
+
+
+
+//
+// prep scene
+//
+
+map = prepMap();
 
 function prepMap() {
     // initialize Tangram
@@ -71,64 +156,6 @@ function prepMap() {
 
     }());
     return map;
-}
-
-function convertGithub(url) {
-    var a = document.createElement('a');
-    a.href = url;
-    queryFile = url;
-    if (a.hostname == "github.com") {
-        a.hostname = "raw.githubusercontent.com";
-        a.pathname = a.pathname.replace("/blob", "");
-    }
-    return a.href;
-}
-
-// testsFile = parseQuery();
-
-// handle enter key in filename input
-function catchEnter(e){
-    if (!e) e = window.event;
-    var keyCode = e.keyCode || e.which;
-    if (keyCode == '13') { // Enter pressed
-        loadFile(e.target.id);
-        return false;
-    }
-}
-
-function splitURL(url) {
-    var dir = url.substring(0, url.lastIndexOf('/')) + "/";
-    var file = url.substring(url.lastIndexOf('/')+1, url.length);
-    return {"dir" : dir, "file": file};
-}
-
-// load file
-function readTextFile(file, callback) {
-    var filename = splitURL(file).file;
-    var rawFile = new XMLHttpRequest();
-    rawFile.overrideMimeType("application/json");
-    try {
-        rawFile.open("GET", file, true);
-    } catch (e) {
-        console.error("Error opening file:", e);
-    }
-    rawFile.onreadystatechange = function() {
-        // readyState 4 = done
-        if (rawFile.readyState === 4 && rawFile.status == "200") {
-            callback(rawFile.responseText);
-        }
-        else if (rawFile.readyState === 4 && rawFile.status == "404") {
-            console.error("404 – can't load file", file);
-            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
-        } else if (rawFile.readyState === 4) {
-            alertDiv.innerHTML += "Had trouble loading that file.<br>";
-            if (parseURL.host == "github.com") {
-                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
-            }
-        }
-
-    }
-    rawFile.send(null);
 }
 
 // parse url and load the appropriate file
@@ -186,7 +213,6 @@ function loadFile(slotID) {
     });
 }
 
-
 // setup output divs and canvases
 function prepAll() {
 
@@ -236,6 +262,41 @@ function prepAll() {
     diffCtx = diffCanvas.getContext('2d');
     diff = diffCtx.createImageData(lsize, lsize);
 
+}
+
+
+
+
+
+//
+// test functions
+//
+
+
+// parse view object and adjust map
+function parseView(view) {
+    // console.log('parseview:', view);
+    if (Object.prototype.toString.call(view) === '[object Array]') {
+        return view; // no parsing needed
+    } else if (typeof(view) === "string") {
+        // parse string location as array of floats
+        // console.log('loc:', view);
+        if (view.indexOf(',') > 0 ) { // comma-delimited
+            var location = view.split(/[ ,]+/);
+        } else if (view.indexOf('/') > 0 ) { // slash-delimited
+            location = view.split(/[\/]+/);
+            location = [location[1], location[2], location[0]]; // re-order
+        }
+        // console.log('location:', location);
+        location = location.map(parseFloat);
+        // console.log('location:', location);
+        // add location as property of view
+        view = location;
+        // return updated view object
+        return view;
+    } else {
+        console.log("Can't parse location:", view);
+    }
 }
 
 // load an image from a file
@@ -298,30 +359,56 @@ function screenshot (save) { // image() object, boolean
     });
 };
 
-// parse view object and adjust map
-function parseView(view) {
-    // console.log('parseview:', view);
-    if (Object.prototype.toString.call(view) === '[object Array]') {
-        return view; // no parsing needed
-    } else if (typeof(view) === "string") {
-        // parse string location as array of floats
-        // console.log('loc:', view);
-        if (view.indexOf(',') > 0 ) { // comma-delimited
-            var location = view.split(/[ ,]+/);
-        } else if (view.indexOf('/') > 0 ) { // slash-delimited
-            location = view.split(/[\/]+/);
-            location = [location[1], location[2], location[0]]; // re-order
-        }
-        // console.log('location:', location);
-        location = location.map(parseFloat);
-        // console.log('location:', location);
-        // add location as property of view
-        view = location;
-        // return updated view object
-        return view;
-    } else {
-        console.log("Can't parse location:", view);
-    }
+// use Tangram's view_complete event to resolve a promise
+var viewCompleteResolve, viewCompleteReject;
+var viewComplete;
+function resetViewComplete() {
+    viewComplete = new Promise(function(resolve, reject){
+        viewCompleteResolve = function(){
+            // console.log('viewCompleteResolve');
+            resolve();
+        };
+        viewCompleteReject = function(){
+            // console.log('viewCompleteReject');
+            reject();
+        };
+    });
+}
+resetViewComplete();
+
+function loadView (view, location) {
+    // console.log('loadView:', view.name, "at", location);
+    return new Promise(function(resolve, reject) {
+        if (!view) reject('no view');
+        // load and draw scene
+        var url = convertGithub(view.url);
+        scene.load(url).then(function() {
+            scene.animated = false;
+            map.setView([location[0], location[1]], location[2]);
+            // scene.requestRedraw();
+            // console.log('viewComplete:', viewComplete);
+            // Promise.all([drawMap(),viewComplete]).then(function(result){
+            viewComplete.then(function(result){
+                resetViewComplete();
+                resolve('loadview resolved result');
+            }).catch(function(err) {
+                reject(err);
+            });
+        });
+    });
+}
+
+
+
+
+
+//
+// perform the test
+//
+
+function proceed() {
+    prepAll();
+    doTest();
 }
 
 function doTest() {
@@ -392,12 +479,6 @@ function doTest() {
     });
 }
 
-
-function proceed() {
-    prepAll();
-    doTest();
-}
-
 // perform the image comparison and update the html
 function doDiff( test ) {
     // UPDATE READOUTS
@@ -461,69 +542,6 @@ function doDiff( test ) {
     diff2.src = diffblob;
 
 };
-
-// use Tangram's view_complete event to resolve a promise
-var viewCompleteResolve, viewCompleteReject;
-var viewComplete;
-function resetViewComplete() {
-    viewComplete = new Promise(function(resolve, reject){
-        viewCompleteResolve = function(){
-            // console.log('viewCompleteResolve');
-            resolve();
-        };
-        viewCompleteReject = function(){
-            // console.log('viewCompleteReject');
-            reject();
-        };
-    });
-}
-resetViewComplete();
-
-function loadView (view, location) {
-    // console.log('loadView:', view.name, "at", location);
-    return new Promise(function(resolve, reject) {
-        if (!view) reject('no view');
-        // load and draw scene
-        var url = convertGithub(view.url);
-        scene.load(url).then(function() {
-            scene.animated = false;
-            map.setView([location[0], location[1]], location[2]);
-            // scene.requestRedraw();
-            // console.log('viewComplete:', viewComplete);
-            // Promise.all([drawMap(),viewComplete]).then(function(result){
-            viewComplete.then(function(result){
-                resetViewComplete();
-                resolve('loadview resolved result');
-            }).catch(function(err) {
-                reject(err);
-            });
-        });
-    });
-}
-
-// save an image with a POST request to the server
-function saveImage( file, filename ) {
-    var url = '/save';
-    var data = new FormData();
-
-    data.append("image", file, filename);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.onload = function () {
-        // console.log('response:', this.responseText);
-    };
-    xhr.send(data);
-}
-
-// save all new images
-function write() {
-    for (var img in images) {
-        img = images[x];
-        images[test.name].newImg = newImg;
-        saveImage(test.image, test.name);
-    }
-}
 
 function stop() {
     nextView = false;
@@ -627,9 +645,42 @@ function makeRow(test, matchScore) {
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "make GIF";
     exportGifButton.onclick = function() {
-        makeGif([images[test.name].oldImg, images[test.name].newImg], test.name);
+        makeGif([images[test.name].img1, images[test.name].img2], test.name);
     };
     controls.appendChild(exportGifButton);
+}
+
+
+
+
+
+
+//
+// output
+//
+
+// save an image with a POST request to the server
+function saveImage( file, filename ) {
+    var url = '/save';
+    var data = new FormData();
+
+    data.append("image", file, filename);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.onload = function () {
+        // console.log('response:', this.responseText);
+    };
+    xhr.send(data);
+}
+
+// save all new images
+function write() {
+    for (var img in images) {
+        img = images[x];
+        images[test.name].newImg = newImg;
+        saveImage(test.image, test.name);
+    }
 }
 
 function makeStrip(images, size) {
@@ -708,7 +759,6 @@ function makeContactSheet() {
         i++;
     }
 }
-
 
 function makeInfoJSON() {
     var j = {};
