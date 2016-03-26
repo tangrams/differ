@@ -5,7 +5,6 @@
 
 
 
-
 //
 // initialize variables
 //
@@ -163,7 +162,7 @@ function loadFile(slotID) {
     // console.log('loading', slotID);
     var slot = document.getElementById(slotID);
     var url = slot.value;
-    // console.log('url:', url);
+    // console.log(slotID, 'url:', url);
     url = convertGithub(url);
     var urlname = splitURL(url).file;
     // if (slotID = "slot1")
@@ -300,16 +299,16 @@ function parseView(view) {
 }
 
 // load an image from a file
-function loadImage (url, target) {
+function loadImage (url) {
     // console.log('loadImage:', typeof url, url);
     return new Promise(function(resolve, reject) {
-        var image = target || new Image();
+        var image = new Image();
         // set up events
         image.onload = function() {
             resolve({ url: url, image: image });
         };
-        image.onerror = function(error) {
-            reject({ test: "test", error: error });
+        image.onerror = function() {
+            reject(null);
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
@@ -317,33 +316,31 @@ function loadImage (url, target) {
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
         image.src = url;
-    }).catch(function(err){
-        // console.log('err? err!', err);
+        // console.log('loadImage image:', image);
+        // resolve(image);
     });
 }
 
 // draw an image object to a canvas
 function drawImageToCanvas (img, canvas) {
-    // console.log('drawImageToCanvas', img, canvas);
+    // console.log('drawImageToCanvas:', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
-        // var imgObj = new Image();
-        var imgObj = img;
-        context.drawImage(imgObj,
-                          0, 0, imgObj.width, imgObj.height,
+        context.drawImage(img,
+                          0, 0, img.width, img.height,
                           0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
         var data = context.getImageData(0, 0, lsize, lsize);
-        // console.log('data:', data);
+        console.log('data:', data);
         // console.log('drawImageToCanvas result:', result);
         resolve(data);
         // resolve('drawimagetocanvas done!');
     }, function(err) {
         // imgObj.style.display = "none";
-        // console.log('drawImageToCanvas err:', err);
+        console.log('drawImageToCanvas err:', err);
         data = null;
-        reject(err);
+        reject(data);
     });
 };
 
@@ -385,7 +382,7 @@ function loadView (view, location) {
         scene.load(url).then(function() {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
-            // scene.requestRedraw();
+            // scene.requestRedraw(); // necessary?
             // console.log('viewComplete:', viewComplete);
             // Promise.all([drawMap(),viewComplete]).then(function(result){
             viewComplete.then(function(result){
@@ -408,10 +405,11 @@ function loadView (view, location) {
 
 function proceed() {
     prepAll();
-    doTest();
+    loadImages();
 }
 
-function doTest() {
+// load or create the test images
+function loadImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
     // console.log('test1:', test1);
@@ -419,16 +417,18 @@ function doTest() {
     // console.log('test2:', test2);
 
     // if there's an image for slot1, load it
-    var img1URL = splitURL(test1.url).dir + test1.name + imgType;
+    var img1URL = splitURL(slots.slot1.url).dir + test1.name + imgType;
     // console.log('img1url:', img1URL);
-    return loadImage(img1URL).then(function(result){
-        // console.log('loadimage result:', result);
+    return loadImage(convertGithub(img1URL)).then(function(result){
+        img1 = result.image;
+        // popup(img1, size, size);
         return drawImageToCanvas(result.image, canvas1).then(function(result){
-            // console.log('test1 drawimage success:', result);
-            return img1Data = result;
+        // return drawImageToCanvas(result.url, canvas1).then(function(result){
+            console.log('test1 drawimage success:', result);
+            return img1Data = result.data;
         });
     }).catch(function(err) {
-        // console.log('test1 drawimage failed:', err);
+        console.log('test1 drawimage failed:', err);
         // no image? load the view and make a new image
         var loc = parseView(test1.location);
         return loadView(test1, loc).then(function(result){
@@ -438,8 +438,9 @@ function doTest() {
                 console.log('screenshot result:', result);
                 img1 = result.image;
                 console.log('img1:', img1);
+                // console.log('drawimagetocanvas:', result.image);
                 return drawImageToCanvas(result.image, canvas1).then(function(result){
-                    return img1Data = result;
+                    return img1Data = result.data;
                 });
             });
         });
@@ -447,10 +448,12 @@ function doTest() {
         // console.log('then 1 result:', result);
         // if there's an image for slot2, load it
         var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-        console.log('img2url:', img2URL);
-        return loadImage(img2URL).then(function(result){
+        // console.log('img2url:', img2URL);
+        return loadImage(convertGithub(img2URL)).then(function(result){
+            img2 = result.image;
+        // console.log('drawimagetocanvas:', result);
             return drawImageToCanvas(result.image, canvas2).then(function(result){
-                return img2Data = result;
+                return img2Data = result.data;
             });
         });
     }).catch(function(err){
@@ -461,14 +464,16 @@ function doTest() {
             // take screenshot of the map
             return screenshot(false).then(function(result){
                 // console.log('screenshot result:', result);
+                // console.log('screenshot result:', result.src);
                 img2 = result.image;
                 console.log('img2:', img2);
                 // put it in canvas2
+                // console.log('drawimagetocanvas:', result);
                 return drawImageToCanvas(result.image, canvas2).then(function(result){
-                    return img2Data = result;
+                    return img2Data = result.data;
                 });
             }).then(function(result) {
-                console.log('last result:', result);
+                // console.log('last result:', result);
                 return('last return');
             });
         });
@@ -489,10 +494,10 @@ function doDiff( test ) {
     // newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
     // var newData = newCtx.getImageData(0, 0, lsize, lsize);
-    console.log('img1Data:', img1Data);
+    // console.log('img1Data:', img1Data);
     if (img1Data && img2Data) {
         // run the diff
-        var difference = pixelmatch(img1Data.data, img2Data.data, diff.data, lsize, lsize, {threshold: 0.1});
+        var difference = pixelmatch(img1Data, img2Data, diff.data, lsize, lsize, {threshold: 0.1});
         console.log('difference:',difference);
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
@@ -524,7 +529,7 @@ function doDiff( test ) {
 
     // var url = c.toDataURL('image/png');
     // console.log('diffImg:', diffImg);
-    console.log('diffImg.src:', diffImg.src);
+    // console.log('diffImg.src:', diffImg.src);
     var data = atob(diffImg.src.slice(22));
     // console.log('data:', data);
     var buffer = new Uint8Array(data.length);
@@ -606,6 +611,8 @@ function makeRow(test, matchScore) {
     img1.height = size;
     column1.appendChild( img1 );
     
+    // popup(img1, size, size);
+
     img2.width = size;
     img2.height = size;
     column2.appendChild( img2 );
@@ -684,7 +691,7 @@ function write() {
 }
 
 function makeStrip(images, size) {
-    console.log('makeStrip');
+    // console.log('makeStrip');
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
