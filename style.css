@@ -90,6 +90,9 @@ button.chooser {
     position: absolute;
 }
 
+canvas {
+    visibility: hidden;
+}
 #tests {
     margin: auto;
 }
