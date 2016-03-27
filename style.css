@@ -22,6 +22,11 @@ body {
     padding: 1em;
 }
 
+#alert {
+    height: 200px;
+    overflow: scroll;
+}
+
 #content {
     max-width: 1080;
 }
@@ -72,11 +77,6 @@ button.chooser {
 
 #examples a {
     color: #aaa;
-}
-
-#alert {
-    margin-top: 1em;
-    color: red;
 }
 
 #useragent {

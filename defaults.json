@@ -1,0 +1,13 @@
+{
+    "origin": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.54 Safari/537.36",
+        "devicepixelratio": 2,
+        "time": "Wed Feb 24 2016 13:37:28 GMT-0500 (EST)"
+    },
+
+    "tests": {
+        "world0": {
+            "location": [0,0,0]
+        }
+    }
+}
