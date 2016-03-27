@@ -10,10 +10,7 @@
 //
 
 var map, slots = {}, queue, nextView,
-    canvas1, ctx1, canvas2, ctx2,
-    img1 = new Image(), img1Canvas, img1Ctx, img1Data,
-    img2 = new Image(), img2Canvas, img2Ctx, img2Data,
-    diffImg = new Image(), diffCanvas, diffCtx, diff,
+    diffImg = new Image(), diff, canvas, ctx,
     images = {};
 var testsFile = "";
 var queryFile = "";
@@ -249,24 +246,12 @@ function prepPage() {
 
     // set up canvases
 
-    // make canvas for slot1
-    canvas1 = document.createElement('canvas');
-    canvas1.height = lsize;
-    canvas1.width = lsize;
-    ctx1 = canvas1.getContext('2d');
-
-    // make a canvas for slot2
-    canvas2 = document.createElement('canvas');
-    canvas2.height = lsize;
-    canvas2.width = lsize;
-    ctx2 = canvas2.getContext('2d');
-
-    // make a canvas for the diff
-    diffCanvas = document.createElement('canvas');
-    diffCanvas.height = lsize;
-    diffCanvas.width = lsize;
-    diffCtx = diffCanvas.getContext('2d');
-    diff = diffCtx.createImageData(lsize, lsize);
+    // make canvas
+    canvas = document.createElement('canvas');
+    canvas.height = lsize;
+    canvas.width = lsize;
+    ctx = canvas.getContext('2d');
+    diff = ctx.createImageData(lsize, lsize);
 
 }
 
@@ -303,11 +288,11 @@ function parseLocation(loc) {
 
 // load an image from a file
 function loadImage (url) {
-    // console.log('loadImage:', typeof url, url);
     return new Promise(function(resolve, reject) {
         var image = new Image();
         // set up events
         image.onload = function() {
+            console.log('image size:', image)
             resolve(image);
         };
         image.onerror = function() {
@@ -315,7 +300,6 @@ function loadImage (url) {
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
-        // console.log('url?', url);
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
         image.src = url;
@@ -343,13 +327,12 @@ function drawImageToCanvas (img, canvas) {
 };
 
 // capture the current tangram map
-function screenshot (save) { // image() object, boolean
+function screenshot (save) {
     return scene.screenshot().then(function(data) {
         // save it to a file
         if (save) saveImage(data.blob, nextView.name);
 
-        var img = new Image();
-        return loadImage(linkFromBlob( data.blob ), img);
+        return loadImage(linkFromBlob( data.blob ));
     });
 };
 
@@ -405,7 +388,8 @@ function proceed() {
 function prepImage(test) {
     return loadImage(convertGithub(test.imageURL)).then(function(result){
         test.img = result;
-        return drawImageToCanvas(result, canvas1).then(function(result){
+        // canvas = test.canvas;
+        return drawImageToCanvas(result, canvas).then(function(result){
             console.log('prepImage found a file:', result);
             return test.data = result.data;
         });
@@ -419,9 +403,8 @@ function prepImage(test) {
             return screenshot(false).then(function(result){
                 // console.log('screenshot result:', result);
                 test.img = result;
-                console.log('test.img:', test.img);
                 // console.log('drawimagetocanvas:', result);
-                return drawImageToCanvas(result, canvas1).then(function(result){
+                return drawImageToCanvas(result, canvas).then(function(result){
                     return test.data = result.data;
                 });
             });
@@ -454,16 +437,14 @@ function doDiff( test1, test2 ) {
 
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     // make the data available
-    // console.log('img1Data:', img1Data);
     if (test1.data && test2.data) {
         // run the diff
-        // var difference = pixelmatch(img1Data, img2Data, diff.data, lsize, lsize, {threshold: 0.1});
-        var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.1});
+        var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
         // put the diff in its canvas
-        diffCtx.putImageData(diff, 0, 0);
+        ctx.putImageData(diff, 0, 0);
     } else {
         // generating new image
         match = 100;
@@ -487,17 +468,16 @@ function doDiff( test1, test2 ) {
     images[test1.name].img1 = test1.img;
     images[test1.name].img2 = test2.img;
 
-    // var url = c.toDataURL('image/png');
-    // console.log('diffImg:', diffImg);
-    // console.log('diffImg.src:', diffImg.src);
+    // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
-    // console.log('data:', data);
     var buffer = new Uint8Array(data.length);
     for (var j = 0; j < data.length; ++j) {
         buffer[j] = data.charCodeAt(j);
     }
     var blob = new Blob([buffer], { type: 'image/png' });
     var diff2 = new Image();
+    diff2.height=size;
+    diff2.width=size;
     diff2.onload = function() {
         images[test1.name].diffImg = diff2;
         images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize);
@@ -563,13 +543,13 @@ function makeRow(test1, test2, matchScore) {
     diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
-    // insert old and new images
-    img1.width = size;
-    img1.height = size;
+    // insert images
+    test1.img.width = size;
+    test1.img.height = size;
     column1.appendChild( test1.img );
     
-    img2.width = size;
-    img2.height = size;
+    test2.img.width = size;
+    test2.img.height = size;
     column2.appendChild( test2.img );
 
     // CONTROLS //
@@ -583,9 +563,10 @@ function makeRow(test1, test2, matchScore) {
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
-        diffImg.src = diffCanvas.toDataURL("image/png");
+        diffImg.src = canvas.toDataURL("image/png");
         diffImg.width = size;
         diffImg.height = size;
+        console.log('diffimg:', diffImg)
         diffcolumn.appendChild( diffImg );
     }
 
