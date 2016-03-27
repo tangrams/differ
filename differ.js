@@ -198,6 +198,9 @@ function loadFile(slotID) {
         slots[slotID].tests = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
             data.tests[key].name = key;
+            // add name of pre-rendered image to look for
+            data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+
 
             return data.tests[key];
         });
@@ -217,7 +220,7 @@ function loadFile(slotID) {
 }
 
 // setup output divs and canvases
-function prepAll() {
+function prepPage() {
 
     // clone views array
     // console.log('slots:')
@@ -331,11 +334,8 @@ function drawImageToCanvas (img, canvas) {
         // make the data available to pixelmatch
         var data = context.getImageData(0, 0, lsize, lsize);
         console.log('data:', data);
-        // console.log('drawImageToCanvas result:', result);
         resolve(data);
-        // resolve('drawimagetocanvas done!');
     }, function(err) {
-        // imgObj.style.display = "none";
         console.log('drawImageToCanvas err:', err);
         data = null;
         reject(data);
@@ -359,11 +359,9 @@ var viewComplete;
 function resetViewComplete() {
     viewComplete = new Promise(function(resolve, reject){
         viewCompleteResolve = function(){
-            // console.log('viewCompleteResolve');
             resolve();
         };
         viewCompleteReject = function(){
-            // console.log('viewCompleteReject');
             reject();
         };
     });
@@ -380,7 +378,6 @@ function loadView (view, location) {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
-            // console.log('viewComplete:', viewComplete);
             // Promise.all([drawMap(),viewComplete]).then(function(result){
             viewComplete.then(function(result){
                 resetViewComplete();
@@ -401,89 +398,56 @@ function loadView (view, location) {
 //
 
 function proceed() {
-    prepAll();
-    loadImages();
+    prepPage();
+    prepBothImages();
 }
 
-// load or create the test images
-function loadImages() {
-    // load next test in the lists
-    var test1 = slots.slot1.tests.shift();
-    // console.log('test1:', test1);
-    var test2 = slots.slot2.tests.shift();
-    // console.log('test2:', test2);
-
-    // if there's an image for slot1, load it
-    var img1URL = splitURL(slots.slot1.url).dir + test1.name + imgType;
-    // console.log('img1url:', img1URL);
-    return loadImage(convertGithub(img1URL)).then(function(result){
-        img1 = result;
-        // popup(img1, size, size);
+function prepImage(test) {
+    return loadImage(convertGithub(test.imageURL)).then(function(result){
+        test.img = result;
         return drawImageToCanvas(result, canvas1).then(function(result){
-        // return drawImageToCanvas(result.url, canvas1).then(function(result){
-            console.log('test1 drawimage success:', result);
-            return img1Data = result.data;
+            console.log('prepImage found a file:', result);
+            return test.data = result.data;
         });
     }).catch(function(err) {
-        console.log('test1 drawimage failed:', err);
+        console.log('prepImage didn\'t find a file:', err);
         // no image? load the view and make a new image
-        var loc = parseLocation(test1.location);
-        return loadView(test1, loc).then(function(result){
+        var loc = parseLocation(test.location);
+        return loadView(test, loc).then(function(result){
             // console.log('loadview result:', result);
             // grab screenshot and put it in slot1
             return screenshot(false).then(function(result){
-                console.log('screenshot result:', result);
-                img1 = result;
-                console.log('img1:', img1);
+                // console.log('screenshot result:', result);
+                test.img = result;
+                console.log('test.img:', test.img);
                 // console.log('drawimagetocanvas:', result);
                 return drawImageToCanvas(result, canvas1).then(function(result){
-                    return img1Data = result.data;
+                    return test.data = result.data;
                 });
             });
         });
-    }).then(function(result) {
-        // console.log('then 1 result:', result);
-        // if there's an image for slot2, load it
-        var img2URL = splitURL(test2.url).dir + test2.name + imgType;
-        // console.log('img2url:', img2URL);
-        return loadImage(convertGithub(img2URL)).then(function(result){
-            img2 = result;
-        // console.log('drawimagetocanvas:', result);
-            return drawImageToCanvas(result, canvas2).then(function(result){
-                return img2Data = result.data;
-            });
-        });
-    }).catch(function(err){
-        // console.log('loadimg2 err? err!', err);
-        // no image? load the view and make a new one
-        console.log('test2:', test2);
-        var loc = parseLocation(test2.location);
-        return loadView(test2, loc).then(function(result){
-            // take screenshot of the map
-            return screenshot(false).then(function(result){
-                // console.log('screenshot result:', result);
-                // console.log('screenshot result:', result.src);
-                img2 = result;
-                console.log('img2:', img2);
-                // put it in canvas2
-                // console.log('drawimagetocanvas:', result);
-                return drawImageToCanvas(result, canvas2).then(function(result){
-                    return img2Data = result.data;
-                });
-            }).then(function(result) {
-                // console.log('last result:', result);
-                return('last return');
-            });
-        });
-    }).then(function(result) {
-        // console.log('final then result:', result);
-        // console.log('canvases:', canvas1, canvas2);
-        doDiff(test1);
+    });
+}
+// load or create the test images
+function prepBothImages() {
+    // load next test in the lists
+    var test1 = slots.slot1.tests.shift();
+    console.log('test1:', test1);
+    var test2 = slots.slot2.tests.shift();
+    console.log('test2:', test2);
+
+    // if there's an image for slot1, load it
+    // var img1URL = splitURL(slots.slot1.url).dir + test1.name + imgType;
+    // var img2URL = splitURL(slots.slot2.url).dir + test2.name + imgType;
+    // console.log('img1url:', img1URL);
+    Promise.all([prepImage(test1), prepImage(test2)]).then(function(result){
+        console.log('done loading both images');
+        doDiff(test1, test2);
     });
 }
 
 // perform the image comparison and update the html
-function doDiff( test ) {
+function doDiff( test1, test2 ) {
     // UPDATE READOUTS
     // var count = views.length-queue.length;
     // statusDiv.innerHTML = count + " of " + views.length;
@@ -491,10 +455,10 @@ function doDiff( test ) {
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
     // make the data available
     // console.log('img1Data:', img1Data);
-    if (img1Data && img2Data) {
+    if (test1.data && test2.data) {
         // run the diff
         // var difference = pixelmatch(img1Data, img2Data, diff.data, lsize, lsize, {threshold: 0.1});
-        var difference = pixelmatch(img1Data, img2Data, diff.data, size, size, {threshold: 0.1});
+        var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.1});
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
@@ -507,7 +471,7 @@ function doDiff( test ) {
     }
 
     // update master percentage
-    scores[test.name] = match;
+    scores[test1.name] = match;
     var totalSum = 0;
     for (var v in scores) {
         totalSum += scores[v];
@@ -517,11 +481,11 @@ function doDiff( test ) {
     // totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
     // make an output row
-    makeRow(test, matchScore);
+    makeRow(test1, test2, matchScore);
 
-    images[test.name] = {};
-    images[test.name].img1 = img1;
-    images[test.name].img2 = img2;
+    images[test1.name] = {};
+    images[test1.name].img1 = test1.img;
+    images[test1.name].img2 = test2.img;
 
     // var url = c.toDataURL('image/png');
     // console.log('diffImg:', diffImg);
@@ -535,8 +499,8 @@ function doDiff( test ) {
     var blob = new Blob([buffer], { type: 'image/png' });
     var diff2 = new Image();
     diff2.onload = function() {
-        images[test.name].diffImg = diff2;
-        images[test.name].strip = makeStrip([img1, img2, diff2], lsize);
+        images[test1.name].diffImg = diff2;
+        images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize);
     }
     diff2.src = linkFromBlob( blob );
 
@@ -556,16 +520,16 @@ function drawMap() {
     });
 }
 
-function makeRow(test, matchScore) {
+function makeRow(test1, test2, matchScore) {
     // check to see if div already exists (if re-running a test);
-    var testdiv = document.getElementById(test.name);
+    var testdiv = document.getElementById(test1.name);
 
     // if a row for this test doesn't already exist:
     if (testdiv === null) {
         // generate one
         var testdiv = document.createElement('div');
         testdiv.className = 'test';
-        testdiv.id = test.name;
+        testdiv.id = test1.name;
         tests.insertBefore(testdiv, tests.firstChild);
     } else {
         // clear it out
@@ -575,10 +539,10 @@ function makeRow(test, matchScore) {
     var title = document.createElement('div');
     title.className = 'testname';
     // make test title a link to a live version of the test"
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1];
-    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test.name+"</a>";
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
+    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
 
-    title.innerHTML += " <a target='_blank' href='"+test.url+"'>"+splitURL(test.url).file+"</a>";
+    title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
     testdiv.appendChild(title);
 
     var column1 = document.createElement('span');
@@ -602,11 +566,11 @@ function makeRow(test, matchScore) {
     // insert old and new images
     img1.width = size;
     img1.height = size;
-    column1.appendChild( img1 );
+    column1.appendChild( test1.img );
     
     img2.width = size;
     img2.height = size;
-    column2.appendChild( img2 );
+    column2.appendChild( test2.img );
 
     // CONTROLS //
 
@@ -628,22 +592,22 @@ function makeRow(test, matchScore) {
     controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
     var refreshButton =  document.createElement('button');
-    refreshButton.innerHTML = "refresh " + test.name;
+    refreshButton.innerHTML = "refresh " + test1.name;
     controls.appendChild(refreshButton);
-    refreshButton.onclick = function() {refresh(test);}
+    refreshButton.onclick = function() {refresh(test1);}
 
     var exportButton =  document.createElement('button');
     exportButton.innerHTML = "make PNG";
     // store current value of these global variables
     exportButton.onclick = function() {
-        popup(images[test.name].strip, size * 3, size);
+        popup(images[test1.name].strip, size * 3, size);
     };
     controls.appendChild(exportButton);
 
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "make GIF";
     exportGifButton.onclick = function() {
-        makeGif([images[test.name].img1, images[test.name].img2], test.name);
+        makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
     };
     controls.appendChild(exportGifButton);
 }
