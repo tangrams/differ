@@ -22,8 +22,13 @@ body {
     padding: 1em;
 }
 
+#alert {
+    height: 200px;
+    overflow: scroll;
+}
+
 #content {
-    max-width: 1080;
+    max-width: 1080px;
 }
 
 .container {
@@ -74,11 +79,6 @@ button.chooser {
     color: #aaa;
 }
 
-#alert {
-    margin-top: 1em;
-    color: red;
-}
-
 #useragent {
     margin-top: 1em;
     font-size: .8em;
@@ -92,6 +92,8 @@ button.chooser {
 
 canvas {
     visibility: hidden;
+    position: absolute;
+    display: none;
 }
 #tests {
     margin: auto;
