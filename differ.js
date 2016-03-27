@@ -147,9 +147,6 @@ function prepMap() {
         var scene = layer.scene;
         window.scene = scene;
 
-        // setView expects format ([lat, long], zoom)
-        // map.setView(map_start_location.slice(0, 3), map_start_location[2]);
-
         layer.addTo(map);
 
         return map;
@@ -306,9 +303,9 @@ function loadImage (url) {
     });
 }
 
-// draw an image object to a canvas
-function drawImageToCanvas (img, canvas) {
-    // console.log('drawImageToCanvas?', img, canvas);
+// get image data object using a canvas
+function imageData (img, canvas) {
+    // console.log('imageData?', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
@@ -320,7 +317,7 @@ function drawImageToCanvas (img, canvas) {
         console.log('data:', data);
         resolve(data);
     }, function(err) {
-        console.log('drawImageToCanvas err:', err);
+        console.log('imageData err:', err);
         data = null;
         reject(data);
     });
@@ -386,25 +383,25 @@ function proceed() {
 }
 
 function prepImage(test) {
+    // if there's an image for the test, load it
     return loadImage(convertGithub(test.imageURL)).then(function(result){
+        // store it
         test.img = result;
-        // canvas = test.canvas;
-        return drawImageToCanvas(result, canvas).then(function(result){
+        return imageData(result, canvas).then(function(result){
+            // then return the the data object
             console.log('prepImage found a file:', result);
             return test.data = result.data;
         });
     }).catch(function(err) {
-        console.log('prepImage didn\'t find a file:', err);
-        // no image? load the view and make a new image
+    // no image? load the test view in the map and make a new image
         var loc = parseLocation(test.location);
         return loadView(test, loc).then(function(result){
-            // console.log('loadview result:', result);
-            // grab screenshot and put it in slot1
+            // grab a screenshot and store it
             return screenshot(false).then(function(result){
-                // console.log('screenshot result:', result);
                 test.img = result;
-                // console.log('drawimagetocanvas:', result);
-                return drawImageToCanvas(result, canvas).then(function(result){
+                // then return the data object
+                return imageData(result, canvas).then(function(result){
+                    console.log('prepImage made an image:', result);
                     return test.data = result.data;
                 });
             });
@@ -419,12 +416,7 @@ function prepBothImages() {
     var test2 = slots.slot2.tests.shift();
     console.log('test2:', test2);
 
-    // if there's an image for slot1, load it
-    // var img1URL = splitURL(slots.slot1.url).dir + test1.name + imgType;
-    // var img2URL = splitURL(slots.slot2.url).dir + test2.name + imgType;
-    // console.log('img1url:', img1URL);
     Promise.all([prepImage(test1), prepImage(test2)]).then(function(result){
-        console.log('done loading both images');
         doDiff(test1, test2);
     });
 }
@@ -483,7 +475,6 @@ function doDiff( test1, test2 ) {
         images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize);
     }
     diff2.src = linkFromBlob( blob );
-
 };
 
 function stop() {
