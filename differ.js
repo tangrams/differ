@@ -418,6 +418,10 @@ function prepBothImages() {
 
     Promise.all([prepImage(test1), prepImage(test2)]).then(function(result){
         doDiff(test1, test2);
+    }).then(function(result){
+        if (slots.slot1.tests.length > 0) {
+            prepBothImages();
+        }
     });
 }
 
