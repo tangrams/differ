@@ -370,43 +370,25 @@ console.log('init viewcomplete:', viewComplete);
 // load a map position and zoom
 function loadView (view, location) {
     console.log(view.url, location);
+    var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
         // load and draw scene
         var url = convertGithub(view.url);
         var name = splitURL(url).file;
         // if it's drawing, wait for it to finish
-        console.log(name, '2:', viewComplete);
-        Promise.all([viewComplete]).then(function(result){
-        // resetViewComplete();
-        // viewComplete.then(function(result){
-            console.log(name, '3:', viewComplete);
-            resetViewComplete();
-            console.log(name, '4:', viewComplete);
-            scene.load(url).then(function() {
-                console.log("RENDERING", name)
-                scene.animated = false;
-                map.setView([location[0], location[1]], location[2]);
-                // scene.requestRedraw(); // necessary?
-                // Promise.all([drawMap(),viewComplete]).
-                viewComplete.then(function(){
-                    console.log('vc?', viewComplete);
-                    return screenshot(false);
-                }).
-                then(function(result) {
-                    // resetViewComplete();
-                    console.log('result:', result.src);
-                    resolve(result);
-                // console.log('5', viewComplete);
-                // viewComplete.then(function(result){
-                //     // console.log('viewcomplete:', viewComplete);
-                //     console.log(name, '6', viewComplete);
-                // }).catch(function(err) {
-                //     reject(err);
-                });
+        resetViewComplete();
+        return scene.load(url).then(function() {
+            console.log("RENDERING", name)
+            scene.animated = false;
+            map.setView([location[0], location[1]], location[2]);
+            // scene.requestRedraw(); // necessary?
+            // wait for map to finish drawing, then return
+            return viewComplete.then(function(){
+                console.log('view complete!')
+                return resolve();
             });
         });
-        resolve(result);
     });
 }
 
@@ -425,30 +407,37 @@ function proceed() {
 
 // prep an image to send to the diff
 function prepImage(test) {
-    // if there's an image for the test, load it
-    return loadImage(test.imageURL).then(function(result){
-        diffSay(test.name+imgType+" found; ")
-        // store it
-        test.img = result;
-        return imageData(result, canvas).then(function(result){
-            // then return the the data object
-            return test.data = result.data;
-        });
-    }).catch(function(err) {
-    // no image? load the test view in the map and make a new image
-        var loc = parseLocation(test.location);
-        return loadView(test, loc).then(function(result){
-            // grab a screenshot and store it
-            // return screenshot(false).then(function(result){
-                test.img = result;
-                resetViewComplete();
+    return new Promise(function(resolve, reject) {
+        console.log("> PREPIMAGE", test);
+        // if there's an image for the test, load it
+        return loadImage(test.imageURL).then(function(result){
+            console.log("loadimage", test);
+            diffSay(test.name+imgType+" found; ")
+            // store it
+            test.img = result;
+            return imageData(result, canvas).then(function(result){
+                console.log("imagedata", test);
+                // then return the the data object
+                return test.data = result.data;
+            });
+        }).catch(function(err) {
+            // console.log("catch", test);
+        // no image? load the test view in the map and make a new image
+            var loc = parseLocation(test.location);
+            return loadView(test, loc).then(function(){
+                // grab a screenshot and store it
+                return screenshot(false).then(function(result){
+                    console.log('screenshot?', result.src);
+                    test.img = result;
 
-                // then return the data object
-                return imageData(result, canvas).then(function(result){
-                    diffSay(test.name+" mapped; ")
-                    return test.data = result.data;
+                    // then return the data object
+                    return imageData(result, canvas).then(function(result){
+                        console.log("imagedata", test);
+                        diffSay(test.name+" mapped; ")
+                        return resolve(test.data = result.data);
+                    });
                 });
-            // });
+            });
         });
     });
 }
@@ -469,7 +458,10 @@ function prepBothImages() {
 
     diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
 
-    prepImage(test1).then(prepImage(test2)).then(function(result){
+    prepImage(test1)
+    .then(function(){return prepImage(test2)})
+    .then(function(result){
+        // console.log('prepped?', result);
         doDiff(test1, test2);
     }).then(function(result){
         if (slots.slot1.tests.length > 0) {
@@ -486,8 +478,7 @@ function doDiff( test1, test2 ) {
     // var count = views.length-queue.length;
     // statusDiv.innerHTML = count + " of " + views.length;
 
-    // save the new image to the new canvas, stretching it to fit (in case it's retina)
-    // make the data available
+    console.log('dodiff:', test1, test2);
     if (test1.data && test2.data) {
         // run the diff
         var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
