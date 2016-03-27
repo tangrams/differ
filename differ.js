@@ -116,7 +116,11 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
-
+// get link for blob
+function linkFromBlob(blob) {
+    var urlCreator = window.URL || window.webkitURL;
+    return urlCreator.createObjectURL( blob );
+}
 
 
 
@@ -273,28 +277,24 @@ function prepAll() {
 
 
 // parse view object and adjust map
-function parseView(view) {
-    // console.log('parseview:', view);
-    if (Object.prototype.toString.call(view) === '[object Array]') {
-        return view; // no parsing needed
-    } else if (typeof(view) === "string") {
+function parseLocation(loc) {
+    // console.log('loc:', loc);
+    if (Object.prototype.toString.call(loc) === '[object Array]') {
+        return loc; // no parsing needed
+    } else if (typeof(loc) === "string") {
         // parse string location as array of floats
-        // console.log('loc:', view);
-        if (view.indexOf(',') > 0 ) { // comma-delimited
-            var location = view.split(/[ ,]+/);
-        } else if (view.indexOf('/') > 0 ) { // slash-delimited
-            location = view.split(/[\/]+/);
+        // console.log('loc:', loc);
+        if (loc.indexOf(',') > 0 ) { // comma-delimited
+            var location = loc.split(/[ ,]+/);
+        } else if (loc.indexOf('/') > 0 ) { // slash-delimited
+            location = loc.split(/[\/]+/);
             location = [location[1], location[2], location[0]]; // re-order
         }
-        // console.log('location:', location);
         location = location.map(parseFloat);
-        // console.log('location:', location);
-        // add location as property of view
-        view = location;
-        // return updated view object
-        return view;
+        // return updated location
+        return location;
     } else {
-        console.log("Can't parse location:", view);
+        console.log("Can't parse location:", loc);
     }
 }
 
@@ -305,10 +305,10 @@ function loadImage (url) {
         var image = new Image();
         // set up events
         image.onload = function() {
-            resolve({ url: url, image: image });
+            resolve(image);
         };
         image.onerror = function() {
-            reject(null);
+            reject();
         };
         image.crossOrigin = 'anonymous';
         // force-refresh any local images with a cache-buster
@@ -316,14 +316,12 @@ function loadImage (url) {
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
         image.src = url;
-        // console.log('loadImage image:', image);
-        // resolve(image);
     });
 }
 
 // draw an image object to a canvas
 function drawImageToCanvas (img, canvas) {
-    // console.log('drawImageToCanvas:', img, canvas);
+    // console.log('drawImageToCanvas?', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
@@ -350,9 +348,8 @@ function screenshot (save) { // image() object, boolean
         // save it to a file
         if (save) saveImage(data.blob, nextView.name);
 
-        var urlCreator = window.URL || window.webkitURL;
         var img = new Image();
-        return loadImage(urlCreator.createObjectURL( data.blob ), img);
+        return loadImage(linkFromBlob( data.blob ), img);
     });
 };
 
@@ -420,9 +417,9 @@ function loadImages() {
     var img1URL = splitURL(slots.slot1.url).dir + test1.name + imgType;
     // console.log('img1url:', img1URL);
     return loadImage(convertGithub(img1URL)).then(function(result){
-        img1 = result.image;
+        img1 = result;
         // popup(img1, size, size);
-        return drawImageToCanvas(result.image, canvas1).then(function(result){
+        return drawImageToCanvas(result, canvas1).then(function(result){
         // return drawImageToCanvas(result.url, canvas1).then(function(result){
             console.log('test1 drawimage success:', result);
             return img1Data = result.data;
@@ -430,16 +427,16 @@ function loadImages() {
     }).catch(function(err) {
         console.log('test1 drawimage failed:', err);
         // no image? load the view and make a new image
-        var loc = parseView(test1.location);
+        var loc = parseLocation(test1.location);
         return loadView(test1, loc).then(function(result){
             // console.log('loadview result:', result);
             // grab screenshot and put it in slot1
             return screenshot(false).then(function(result){
                 console.log('screenshot result:', result);
-                img1 = result.image;
+                img1 = result;
                 console.log('img1:', img1);
-                // console.log('drawimagetocanvas:', result.image);
-                return drawImageToCanvas(result.image, canvas1).then(function(result){
+                // console.log('drawimagetocanvas:', result);
+                return drawImageToCanvas(result, canvas1).then(function(result){
                     return img1Data = result.data;
                 });
             });
@@ -450,26 +447,27 @@ function loadImages() {
         var img2URL = splitURL(test2.url).dir + test2.name + imgType;
         // console.log('img2url:', img2URL);
         return loadImage(convertGithub(img2URL)).then(function(result){
-            img2 = result.image;
+            img2 = result;
         // console.log('drawimagetocanvas:', result);
-            return drawImageToCanvas(result.image, canvas2).then(function(result){
+            return drawImageToCanvas(result, canvas2).then(function(result){
                 return img2Data = result.data;
             });
         });
     }).catch(function(err){
         // console.log('loadimg2 err? err!', err);
         // no image? load the view and make a new one
-        var loc = parseView(test2.location);
+        console.log('test2:', test2);
+        var loc = parseLocation(test2.location);
         return loadView(test2, loc).then(function(result){
             // take screenshot of the map
             return screenshot(false).then(function(result){
                 // console.log('screenshot result:', result);
                 // console.log('screenshot result:', result.src);
-                img2 = result.image;
+                img2 = result;
                 console.log('img2:', img2);
                 // put it in canvas2
                 // console.log('drawimagetocanvas:', result);
-                return drawImageToCanvas(result.image, canvas2).then(function(result){
+                return drawImageToCanvas(result, canvas2).then(function(result){
                     return img2Data = result.data;
                 });
             }).then(function(result) {
@@ -491,14 +489,12 @@ function doDiff( test ) {
     // statusDiv.innerHTML = count + " of " + views.length;
 
     // save the new image to the new canvas, stretching it to fit (in case it's retina)
-    // newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
     // make the data available
-    // var newData = newCtx.getImageData(0, 0, lsize, lsize);
     // console.log('img1Data:', img1Data);
     if (img1Data && img2Data) {
         // run the diff
-        var difference = pixelmatch(img1Data, img2Data, diff.data, lsize, lsize, {threshold: 0.1});
-        console.log('difference:',difference);
+        // var difference = pixelmatch(img1Data, img2Data, diff.data, lsize, lsize, {threshold: 0.1});
+        var difference = pixelmatch(img1Data, img2Data, diff.data, size, size, {threshold: 0.1});
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
@@ -537,14 +533,12 @@ function doDiff( test ) {
         buffer[j] = data.charCodeAt(j);
     }
     var blob = new Blob([buffer], { type: 'image/png' });
-    var urlCreator = window.URL || window.webkitURL;
-    var diffblob = urlCreator.createObjectURL( blob );
     var diff2 = new Image();
     diff2.onload = function() {
         images[test.name].diffImg = diff2;
         images[test.name].strip = makeStrip([img1, img2, diff2], lsize);
     }
-    diff2.src = diffblob;
+    diff2.src = linkFromBlob( blob );
 
 };
 
@@ -606,13 +600,10 @@ function makeRow(test, matchScore) {
     testdiv.appendChild(diffcolumn);
 
     // insert old and new images
-    console.log("img1:", img1);
     img1.width = size;
     img1.height = size;
     column1.appendChild( img1 );
     
-    // popup(img1, size, size);
-
     img2.width = size;
     img2.height = size;
     column2.appendChild( img2 );
