@@ -2,15 +2,18 @@
 /*jslint browser: true*/
 /*global Tangram, gui */
 
+
+
+
+//
 // initialize variables
-var map, views, queue, nextView,
-    newImg, newCanvas, newCtx, newData,
-    oldImg, oldCanvas, oldCtx, oldData,
-    diffImg, diffCanvas, diffCtx, diff,
+//
+
+var map, slots = {}, queue, nextView,
+    diffImg = new Image(), diff, canvas, ctx,
     images = {};
 var testsFile = "";
 var queryFile = "";
-var imgDir = "images/";
 var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = size * window.devicePixelRatio; // logical pixels
@@ -22,20 +25,36 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var data, metadata;
 var loadTime = Date();
-var write = true; // write new map images to disk
+var write = false; // write new map images to disk
+var loaded1 = false, loaded2 = false;
+
+
+
+
+
+//
+// helper functions
+//
 
 // useragent.innerHTML = "useragent: "+navigator.userAgent+"<br>Device pixel ratio: "+window.devicePixelRatio;
 
 // parse URL to check for test json passed in the query
 // eg: http://localhost:8080/?test.json
-function parseQuery() {
-    var url = window.location.search.slice(1, window.location.search.length);
-    if (url != "") {
-        return convertGithub(url);
-    }
-    else return testsFile;
+// function parseQuery() {
+//     var url = window.location.search.slice(1, window.location.search.length);
+//     if (url != "") {
+//         return convertGithub(url);
+//     }
+//     else return testsFile;
+// }
+
+// add text to the output div
+function diffSay(txt) {
+    alertDiv.innerHTML += txt;
+    alertDiv.scrollTop = alertDiv.scrollHeight;
 }
 
+// convert github links to raw github files
 function convertGithub(url) {
     var a = document.createElement('a');
     a.href = url;
@@ -47,31 +66,29 @@ function convertGithub(url) {
     return a.href;
 }
 
-testsFile = parseQuery();
-
-var parseURL = document.createElement('a');
-var testsDir = splitURL(testsFile).dir;
-var testsFilename = splitURL(testsFile).file;
-imgDir = testsDir+imgDir;
-
-function splitURL(url) {
-    var dir = url.substring(0, url.lastIndexOf('/')) + "/";
-    var file = url.substring(url.lastIndexOf('/')+1, url.length);
-    return {"dir" : dir, "file": file};
-}
+// testsFile = parseQuery();
 
 // handle enter key in filename input
-document.getElementById("loadtext").onkeypress = function(e){
+function catchEnter(e){
     if (!e) e = window.event;
     var keyCode = e.keyCode || e.which;
     if (keyCode == '13') { // Enter pressed
-        loadButton();
+        loadFile(e.target.id);
         return false;
     }
 }
 
-// load file
+// split a URL string into pieces
+function splitURL(url) {
+    var dir = url.substring(0, url.lastIndexOf('/')) + "/";
+    var file = url.substring(url.lastIndexOf('/')+1, url.length);
+    var ext = url.substring(url.lastIndexOf('.')+1, url.length);
+    return {"dir" : dir, "file": file, "ext": ext};
+}
+
+// load a file from a URL
 function readTextFile(file, callback) {
+    var filename = splitURL(file).file;
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
     try {
@@ -86,7 +103,7 @@ function readTextFile(file, callback) {
         }
         else if (rawFile.readyState === 4 && rawFile.status == "404") {
             console.error("404 – can't load file", file);
-            alertDiv.innerHTML = "404 - can't load file:<br><a href='"+testsFile+"'>"+testsFilename+"</a>";
+            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
         } else if (rawFile.readyState === 4) {
             alertDiv.innerHTML += "Had trouble loading that file.<br>";
             if (parseURL.host == "github.com") {
@@ -98,42 +115,79 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
-// parse view object and adjust map
-function parseView(view) {
-    if (Object.prototype.toString.call(view["location"]) === '[object Array]') {
-        return view; // no parsing needed
-    } else if (typeof(view["location"]) === "string") { 
-        // parse string location as array of floats
-        // console.log('loc:', view["location"]);
-        if (view["location"].indexOf(',') > 0 ) { // comma-delimited
-            var location = view["location"].split(/[ ,]+/);
-        } else if (view["location"].indexOf('/') > 0 ) { // slash-delimited
-            location = view["location"].split(/[\/]+/);
-            location = [location[1], location[2], location[0]]; // re-order
-        }
-        // console.log('location:', location);
-        location = location.map(parseFloat);
-        // console.log('location:', location);
-        // add location as property of view
-        view["location"] = location;
-        // return updated view object
-        return view;
-    } else {
-        console.log("Can't parse location:", view);
-    }
+// get link for blob
+function linkFromBlob(blob) {
+    var urlCreator = window.URL || window.webkitURL;
+    return urlCreator.createObjectURL( blob );
 }
 
-// setup output divs and canvases
-var prep = new Promise( function (resolve, reject) {
+
+
+//
+// prep scene
+//
+
+function prepMap() {
+    return new Promise(function(resolve, reject) {
+        // set sizes
+        document.getElementById("map").style.height = size+"px";
+        document.getElementById("map").style.width = size+"px";
+
+        // initialize Tangram
+        /*** Map ***/
+
+        var map = L.map('map', {
+            keyboardZoomOffset : .05,
+            zoomControl: false,
+            attributionControl : false
+        });
+        map.setView([0,0],5);
+
+        var layer = Tangram.leafletLayer({
+            scene: null,
+            // highDensityDisplay: false
+        });
+
+        window.layer = layer;
+        var scene = layer.scene;
+        window.scene = scene;
+
+        layer.on('init', function () {
+            resolve(map);
+        });
+
+        layer.addTo(map);
+    });
+}
+
+// parse url and load the appropriate file
+function loadFile(slotID) {
+    var slot = document.getElementById(slotID);
+    var url = slot.value;
+    url = convertGithub(url);
+    var urlname = splitURL(url).file;
+    var urlext = splitURL(url).ext;
+    var style = "";
+
+    // populate slots array
+    slots[slotID] = {};
+    slots[slotID].url = url;
+    slots[slotID].file = urlname;
+
+    if (urlext == "yaml") {
+        style = url.slice(0);
+        url = "defaults.json"
+    }
+
     // load and parse test json
-    readTextFile(testsFile, function(text){
-        if (testsFile == "") return false;
+    readTextFile(url, function(text){
+        if (url == "") return false;
         try {
             data = JSON.parse(text);
         } catch(e) {
-            console.log('Error parsing json:', e);
+            console.warn('Error parsing json:', e);
             // set page title
-            alertDiv.innerHTML += "Can't parse JSON:<br><a href='"+testsFile+"'>"+testsFilename+"</a><br>"+e+"<br>";
+            alertDiv.innerHTML += "Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e+"<br>";
             return false;
         }
 
@@ -141,142 +195,133 @@ var prep = new Promise( function (resolve, reject) {
         try {
             metadata = data.origin;
         } catch (e) {
-            alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+testsFile+"'>"+testsFilename+"</a><br>";
-            console.log('metadata problem:', e);
+            alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a><br>";
+            console.warn('metadata problem, continuing', e);
         }
-
         // convert tests to an array for easier traversal
-        views = Object.keys(data.tests).map(function (key) {
+        slots[slotID].tests = Object.keys(data.tests).map(function (key) {
             // add test's name as a property of the test
             data.tests[key].name = key;
+            if (urlext == "yaml") {
+                data.tests[key].url = style;
+            } else {
+                // add name of pre-rendered image to look for
+                data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+            }
 
             return data.tests[key];
         });
 
-        // clone views array
-        queue = views.slice(0);
-        nextView = parseView(queue.shift()); // pop first and parse location
+        var buttonname = slotID == "slot1" ? 'loadButton1' : 'loadButton2';
+        var button = document.getElementById(buttonname);
+        button.innerHTML = "Loaded!";
+        if (slotID == "slot1") loaded1 = true;
+        if (slotID == "slot2") loaded2 = true;
 
-        // then initialize Tangram with the first view
-        map = (function () {
-            var map_start_location = nextView.location;
-            // var map_start_location = convertGithub(nextView.location);
-            console.log('map_start_location:', map_start_location);
-
-            /*** Map ***/
-
-            var map = L.map('map', {
-                keyboardZoomOffset : .05,
-                zoomControl: false,
-                attributionControl : false
-            });
-
-            var layer = Tangram.leafletLayer({
-                scene: convertGithub(nextView.url),
-                // highDensityDisplay: false
-            });
-
-            window.layer = layer;
-            var scene = layer.scene;
-            window.scene = scene;
-
-            // setView expects format ([lat, long], zoom)
-            map.setView(map_start_location.slice(0, 3), map_start_location[2]);
-
-            layer.addTo(map);
-            
-            return map;
-
-        }());
-
-        // subscribe to Tangram's published view_complete event to
-        // load the next scene when the current scene is done drawing
-        scene.subscribe({
-            view_complete: function () {
-                // console.log('nextView:', nextView);
-                if (nextView) {
-                    // when prep is done, screenshot is made, and oldImg is loaded...
-                    Promise.all([prep,screenshot(write),loadOld(imgDir+nextView.name+imgType)]).then(function() {
-                        // perform the diff
-                        doDiff(nextView);
-                        // move along
-                        if (queue.length > 0) {
-                            nextView = parseView(queue.shift()); // pop first and parse location
-                            loadView(nextView);
-                        } else return;
-                    });
-                } else {
-                    console.log('view_complete, no nextView');
-                    return viewComplete();
-                }
-            }
-        });
-
-        // set page title
-        alertDiv.innerHTML += "Now diffing: <a href='"+queryFile+"'>"+testsFilename+"</a><br>";
+        if (loaded1 && loaded2) {
+            proceed();
+        }
 
     });
+}
 
-    // set sizes
-    document.getElementById("map").style.height = size+"px";
-    document.getElementById("map").style.width = size+"px";
+// setup output divs and canvases
+function prepPage() {
 
-    // set up canvases
+    // clone views array
+    var tests1 = slots.slot1.tests.slice(0);
+    var tests2 = slots.slot2.tests.slice(0);
 
-    // make canvas for the old image
-    oldCanvas = document.createElement('canvas');
-    oldCanvas.height = lsize;
-    oldCanvas.width = lsize;
-    oldCtx = oldCanvas.getContext('2d');
+    // subscribe to Tangram's published view_complete event
+    scene.subscribe({
+        // trigger promise resolution
+        view_complete: function () {
+                viewCompleteResolve();
+            }
+    });
 
-    // make a canvas for the newly-drawn map image
-    newCanvas = document.createElement('canvas');
-    newCanvas.height = lsize;
-    newCanvas.width = lsize;
-    newCtx = newCanvas.getContext('2d');
+    // set page title
+    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
+    msg += (slots.slot2.url == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+    msg += "<br>" + slots.slot1.tests.length + " tests:<br>";
+    diffSay(msg);
 
-    // make a canvas for the diff
-    diffCanvas = document.createElement('canvas');
-    diffCanvas.height = lsize;
-    diffCanvas.width = lsize;
-    diffCtx = diffCanvas.getContext('2d');
-    diff = diffCtx.createImageData(lsize, lsize);
+    // make canvas
+    canvas = document.createElement('canvas');
+    canvas.height = lsize;
+    canvas.width = lsize;
+    ctx = canvas.getContext('2d');
+    diff = ctx.createImageData(lsize, lsize);
 
-    resolve();
-});
+}
 
-// load an image asynchronously with a Promise
-function loadImage (url, target) {
+
+
+
+
+//
+// test functions
+//
+
+
+// parse view object and adjust map
+function parseLocation(loc) {
+    if (Object.prototype.toString.call(loc) === '[object Array]') {
+        return loc; // no parsing needed
+    } else if (typeof(loc) === "string") {
+        // parse string location as array of floats
+        if (loc.indexOf(',') > 0 ) { // comma-delimited
+            var location = loc.split(/[ ,]+/);
+        } else if (loc.indexOf('/') > 0 ) { // slash-delimited
+            location = loc.split(/[\/]+/);
+            location = [location[1], location[2], location[0]]; // re-order
+        }
+        location = location.map(parseFloat);
+        // return updated location
+        return location;
+    } else {
+        console.warn("Can't parse location:", loc);
+    }
+}
+
+// load an image from a file
+function loadImage (url) {
     return new Promise(function(resolve, reject) {
-        var image = target || new Image();
+        if (typeof url == "undefined") {
+            return reject();
+        }
+        var image = new Image();
+        // set up events
         image.onload = function() {
-            resolve({ url: url, image: image });
+            resolve(image);
         };
-        image.onerror = function(error) {
-            resolve({ error: error });
+        image.onerror = function() {
+            reject();
         };
         image.crossOrigin = 'anonymous';
+        url = convertGithub(url);
         // force-refresh any local images with a cache-buster
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
+        // try to load the image
         image.src = url;
     });
 }
 
-// load the old image
-function loadOld (img) {
-    oldImg = new Image();
-    return loadImage(img).then(function(result){
-        if (result.url) {
-            // set the old image to be drawn to the canvas once the image loads
-            oldImg = result.image;
-            oldCtx.drawImage(oldImg, 0, 0, oldImg.width, oldImg.height, 0, 0, oldCanvas.width, oldCanvas.height);
-            // make the data available to pixelmatch
-            oldData = oldCtx.getImageData(0, 0, lsize, lsize);
-        } else {
-            oldImg.style.display = "none";
-            oldData = null;
-        }
-        return result;
+// get image data object using a canvas
+function imageData (img, canvas) {
+    return new Promise(function(resolve, reject) {
+        // draw image to the canvas
+        var context = canvas.getContext("2d");
+        context.drawImage(img,
+                          0, 0, img.width, img.height,
+                          0, 0, canvas.width, canvas.height);
+        // make the data available to pixelmatch
+        var data = context.getImageData(0, 0, lsize, lsize);
+        resolve(data);
+    }, function(err) {
+        console.warn('imageData err:', err);
+        data = null;
+        reject(data);
     });
 };
 
@@ -286,30 +331,137 @@ function screenshot (save) {
         // save it to a file
         if (save) saveImage(data.blob, nextView.name);
 
-        var urlCreator = window.URL || window.webkitURL;
-        newImg = new Image();
-        return loadImage(urlCreator.createObjectURL( data.blob ), newImg);
+        return loadImage(linkFromBlob( data.blob ));
+    }).catch(function(err){
+        console.warn('screenshot failed:', err);
+        return Promise.reject();
     });
 };
 
-// perform the image comparison and update the html
-function doDiff( test ) {
-    // UPDATE READOUTS
-    var count = views.length-queue.length;
-    statusDiv.innerHTML = count + " of " + views.length;
+// use Tangram's view_complete event to resolve a promise
+var viewCompleteResolve, viewCompleteReject;
+var viewComplete;
+function resetViewComplete() {
+    viewComplete = new Promise(function(resolve, reject){
+        viewCompleteResolve = function(){
+            resolve();
+        };
+        viewCompleteReject = function(){
+            reject();
+        };
+    });
+}
 
-    // save the new image to the new canvas, stretching it to fit (in case it's retina)
-    newCtx.drawImage(newImg, 0, 0, newImg.width, newImg.height, 0, 0, newCanvas.width, newCanvas.height);
-    // make the data available
-    var newData = newCtx.getImageData(0, 0, lsize, lsize);
-    if (oldData) {
+// load a map position and zoom
+function loadView (view, location) {
+    var t = 0;
+    return new Promise(function(resolve, reject) {
+        if (!view) reject('no view');
+        // load and draw scene
+        var url = convertGithub(view.url);
+        var name = splitURL(url).file;
+        // if it's drawing, wait for it to finish
+        resetViewComplete();
+        return scene.load(url).then(function() {
+            scene.animated = false;
+            map.setView([location[0], location[1]], location[2]);
+            // scene.requestRedraw(); // necessary?
+            // wait for map to finish drawing, then return
+            return viewComplete.then(function(){
+                return resolve();
+            });
+        });
+    });
+}
+
+
+
+
+
+//
+// perform the test
+//
+
+function proceed() {
+    return prepMap().then(function(val) {
+        map = val;
+        prepPage();
+        prepBothImages();
+    });
+}
+
+// prep an image to send to the diff
+function prepImage(test) {
+    return new Promise(function(resolve, reject) {
+        // if there's an image for the test, load it
+        return loadImage(test.imageURL).then(function(result){
+            diffSay(test.name+imgType+" found; ")
+            // store it
+            test.img = result;
+            return imageData(result, canvas).then(function(result){
+                // then return the the data object
+                return test.data = result.data;
+            });
+        }).catch(function(err) {
+        // no image? load the test view in the map and make a new image
+            var loc = parseLocation(test.location);
+            return loadView(test, loc).then(function(){
+                // grab a screenshot and store it
+                return screenshot(false).then(function(result){
+                    test.img = result;
+
+                    // then return the data object
+                    return imageData(result, canvas).then(function(result){
+                        // diffSay(test.name+" mapped; ")
+                        return resolve(test.data = result.data);
+                    });
+                });
+            });
+        });
+    });
+}
+// load or create the test images
+function prepBothImages() {
+    // load next test in the lists
+    var test1 = slots.slot1.tests.shift();
+    var test2 = slots.slot2.tests.shift();
+
+    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+        diffSay("Missing test in slot ");
+        if (typeof test1 == "undefined") diffSay("1");
+        if (typeof test2 == "undefined") diffSay("2");
+        stop();
+    }
+
+    diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
+
+    prepImage(test1)
+    .then(function(){return prepImage(test2)})
+    .then(function(result){
+        doDiff(test1, test2);
+    }).then(function(result){
+        if (slots.slot1.tests.length > 0) {
+            prepBothImages();
+        } else {
+            diffSay("<br>Done!<br>");
+        }
+    });
+}
+
+// perform the image comparison and update the html
+function doDiff( test1, test2 ) {
+    // UPDATE READOUTS
+    // var count = views.length-queue.length;
+    // statusDiv.innerHTML = count + " of " + views.length;
+
+    if (test1.data && test2.data) {
         // run the diff
-        var difference = pixelmatch(newData.data, oldData.data, diff.data, lsize, lsize, {threshold: 0.1});
+        var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
         // put the diff in its canvas
-        diffCtx.putImageData(diff, 0, 0);
+        ctx.putImageData(diff, 0, 0);
     } else {
         // generating new image
         match = 100;
@@ -317,89 +469,62 @@ function doDiff( test ) {
     }
 
     // update master percentage
-    scores[test.name] = match;
+    scores[test1.name] = match;
     var totalSum = 0;
     for (var v in scores) {
         totalSum += scores[v];
     }
-    totalScore = Math.floor(totalSum/(100*count)*100);
-    var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
+    // totalScore = Math.floor(totalSum/(100*count)*100);
+    // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
+    // totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
     // make an output row
-    makeRow(test, matchScore);
+    makeRow(test1, test2, matchScore);
 
-    images[test.name] = {};
-    images[test.name].oldImg = oldImg;
-    images[test.name].newImg = newImg;
+    images[test1.name] = {};
+    images[test1.name].img1 = test1.img;
+    images[test1.name].img2 = test2.img;
 
-    // var url = c.toDataURL('image/png');
+    // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
     var buffer = new Uint8Array(data.length);
     for (var j = 0; j < data.length; ++j) {
         buffer[j] = data.charCodeAt(j);
     }
     var blob = new Blob([buffer], { type: 'image/png' });
-    var urlCreator = window.URL || window.webkitURL;
-    var diffblob = urlCreator.createObjectURL( blob );
     var diff2 = new Image();
+    diff2.height=size;
+    diff2.width=size;
     diff2.onload = function() {
-        images[test.name].diffImg = diff2;
-        images[test.name].strip = makeStrip([oldImg, newImg, diff2], lsize);
+        images[test1.name].diffImg = diff2;
+        images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize);
     }
-    diff2.src = diffblob;
-
+    diff2.src = linkFromBlob( blob );
 };
 
-function loadView (view) {
-    // load and draw scene
-    scene.load(convertGithub(view.url)).then(function() {
-        if (!view) return;
-        scene.animated = false;
-        map.setView([view.location[0], view.location[1]], view.location[2]);
-        scene.requestRedraw();
-    });
-}
-
-// save an image with a POST request to the server
-function saveImage( file, filename ) {
-    var url = '/save';
-    var data = new FormData();
-
-    data.append("image", file, filename);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', url, true);
-    xhr.onload = function () {
-        // console.log('response:', this.responseText);
-    };
-    xhr.send(data);
-}
-
 function stop() {
-    nextView = false;
-    queue = false;
+    slots.slot1.tests = [];
+    slots.slot2.tests = [];
+    diffSay("Stopping test!<br>");
 }
 
-// convert event to promise
-function viewComplete () {
-    // console.log('viewComplete');
+function drawMap() {
     return new Promise(function(resolve, reject) {
-        // console.log('viewComplete sent');
+        scene.requestRedraw();
         resolve();
     });
 }
 
-function makeRow(test, matchScore) {
+function makeRow(test1, test2, matchScore) {
     // check to see if div already exists (if re-running a test);
-    var testdiv = document.getElementById(test.name);
+    var testdiv = document.getElementById(test1.name);
 
     // if a row for this test doesn't already exist:
     if (testdiv === null) {
         // generate one
         var testdiv = document.createElement('div');
         testdiv.className = 'test';
-        testdiv.id = test.name;
+        testdiv.id = test1.name;
         tests.insertBefore(testdiv, tests.firstChild);
     } else {
         // clear it out
@@ -409,23 +534,23 @@ function makeRow(test, matchScore) {
     var title = document.createElement('div');
     title.className = 'testname';
     // make test title a link to a live version of the test"
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test.url+"#"+test.location[2]+"/"+test.location[0]+"/"+test.location[1];
-    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test.name+"</a>";
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
+    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
 
-    title.innerHTML += " <a target='_blank' href='"+test.url+"'>"+splitURL(test.url).file+"</a>";
+    title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
     testdiv.appendChild(title);
 
-    var oldcolumn = document.createElement('span');
-    oldcolumn.className = 'column';
-    oldcolumn.id = "old";
-    oldcolumn.innerHTML = "old<br>";
-    testdiv.appendChild(oldcolumn);
+    var column1 = document.createElement('span');
+    column1.className = 'column';
+    column1.id = "column1";
+    column1.innerHTML = "1<br>";
+    testdiv.appendChild(column1);
 
-    var newcolumn = document.createElement('span');
-    newcolumn.className = 'column';
-    newcolumn.id = "new";
-    newcolumn.innerHTML = "new<br>";
-    testdiv.appendChild(newcolumn);
+    var column2 = document.createElement('span');
+    column2.className = 'column';
+    column2.id = "column2";
+    column2.innerHTML = "2<br>";
+    testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
     diffcolumn.className = 'column';
@@ -433,14 +558,14 @@ function makeRow(test, matchScore) {
     diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
-    // insert old and new images
-    newImg.width = size;
-    newImg.height = size;
-    newcolumn.appendChild( newImg );
+    // insert images
+    test1.img.width = size;
+    test1.img.height = size;
+    column1.appendChild( test1.img );
     
-    oldImg.width = size;
-    oldImg.height = size;
-    oldcolumn.appendChild( oldImg );
+    test2.img.width = size;
+    test2.img.height = size;
+    column2.appendChild( test2.img );
 
     // CONTROLS //
 
@@ -453,35 +578,65 @@ function makeRow(test, matchScore) {
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
-        diffImg.src = diffCanvas.toDataURL("image/png");
+        diffImg.src = canvas.toDataURL("image/png");
         diffImg.width = size;
         diffImg.height = size;
         diffcolumn.appendChild( diffImg );
     }
 
-    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
+    // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
     var refreshButton =  document.createElement('button');
-    refreshButton.innerHTML = "refresh " + test.name;
+    refreshButton.innerHTML = "refresh " + test1.name;
     controls.appendChild(refreshButton);
-    refreshButton.onclick = function() {refresh(test);}
+    refreshButton.onclick = function() {refresh(test1);}
 
     var exportButton =  document.createElement('button');
     exportButton.innerHTML = "make PNG";
     // store current value of these global variables
     exportButton.onclick = function() {
-        popup(images[test.name].strip, size * 3, size);
+        popup(images[test1.name].strip, size * 3, size);
     };
     controls.appendChild(exportButton);
 
     var exportGifButton =  document.createElement('button');
     exportGifButton.innerHTML = "make GIF";
     exportGifButton.onclick = function() {
-        makeGif([images[test.name].oldImg, images[test.name].newImg], test.name);
+        makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
     };
     controls.appendChild(exportGifButton);
+}
 
 
+
+
+
+
+//
+// output
+//
+
+// save an image with a POST request to the server
+function saveImage( file, filename ) {
+    var url = '/save';
+    var data = new FormData();
+
+    data.append("image", file, filename);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.onload = function () {
+    };
+    xhr.send(data);
+}
+
+// save all new images
+function write() {
+    for (var img in images) {
+        img = images[x];
+        images[test.name].newImg = newImg;
+        saveImage(test.image, test.name);
+    }
 }
 
 function makeStrip(images, size) {
@@ -560,7 +715,6 @@ function makeContactSheet() {
     }
 }
 
-
 function makeInfoJSON() {
     var j = {};
     j.origin = {
@@ -585,27 +739,6 @@ function download(url, type) {
     document.body.removeChild(a);
 }
 
-function rerunAll() {
-    tests.innerHTML = "";
-    totalScoreDiv.innerHTML = "";
-    nextView = false;
-    totalSum = 0;
-    totalScore = 0;
-    queue = views.slice(0);
-    startRender();
-}
 
-function refresh(test) {
-    queue.push(test);
-    startRender();
-}
-
-function startRender() {
-    // if map is rendering, wait for it to finish, then start over
-    Promise.all([viewComplete]).then(function() {
-        // move along
-        nextView = queue.shift()
-        loadView(nextView);
-    });
-}
-
+document.getElementById("loadButton1").click();
+document.getElementById("loadButton2").click();

@@ -5,9 +5,11 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>Differ · Mapzen</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://mapzen.com/common/styleguide/styles/styleguide.css">
+  <!-- <link rel="stylesheet" href="https://mapzen.com/common/styleguide/styles/styleguide.css"> -->
+  <!-- <link rel="stylesheet" href="lib/styleguide.css"> -->
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" />
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" /> -->
+    <link rel="stylesheet" href="lib/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
 
     <script>
@@ -22,17 +24,25 @@
   </head>
 
   <body>
-  <div id="content" style="margin: auto">
+    <div id="content" style="margin: auto">
     <div id="header">
         <h1>Tangram Differ</h1>
-    Test file: <input id="loadtext" value="views.json"></input><button id="gobutton" onclick="loadButton()">GO</button>
-    <div id="examples">
-        Example urls:<br>
-        <a href="?views.json">views.json</a> 
-        <a href="?https://gist.githubusercontent.com/meetar/a7629802b06d3c260064/raw/6c0b9d149e1800eed11afd9cf498f8590ec9ced3/test-views.json">test-views.json</a> 
-        <a href="?https://github.com/tangrams/differ/blob/gh-pages/test/test.json">test.json</a> 
-        <a href="?https://gist.githubusercontent.com/meetar/4063a564e99c224ecbfd/raw/29b02d70293de17fa7283e2465a0b99e61eef7ed/problem.json">problem.json</a>
-    </div>
+
+    Compare:<br>
+
+    <input id="slot1" class="slot" value="https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton1" onclick="loadFile('slot1')">LOAD</button>
+
+    <br>to either:<br>
+
+    <div style="width: 100%;"><button class="chooser">A local build</button></div>
+
+    <br>or to:<br>
+
+    <input id="slot2" class="slot" value="https://github.com/tangrams/refill-style/blob/4b1fe333b59b10838f9130a4dcab8f2470cf4b24/refill-style.yaml" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton2" onclick="loadFile('slot2')">LOAD</button>
+
+
+
+
     </div>
     <!-- set up containers for old, new, and difference -->
     <div id="map"></div>
@@ -49,13 +59,15 @@
             <button onclick="makeContactSheet()">Export contact sheet</button>
             <button onclick="makeInfoJSON()">Export info json</button>
             <button onclick="stop()">Stop tests</button>
+            <button onclick="write()">Save new images</button>
         </div>
     </div>
     <!-- controls -->
     <div id="tests"></div>
 
     <!-- 3rd party libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.js"></script> -->
+    <script src="lib/leaflet.js"></script>
     <!-- bog-standard leaflet URL hash -->
     <script src="lib/leaflet-hash.js"></script>
     <!-- write data to a file and save it to disk -->
@@ -68,6 +80,7 @@
 
     <!-- Main tangram library -->
     <script src="https://mapzen.com/tangram/0.6/tangram.debug.js"></script>
+    <!-- <script src="lib/tangram.debug.js"></script> -->
     
     <!-- differ code -->
     <script src="differ.js"></script>
@@ -80,6 +93,7 @@
 
       </div>
   </div>
-  <script src="https://mapzen.com/common/styleguide/scripts/mapzen-styleguide.min.js"></script>
+  <!-- <script src="https://mapzen.com/common/styleguide/scripts/mapzen-styleguide.min.js"></script> -->
+  <!-- <script src="lib/mapzen-styleguide.min.js"></script> -->
 </body>
 </html>
