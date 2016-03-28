@@ -173,7 +173,7 @@ function loadFile(slotID) {
 
     if (urlext == "yaml") {
         style = url.slice(0);
-        url = "defaults.json"
+        url = "defaults1.json"
     }
 
     // load and parse test json
@@ -182,7 +182,7 @@ function loadFile(slotID) {
         try {
             data = JSON.parse(text);
         } catch(e) {
-            console.log('Error parsing json:', e);
+            console.warn('Error parsing json:', e);
             // set page title
             alertDiv.innerHTML += "Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e+"<br>";
             return false;
@@ -193,15 +193,13 @@ function loadFile(slotID) {
             metadata = data.origin;
         } catch (e) {
             alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a><br>";
-            console.log('metadata problem, continuing', e);
+            console.warn('metadata problem, continuing', e);
         }
         // convert tests to an array for easier traversal
         slots[slotID].tests = Object.keys(data.tests).map(function (key) {
-            // console.log('data.tests[key]:', data.tests[key]);
             // add test's name as a property of the test
             data.tests[key].name = key;
             if (urlext == "yaml") {
-                // console.log('style:', style);
                 data.tests[key].url = style;
             } else {
                 // add name of pre-rendered image to look for
@@ -211,14 +209,11 @@ function loadFile(slotID) {
             return data.tests[key];
         });
 
-        // console.log(slotID, "loaded!");
         var buttonname = slotID == "slot1" ? 'loadButton1' : 'loadButton2';
         var button = document.getElementById(buttonname);
         button.innerHTML = "Loaded!";
 
         if (Object.keys(slots).length == 2) {
-            // console.log('slotetst:', slots);
-            // console.log('Two views loaded, proceeding');
             proceed();
         }
 
@@ -229,12 +224,9 @@ function loadFile(slotID) {
 function prepPage() {
 
     // clone views array
-    // console.log('slots:', slots);
     var tests1 = slots.slot1.tests.slice(0);
     var tests2 = slots.slot2.tests.slice(0);
 
-    // console.log('test1:', tests1);
-    // console.log('test2:', tests2);
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
         // trigger promise resolution
@@ -276,12 +268,10 @@ function prepPage() {
 
 // parse view object and adjust map
 function parseLocation(loc) {
-    // console.log('loc:', loc);
     if (Object.prototype.toString.call(loc) === '[object Array]') {
         return loc; // no parsing needed
     } else if (typeof(loc) === "string") {
         // parse string location as array of floats
-        // console.log('loc:', loc);
         if (loc.indexOf(',') > 0 ) { // comma-delimited
             var location = loc.split(/[ ,]+/);
         } else if (loc.indexOf('/') > 0 ) { // slash-delimited
@@ -292,7 +282,7 @@ function parseLocation(loc) {
         // return updated location
         return location;
     } else {
-        console.log("Can't parse location:", loc);
+        console.warn("Can't parse location:", loc);
     }
 }
 
@@ -321,7 +311,6 @@ function loadImage (url) {
 
 // get image data object using a canvas
 function imageData (img, canvas) {
-    // console.log('imageData?', img, canvas);
     return new Promise(function(resolve, reject) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
@@ -332,7 +321,7 @@ function imageData (img, canvas) {
         var data = context.getImageData(0, 0, lsize, lsize);
         resolve(data);
     }, function(err) {
-        console.log('imageData err:', err);
+        console.warn('imageData err:', err);
         data = null;
         reject(data);
     });
@@ -354,7 +343,6 @@ var viewComplete;
 function resetViewComplete() {
     viewComplete = new Promise(function(resolve, reject){
         viewCompleteResolve = function(){
-            console.log('VC RESOLVE');
             resolve();
         };
         viewCompleteReject = function(){
@@ -362,14 +350,9 @@ function resetViewComplete() {
         };
     });
 }
-resetViewComplete();
-viewCompleteResolve();
-
-console.log('init viewcomplete:', viewComplete);
 
 // load a map position and zoom
 function loadView (view, location) {
-    console.log(view.url, location);
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
@@ -379,13 +362,11 @@ function loadView (view, location) {
         // if it's drawing, wait for it to finish
         resetViewComplete();
         return scene.load(url).then(function() {
-            console.log("RENDERING", name)
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
             // wait for map to finish drawing, then return
             return viewComplete.then(function(){
-                console.log('view complete!')
                 return resolve();
             });
         });
@@ -408,32 +389,26 @@ function proceed() {
 // prep an image to send to the diff
 function prepImage(test) {
     return new Promise(function(resolve, reject) {
-        console.log("> PREPIMAGE", test);
         // if there's an image for the test, load it
         return loadImage(test.imageURL).then(function(result){
-            console.log("loadimage", test);
             diffSay(test.name+imgType+" found; ")
             // store it
             test.img = result;
             return imageData(result, canvas).then(function(result){
-                console.log("imagedata", test);
                 // then return the the data object
                 return test.data = result.data;
             });
         }).catch(function(err) {
-            // console.log("catch", test);
         // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             return loadView(test, loc).then(function(){
                 // grab a screenshot and store it
                 return screenshot(false).then(function(result){
-                    console.log('screenshot?', result.src);
                     test.img = result;
 
                     // then return the data object
                     return imageData(result, canvas).then(function(result){
-                        console.log("imagedata", test);
-                        diffSay(test.name+" mapped; ")
+                        // diffSay(test.name+" mapped; ")
                         return resolve(test.data = result.data);
                     });
                 });
@@ -445,9 +420,7 @@ function prepImage(test) {
 function prepBothImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
-    // console.log('test1:', test1);
     var test2 = slots.slot2.tests.shift();
-    // console.log('test2:', test2);
 
     if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
         diffSay("Missing test in slot ");
@@ -461,7 +434,6 @@ function prepBothImages() {
     prepImage(test1)
     .then(function(){return prepImage(test2)})
     .then(function(result){
-        // console.log('prepped?', result);
         doDiff(test1, test2);
     }).then(function(result){
         if (slots.slot1.tests.length > 0) {
@@ -478,7 +450,6 @@ function doDiff( test1, test2 ) {
     // var count = views.length-queue.length;
     // statusDiv.innerHTML = count + " of " + views.length;
 
-    console.log('dodiff:', test1, test2);
     if (test1.data && test2.data) {
         // run the diff
         var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
@@ -534,10 +505,8 @@ function stop() {
 }
 
 function drawMap() {
-    // console.log('drawMap');
     return new Promise(function(resolve, reject) {
         scene.requestRedraw();
-        // console.log('drawMap resolve');
         resolve();
     });
 }
@@ -611,7 +580,7 @@ function makeRow(test1, test2, matchScore) {
         diffcolumn.appendChild( diffImg );
     }
 
-    controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
+    // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
     var refreshButton =  document.createElement('button');
     refreshButton.innerHTML = "refresh " + test1.name;
@@ -653,7 +622,6 @@ function saveImage( file, filename ) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', url, true);
     xhr.onload = function () {
-        // console.log('response:', this.responseText);
     };
     xhr.send(data);
 }
@@ -668,7 +636,6 @@ function write() {
 }
 
 function makeStrip(images, size) {
-    // console.log('makeStrip');
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
