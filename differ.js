@@ -25,6 +25,7 @@ var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
 var loadButton1 = document.getElementById("loadButton1");
 var loadButton2 = document.getElementById("loadButton2");
+var localButton = document.getElementById("localButton");
 var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
@@ -105,11 +106,11 @@ function readTextFile(file, callback) {
         }
         else if (rawFile.readyState === 4 && rawFile.status == "404") {
             console.error("404 – can't load file", file);
-            alertDiv.innerHTML = "404 - can't load file <a href='"+file+"'>"+filename+"</a>";
+            diffSay("404 - can't load file <a href='"+file+"'>"+filename+"</a>");
         } else if (rawFile.readyState === 4) {
-            alertDiv.innerHTML += "Had trouble loading that file.<br>";
+            diffSay("Had trouble loading that file.");
             if (parseURL.host == "github.com") {
-                alertDiv.innerHTML += "I notice you're trying to load a file from github, make sure you're using the \"raw\" file!<br>"
+                diffSay("I notice you're trying to load a file from github, make sure you're using the \"raw\" file!");
             }
         }
 
@@ -172,6 +173,11 @@ function prepMap() {
 function loadFile(slotID) {
     var slot = document.getElementById(slotID);
     var url = slot.value;
+    var local = false;
+    if (url == "local") {
+        local = true;
+        url = slot1.value;
+    }
     url = convertGithub(url);
     var urlname = splitURL(url).file;
     var urlext = splitURL(url).ext;
@@ -212,6 +218,8 @@ function loadFile(slotID) {
             data.tests[key].name = key;
             if (urlext == "yaml") {
                 data.tests[key].url = style;
+            } else if (local) {
+                data.tests[key].imageURL = null;
             } else {
                 // add name of pre-rendered image to look for
                 data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
@@ -235,7 +243,7 @@ function loadFile(slotID) {
 function startLocalBuild() {
     loadButton2.innerHTML = "Load";
     var slot2 = document.getElementById('slot2')
-    slot2.innerHTML = "local";
+    slot2.value = "local";
     loadButton2.click();
         
 }
@@ -254,13 +262,18 @@ function prepPage() {
             }
     });
 
-    // set page title
+    // clear messages
+    alertDiv.innerHTML = "";
+    // clear out any existing tests
+    tests.innerHTML = "";
+
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
-    msg += (slots.slot2.url == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+    msg += (slot2.value == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
     msg += "<br>" + slots.slot1.tests.length + " tests:<br>";
     diffSay(msg);
 
     // make canvas
+    if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
     canvas = document.createElement('canvas');
     canvas.height = lsize;
     canvas.width = lsize;
@@ -414,7 +427,7 @@ function prepImage(test) {
             test.img = result;
             return imageData(result, canvas).then(function(result){
                 // then return the the data object
-                return test.data = result.data;
+                return resolve(test.data = result.data);
             });
         }).catch(function(err) {
         // no image? load the test view in the map and make a new image
@@ -441,6 +454,7 @@ function prepBothImages() {
     var test2 = slots.slot2.tests.shift();
 
     if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+
         diffSay("Missing test in slot ");
         if (typeof test1 == "undefined") diffSay("1");
         if (typeof test2 == "undefined") diffSay("2");
@@ -450,8 +464,9 @@ function prepBothImages() {
     diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
 
     prepImage(test1)
-    .then(function(){return prepImage(test2)})
     .then(function(result){
+        return prepImage(test2)
+    }).then(function(result){
         doDiff(test1, test2);
     }).then(function(result){
         if (slots.slot1.tests.length > 0) {
@@ -531,11 +546,9 @@ function stop() {
     loadButton2.innerHTML = "Load";
 }
 
-function drawMap() {
-    return new Promise(function(resolve, reject) {
-        scene.requestRedraw();
-        resolve();
-    });
+function refresh(test) {
+    queue.push(test);
+    startRender();
 }
 
 function makeRow(test1, test2, matchScore) {
@@ -764,4 +777,5 @@ function download(url, type) {
 
 
 loadButton1.click();
-loadButton2.click();
+// loadButton2.click();
+localButton.click();

@@ -5,8 +5,8 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <title>Differ · Mapzen</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- <link rel="stylesheet" href="https://mapzen.com/common/styleguide/styles/styleguide.css"> -->
-  <!-- <link rel="stylesheet" href="lib/styleguide.css"> -->
+  <link rel="stylesheet" href="https://mapzen.com/common/styleguide/styles/styleguide.css">
+  <link rel="stylesheet" href="lib/styleguide.css">
 
     <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.0-beta.2/leaflet.css" /> -->
     <link rel="stylesheet" href="lib/leaflet.css" />
@@ -30,11 +30,11 @@
 
     Compare:<br>
 
-    <input id="slot1" class="slot" value="https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton1" onclick="loadFile('slot1')">LOAD</button>
+    <input id="slot1" class="slot" value="https://github.com/tangrams/differ/blob/gh-pages/test/test.json" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton1" onclick="loadFile('slot1')">LOAD</button>
 
     <br>to either:<br>
 
-    <div style="width: 100%;"><button class="chooser">A local build</button></div>
+    <div style="width: 100%;"><button id="localButton" class="chooser" onclick="startLocalBuild()">A local build</button></div>
 
     <br>or to:<br>
 
@@ -54,11 +54,11 @@
             <div id="status">&nbsp;</div>
         </div>
         <div style="width:25%; float: right">
-            total score:<br>
+            <!-- total score:<br> -->
             <span id="totalScore" class="header">&nbsp;</span>
             <button onclick="makeContactSheet()">Export contact sheet</button>
             <button onclick="makeInfoJSON()">Export info json</button>
-            <button onclick="stop()">Stop tests</button>
+            <button onclick="stopButton()">Stop tests</button>
             <button onclick="write()">Save new images</button>
         </div>
     </div>
@@ -93,7 +93,7 @@
 
       </div>
   </div>
-  <!-- <script src="https://mapzen.com/common/styleguide/scripts/mapzen-styleguide.min.js"></script> -->
-  <!-- <script src="lib/mapzen-styleguide.min.js"></script> -->
+  <script src="https://mapzen.com/common/styleguide/scripts/mapzen-styleguide.min.js"></script>
+  <script src="lib/mapzen-styleguide.min.js"></script>
 </body>
 </html>
