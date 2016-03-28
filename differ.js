@@ -26,7 +26,7 @@ var totalScoreDiv = document.getElementById("totalScore");
 var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
-
+var loaded1 = false, loaded2 = false;
 
 
 
@@ -127,11 +127,13 @@ function linkFromBlob(blob) {
 // prep scene
 //
 
-map = prepMap();
-
 function prepMap() {
-    // initialize Tangram
-    map = (function () {
+    return new Promise(function(resolve, reject) {
+        // set sizes
+        document.getElementById("map").style.height = size+"px";
+        document.getElementById("map").style.width = size+"px";
+
+        // initialize Tangram
         /*** Map ***/
 
         var map = L.map('map', {
@@ -139,6 +141,7 @@ function prepMap() {
             zoomControl: false,
             attributionControl : false
         });
+        map.setView([0,0],5);
 
         var layer = Tangram.leafletLayer({
             scene: null,
@@ -149,12 +152,12 @@ function prepMap() {
         var scene = layer.scene;
         window.scene = scene;
 
+        layer.on('init', function () {
+            resolve(map);
+        });
+
         layer.addTo(map);
-
-        return map;
-
-    }());
-    return map;
+    });
 }
 
 // parse url and load the appropriate file
@@ -173,7 +176,7 @@ function loadFile(slotID) {
 
     if (urlext == "yaml") {
         style = url.slice(0);
-        url = "defaults1.json"
+        url = "defaults.json"
     }
 
     // load and parse test json
@@ -212,8 +215,10 @@ function loadFile(slotID) {
         var buttonname = slotID == "slot1" ? 'loadButton1' : 'loadButton2';
         var button = document.getElementById(buttonname);
         button.innerHTML = "Loaded!";
+        if (slotID == "slot1") loaded1 = true;
+        if (slotID == "slot2") loaded2 = true;
 
-        if (Object.keys(slots).length == 2) {
+        if (loaded1 && loaded2) {
             proceed();
         }
 
@@ -240,13 +245,6 @@ function prepPage() {
     msg += (slots.slot2.url == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
     msg += "<br>" + slots.slot1.tests.length + " tests:<br>";
     diffSay(msg);
-
-
-    // set sizes
-    document.getElementById("map").style.height = size+"px";
-    document.getElementById("map").style.width = size+"px";
-
-    // set up canvases
 
     // make canvas
     canvas = document.createElement('canvas');
@@ -334,6 +332,9 @@ function screenshot (save) {
         if (save) saveImage(data.blob, nextView.name);
 
         return loadImage(linkFromBlob( data.blob ));
+    }).catch(function(err){
+        console.warn('screenshot failed:', err);
+        return Promise.reject();
     });
 };
 
@@ -382,8 +383,11 @@ function loadView (view, location) {
 //
 
 function proceed() {
-    prepPage();
-    prepBothImages();
+    return prepMap().then(function(val) {
+        map = val;
+        prepPage();
+        prepBothImages();
+    });
 }
 
 // prep an image to send to the diff
