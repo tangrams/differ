@@ -23,6 +23,8 @@ var tests = document.getElementById("tests");
 var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
 var totalScoreDiv = document.getElementById("totalScore");
+var loadButton1 = document.getElementById("loadButton1");
+var loadButton2 = document.getElementById("loadButton2");
 var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
@@ -135,28 +137,34 @@ function prepMap() {
 
         // initialize Tangram
         /*** Map ***/
+        if (typeof window.map == "undefined") {
 
-        var map = L.map('map', {
-            keyboardZoomOffset : .05,
-            zoomControl: false,
-            attributionControl : false
-        });
-        map.setView([0,0],5);
+            var map = L.map('map', {
+                keyboardZoomOffset : .05,
+                zoomControl: false,
+                attributionControl : false
+            });
+            map.setView([0,0],5);
 
-        var layer = Tangram.leafletLayer({
-            scene: null,
-            // highDensityDisplay: false
-        });
+            var layer = Tangram.leafletLayer({
+                scene: null,
+                // highDensityDisplay: false
+            });
 
-        window.layer = layer;
-        var scene = layer.scene;
-        window.scene = scene;
+            window.layer = layer;
+            var scene = layer.scene;
+            window.scene = scene;
 
-        layer.on('init', function () {
-            resolve(map);
-        });
+            layer.on('init', function () {
+                resolve(map);
+            });
 
-        layer.addTo(map);
+            layer.addTo(map);
+
+        } else{
+            resolve(window.map);
+        }
+
     });
 }
 
@@ -212,8 +220,7 @@ function loadFile(slotID) {
             return data.tests[key];
         });
 
-        var buttonname = slotID == "slot1" ? 'loadButton1' : 'loadButton2';
-        var button = document.getElementById(buttonname);
+        var button = slotID == "slot1" ? loadButton1 : loadButton2;
         button.innerHTML = "Loaded!";
         if (slotID == "slot1") loaded1 = true;
         if (slotID == "slot2") loaded2 = true;
@@ -225,6 +232,13 @@ function loadFile(slotID) {
     });
 }
 
+function startLocalBuild() {
+    loadButton2.innerHTML = "Load";
+    var slot2 = document.getElementById('slot2')
+    slot2.innerHTML = "local";
+    loadButton2.click();
+        
+}
 // setup output divs and canvases
 function prepPage() {
 
@@ -443,6 +457,7 @@ function prepBothImages() {
         if (slots.slot1.tests.length > 0) {
             prepBothImages();
         } else {
+            stop();
             diffSay("<br>Done!<br>");
         }
     });
@@ -502,10 +517,18 @@ function doDiff( test1, test2 ) {
     diff2.src = linkFromBlob( blob );
 };
 
+function stopButton() {
+    diffSay("Stopping test!<br>");
+    stop();
+}
+
 function stop() {
     slots.slot1.tests = [];
     slots.slot2.tests = [];
-    diffSay("Stopping test!<br>");
+    loaded1 = false;
+    loaded2 = false;
+    loadButton1.innerHTML = "Load";
+    loadButton2.innerHTML = "Load";
 }
 
 function drawMap() {
@@ -740,5 +763,5 @@ function download(url, type) {
 }
 
 
-document.getElementById("loadButton1").click();
-document.getElementById("loadButton2").click();
+loadButton1.click();
+loadButton2.click();
