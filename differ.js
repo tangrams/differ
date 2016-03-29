@@ -249,6 +249,7 @@ function startLocalBuild() {
 // setup output divs and canvases
 function prepPage() {
 
+    images = {};
     // clone views array
     var tests1 = slots.slot1.tests.slice(0);
     var tests2 = slots.slot2.tests.slice(0);
