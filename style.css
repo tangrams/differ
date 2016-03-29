@@ -61,6 +61,11 @@ button {
     margin-left: .5em;
     clear: left;
     float: left;
+    border: 1px solid #d4d4d4;
+    border-bottom-color: #bcbcbc;
+    border-radius: 4px;
+    /*-webkit-border-radius: 4px;*/
+    background: -webkit-linear-gradient(#fafafa,#eaeaea);
 }
 
 .goButton {
@@ -68,7 +73,7 @@ button {
     clear: none;
     margin: 1em;
     font-size: 2em;
-    border: 3px solid gray;
+    border: 2px solid #bbb;
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
 }
@@ -81,9 +86,11 @@ button {
     background-color: white;
 }
 #goButton {
+    background: none;
     background-color: #ccffcc;
 }
 #stopButton {
+    background: none;
     background-color: #ffcccc;
     display: none;
 }
