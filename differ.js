@@ -179,7 +179,7 @@ function loadFile(slotID) {
     var slot = document.getElementById(slotID);
     var url = slot.value;
     var local = false;
-    if (url == "local") {
+    if (url == "a local build") {
         local = true;
         url = slot1.value;
     }
@@ -238,17 +238,13 @@ function loadFile(slotID) {
         if (slotID == "slot1") loaded1 = true;
         if (slotID == "slot2") loaded2 = true;
 
-        if (loaded1 && loaded2) {
-            proceed();
-        }
-
     });
 }
 
 function startLocalBuild() {
     loadButton2.innerHTML = "Load";
     var slot2 = document.getElementById('slot2')
-    slot2.value = "local";
+    slot2.value = "a local build";
     loadButton2.click();
         
 }
@@ -279,7 +275,7 @@ function prepPage() {
     numTests = slots.slot1.tests.length;
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
-    msg += (slot2.value == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+    msg += (slot2.value == "a local build") ? "a local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
     msg += "<br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
@@ -412,7 +408,23 @@ function loadView (view, location) {
     });
 }
 
+function goClick() {
+    goButton.blur();
+    if (loaded1 && loaded2) {
+        proceed();
+        goButton.innerHTML = "STOP";
+        goButton.setAttribute("style","background-color:#ffcccc");
+        goButton.setAttribute("onclick","stopClick()");
+    } else {
+        diffSay("Load two files<br>");
+    }
+}
 
+function stopClick() {
+    goButton.blur();
+    diffSay("Stopping test!<br>");
+    stop();
+}
 
 
 
@@ -547,11 +559,6 @@ function doDiff( test1, test2 ) {
     diff2.src = linkFromBlob( blob );
 };
 
-function stopButton() {
-    diffSay("Stopping test!<br>");
-    stop();
-}
-
 function stop() {
     slots.slot1.tests = [];
     slots.slot2.tests = [];
@@ -559,6 +566,9 @@ function stop() {
     loaded2 = false;
     loadButton1.innerHTML = "Load";
     loadButton2.innerHTML = "Load";
+    goButton.innerHTML = "GO";
+    goButton.setAttribute("style","background-color:#ccffcc");
+    goButton.setAttribute("onclick","goClick()");
 }
 
 function refresh(test) {
@@ -791,6 +801,6 @@ function download(url, type) {
 }
 
 
-loadButton1.click();
-loadButton2.click();
+// loadButton1.click();
+// loadButton2.click();
 // localButton.click();

@@ -30,7 +30,8 @@
 
     Compare:<br>
 
-    <input id="slot1" class="slot" value="https://github.com/tangrams/differ/blob/gh-pages/test/test.json" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton1" onclick="loadFile('slot1')">LOAD</button>
+    <input id="slot1" class="slot" value="https://github.com/tangrams/differ/blob/gh-pages/test/test.json" onkeypress="catchEnter(event)"></input>
+    <button class="goButton" id="loadButton1" onclick="loadFile('slot1')">LOAD</button>
 
     <br>to either:<br>
 
@@ -39,7 +40,8 @@
     <br>or to:<br>
 
     <input id="slot2" class="slot" value="https://github.com/tangrams/refill-style/blob/4b1fe333b59b10838f9130a4dcab8f2470cf4b24/refill-style.yaml" onkeypress="catchEnter(event)"></input><button class="goButton" id="loadButton2" onclick="loadFile('slot2')">LOAD</button>
-
+    <br>
+    <button class="goButton" id="goButton" onclick="goClick()">GO</button>
 
 
 
@@ -57,7 +59,6 @@
             <span id="totalScore" class="header">&nbsp;</span>
             <button onclick="makeContactSheet()">Export contact sheet</button>
             <button onclick="makeInfoJSON()">Export info json</button>
-            <button onclick="stopButton()">Stop tests</button>
             <button onclick="write()">Save new images</button>
         </div>
     </div>

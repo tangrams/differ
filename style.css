@@ -57,6 +57,7 @@ body {
 button {
     font-size: 1em;
     line-height: 1.5em;
+    margin: 2px;
     margin-left: .5em;
     clear: left;
     float: left;
@@ -65,6 +66,18 @@ button {
 .goButton {
     float: none;
     clear: none;
+}
+
+#goButton {
+    font-size: 2em;
+    background-color: #ccffcc;
+    border: 3px solid gray;
+    -moz-border-radius: 10px;
+    -webkit-border-radius: 10px;
+}
+#goButton:hover {
+    top: -5px;
+    color: white;
 }
 
 button.chooser {
