@@ -17,9 +17,10 @@ var queryFile = "";
 var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = size * window.devicePixelRatio; // logical pixels
-var scores = [], totalScore = 0;
+var numTests, scores = [], totalScore = 0;
 var tests = document.getElementById("tests");
-var statusDiv = document.getElementById("status");
+var statusDiv = document.getElementById("statustext");
+var progressBar = document.getElementById("progressbar");
 var alertDiv = document.getElementById("alert");
 var totalScoreDiv = document.getElementById("totalScore");
 var loadButton1 = document.getElementById("loadButton1");
@@ -123,6 +124,11 @@ function linkFromBlob(blob) {
     return urlCreator.createObjectURL( blob );
 }
 
+// update progress bar, remaining = number of tests left to do
+function updateProgress(remaining) {
+    var percent = 100 - (remaining / numTests) * 100;
+    progressBar.setAttribute("style", "width:"+percent + "%");
+}
 
 
 //
@@ -249,6 +255,9 @@ function startLocalBuild() {
 // setup output divs and canvases
 function prepPage() {
 
+    // reset progress bar
+    updateProgress(numTests);
+    // clear stored images
     images = {};
     // clone views array
     var tests1 = slots.slot1.tests.slice(0);
@@ -266,10 +275,12 @@ function prepPage() {
     alertDiv.innerHTML = "";
     // clear out any existing tests
     tests.innerHTML = "";
-
+    // count tests
+    numTests = slots.slot1.tests.length;
+    // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
     msg += (slot2.value == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
-    msg += "<br>" + slots.slot1.tests.length + " tests:<br>";
+    msg += "<br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
     // make canvas
@@ -461,7 +472,7 @@ function prepBothImages() {
         stop();
     }
 
-    diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
+    // diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
 
     prepImage(test1)
     .then(function(result){
@@ -474,6 +485,7 @@ function prepBothImages() {
         } else {
             stop();
             diffSay("<br>Done!<br>");
+            console.log("Done!");
         }
     });
 }
@@ -497,6 +509,9 @@ function doDiff( test1, test2 ) {
         match = 100;
         matchScore = "";
     }
+
+    // update progressbar
+    updateProgress(slots.slot1.tests.length);
 
     // update master percentage
     scores[test1.name] = match;
@@ -579,19 +594,19 @@ function makeRow(test1, test2, matchScore) {
     var column1 = document.createElement('span');
     column1.className = 'column';
     column1.id = "column1";
-    column1.innerHTML = "1<br>";
+    // column1.innerHTML = "1<br>";
     testdiv.appendChild(column1);
 
     var column2 = document.createElement('span');
     column2.className = 'column';
     column2.id = "column2";
-    column2.innerHTML = "2<br>";
+    // column2.innerHTML = "2<br>";
     testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
     diffcolumn.className = 'column';
     diffcolumn.id = "diff";
-    diffcolumn.innerHTML = "diff<br>";
+    // diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
     // insert images

@@ -79,9 +79,14 @@ button.chooser {
     color: #aaa;
 }
 
-#useragent {
-    margin-top: 1em;
-    font-size: .8em;
+#progress {
+    height: 6px;
+    border: 1px solid lightgray;
+}
+#progressbar {
+    height: 100%;
+    float: left;
+    background-color: #33ee33;
 }
 
 #map {
