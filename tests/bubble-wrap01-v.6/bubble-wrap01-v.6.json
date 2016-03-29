@@ -1,0 +1,179 @@
+{
+    "origin": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36",
+        "devicePixelRatio": 2,
+        "time": "Tue Mar 29 2016 17:40:09 GMT-0400 (EDT)"
+    },
+
+    "tests": {
+        "world0": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [0,0,0]
+        },
+        "nyc1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.70532700869127,-74.0097749233246,10]
+        },
+        "nyc2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.70532700869127,-74.0097749233246,15]
+        },
+        "nyc3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.70532700869127,-74.0097749233246,16]
+        },
+        "nyc4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.70532700869127,-74.0097749233246,17]
+        },
+        "nyc5": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.70532700869127,-74.0097749233246,18]
+        },
+        "zoo": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.767653506304654,-73.97185871788633,18.35]
+        },
+
+        "paris1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [48.853,2.349,10]
+        },
+        "paris2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [48.853,2.349,15]
+        },
+        "paris3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [48.853,2.349,16]
+        },
+        "paris4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [48.853,2.349,17]
+        },
+        "paris5": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [48.853,2.349,18]
+        },
+
+        "sf1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.794320114406965,-122.39521661967713,10]
+        },
+        "sf2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.794320114406965,-122.39521661967713,15]
+        },
+        "sf3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.794320114406965,-122.39521661967713,16]
+        },
+        "sf4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.794320114406965,-122.39521661967713,17]
+        },
+        "sf5": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.794320114406965,-122.39521661967713,18]
+        },
+
+        "oak1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.804,-122.271,10]
+        },
+        "oak2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.804,-122.271,15]
+        },
+        "oak3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.804,-122.271,16]
+        },
+        "oak4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.804,-122.271,17]
+        },
+        "oak5": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.804,-122.271,18]
+        },
+        "tok1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [35.69000367523146,139.69199627637863,10]
+        },
+        "tok2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [35.69000367523146,139.69199627637863,15]
+        },
+        "tok3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [35.69000367523146,139.69199627637863,16]
+        },
+        "tok4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [35.69000367523146,139.69199627637863,17]
+        },
+        "tok5": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [35.69000367523146,139.69199627637863,18]
+        },
+
+        "bkbridge": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.71148940753243,-74.00395994758611,17.5]
+        },
+        "bqe1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.700670648879,-73.99016172404833,18]
+        },
+        "bqe2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.680158142468244,-74.00420833056701,17]
+        },
+        "jfk": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [40.644548507060854,-73.78533814798226,15.625]
+        },
+        "atl": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [33.891744,-84.259164,16]
+        },
+        "bcn": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [41.38319564807807,2.1767943761804625,16]
+        },
+        "bcn2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [41.425056262144864,2.2162650446394854,16.75]
+        },
+        "la": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [34.03783,-118.27437,16.5]
+        },
+
+        "lombard": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80205,-122.41893,18.475]
+        },
+        "stair": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80096,-122.42076,19]
+        },
+        "greenwich1": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80269,-122.40618,16]
+        },
+        "greenwich2": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80269,-122.40618,17]
+        },
+        "greenwich3": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80269,-122.40618,18]
+        },
+        "greenwich4": {
+            "url": "https://github.com/tangrams/bubble-wrap/blob/3778b810cfbd7ad08268c906b670f747cc624baf/bubble-wrap.yaml",
+            "location": [37.80269,-122.40618,19]
+        }
+    }
+}
