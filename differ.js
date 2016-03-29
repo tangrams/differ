@@ -18,10 +18,9 @@ var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = size * window.devicePixelRatio; // logical pixels
 var scores = [], totalScore = 0;
-var useragent = document.getElementById("useragent");
 var tests = document.getElementById("tests");
-var alertDiv = document.getElementById("alert");
 var statusDiv = document.getElementById("status");
+var alertDiv = document.getElementById("alert");
 var totalScoreDiv = document.getElementById("totalScore");
 var loadButton1 = document.getElementById("loadButton1");
 var loadButton2 = document.getElementById("loadButton2");
@@ -270,7 +269,7 @@ function prepPage() {
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
     msg += (slot2.value == "local") ? "local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
     msg += "<br>" + slots.slot1.tests.length + " tests:<br>";
-    diffSay(msg);
+    statusDiv.innerHTML = msg;
 
     // make canvas
     if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
@@ -777,5 +776,5 @@ function download(url, type) {
 
 
 loadButton1.click();
-// loadButton2.click();
-localButton.click();
+loadButton2.click();
+// localButton.click();
