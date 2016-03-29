@@ -8,7 +8,6 @@ var formidable = require('formidable');  // uploading files;
 // Settings
 //
 var WWW_ROOT = "./";
-var IMG_PATH = "images/";
 var HTTP_PORT = 8080;
 
 // WEB SERVER
@@ -21,7 +20,7 @@ var server = http.createServer( function( req , res ) {
         var form = new formidable.IncomingForm();
         // console.log('form:', form);
 
-        form.uploadDir = WWW_ROOT + IMG_PATH;
+        form.uploadDir = WWW_ROOT;
         form.keepExtensions = true;
 
         // var filename = (new Date().getTime());

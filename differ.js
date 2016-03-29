@@ -26,11 +26,12 @@ var totalScoreDiv = document.getElementById("totalScore");
 var goButton = document.getElementById("goButton");
 var stopButton = document.getElementById("stopButton");
 var localButton = document.getElementById("localButton");
+var saveButton = document.getElementById("saveButton");
 var data, metadata;
 var loadTime = Date();
-var write = false; // write new map images to disk
+var writeScreenshots = false; // write new map images to disk?
 
-
+if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
 
 
 
@@ -357,10 +358,10 @@ function imageData (img, canvas) {
 };
 
 // capture the current tangram map
-function screenshot (save) {
+function screenshot (save, name) {
     return scene.screenshot().then(function(data) {
         // save it to a file
-        if (save) saveImage(data.blob, nextView.name);
+        if (save) saveImage(data.blob, name);
 
         return loadImage(linkFromBlob( data.blob ));
     }).catch(function(err){
@@ -465,7 +466,7 @@ function prepImage(test) {
             var loc = parseLocation(test.location);
             return loadView(test, loc).then(function(){
                 // grab a screenshot and store it
-                return screenshot(false).then(function(result){
+                return screenshot(writeScreenshots, test.name).then(function(result){
                     test.img = result;
 
                     // then return the data object
@@ -673,7 +674,7 @@ function makeRow(test1, test2, matchScore) {
 // output
 //
 
-// save an image with a POST request to the server
+// save an image in a blob with a POST request to the server
 function saveImage( file, filename ) {
     var url = '/save';
     var data = new FormData();
@@ -687,13 +688,32 @@ function saveImage( file, filename ) {
     xhr.send(data);
 }
 
+// http://stackoverflow.com/questions/8022425/getting-blob-data-from-xhr-request
+function blobFromLink(url, name) {
+    return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'blob';
+        xhr.onload = function () {
+            if (this.status == 200) {
+                resolve({"blob":this.response, "name":name});
+            }
+        };
+        xhr.send();
+    });
+}
+
 // save all new images
-function write() {
-    for (var img in images) {
-        img = images[x];
-        images[test.name].newImg = newImg;
-        saveImage(test.image, test.name);
+function saveImages() {
+    diffSay("Saving "+Object.keys(images).length+" images…")
+    for (var name in images) {
+        console.log('saving', name);
+        var link = images[name].img2.src;
+        blobFromLink(link, name).then(function(response){
+            saveImage(response.blob, response.name);
+        });
     }
+    diffSay(" Done.<br>")
 }
 
 function makeStrip(images, size) {
@@ -802,4 +822,4 @@ function download(url, type) {
 
 // loadButton1.click();
 // loadButton2.click();
-// localButton.click();
+goButton.click();
