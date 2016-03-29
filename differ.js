@@ -76,7 +76,7 @@ function catchEnter(e){
     if (!e) e = window.event;
     var keyCode = e.keyCode || e.which;
     if (keyCode == '13') { // Enter pressed
-        loadFile(e.target.id);
+        goButton.click();
         return false;
     }
 }
@@ -646,7 +646,7 @@ function makeRow(test1, test2, matchScore) {
 
     var refreshButton =  document.createElement('button');
     refreshButton.innerHTML = "refresh " + test1.name;
-    controls.appendChild(refreshButton);
+    // controls.appendChild(refreshButton);
     refreshButton.onclick = function() {refresh(test1);}
 
     var exportButton =  document.createElement('button');
@@ -822,4 +822,4 @@ function download(url, type) {
 
 // loadButton1.click();
 // loadButton2.click();
-goButton.click();
+// goButton.click();
