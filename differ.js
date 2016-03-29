@@ -23,13 +23,12 @@ var statusDiv = document.getElementById("statustext");
 var progressBar = document.getElementById("progressbar");
 var alertDiv = document.getElementById("alert");
 var totalScoreDiv = document.getElementById("totalScore");
-var loadButton1 = document.getElementById("loadButton1");
-var loadButton2 = document.getElementById("loadButton2");
+var goButton = document.getElementById("goButton");
+var stopButton = document.getElementById("stopButton");
 var localButton = document.getElementById("localButton");
 var data, metadata;
 var loadTime = Date();
 var write = false; // write new map images to disk
-var loaded1 = false, loaded2 = false;
 
 
 
@@ -176,78 +175,76 @@ function prepMap() {
 
 // parse url and load the appropriate file
 function loadFile(slotID) {
-    var slot = document.getElementById(slotID);
-    var url = slot.value;
-    var local = false;
-    if (url == "a local build") {
-        local = true;
-        url = slot1.value;
-    }
-    url = convertGithub(url);
-    var urlname = splitURL(url).file;
-    var urlext = splitURL(url).ext;
-    var style = "";
+    return new Promise(function(resolve, reject) {
+        var slot = document.getElementById(slotID);
+        var url = slot.value;
+        var local = false;
+        if (url == "a local build") {
+            local = true;
+            url = slot1.value;
+        }
+        url = convertGithub(url);
+        var urlname = splitURL(url).file;
+        var urlext = splitURL(url).ext;
+        var style = "";
 
-    // populate slots array
-    slots[slotID] = {};
-    slots[slotID].url = url;
-    slots[slotID].file = urlname;
+        // populate slots array
+        slots[slotID] = {};
+        slots[slotID].url = url;
+        slots[slotID].file = urlname;
 
-    if (urlext == "yaml") {
-        style = url.slice(0);
-        url = "defaults.json"
-    }
-
-    // load and parse test json
-    readTextFile(url, function(text){
-        if (url == "") return false;
-        try {
-            data = JSON.parse(text);
-        } catch(e) {
-            console.warn('Error parsing json:', e);
-            // set page title
-            alertDiv.innerHTML += "Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e+"<br>";
-            return false;
+        if (urlext == "yaml") {
+            style = url.slice(0);
+            url = "defaults.json"
         }
 
-        // extract test origin metadata
-        try {
-            metadata = data.origin;
-        } catch (e) {
-            alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a><br>";
-            console.warn('metadata problem, continuing', e);
-        }
-        // convert tests to an array for easier traversal
-        slots[slotID].tests = Object.keys(data.tests).map(function (key) {
-            // add test's name as a property of the test
-            data.tests[key].name = key;
-            if (urlext == "yaml") {
-                data.tests[key].url = style;
-            } else if (local) {
-                data.tests[key].imageURL = null;
-            } else {
-                // add name of pre-rendered image to look for
-                data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+        // load and parse test json
+        readTextFile(url, function(text){
+            if (url == "") return false;
+            try {
+                data = JSON.parse(text);
+            } catch(e) {
+                console.warn('Error parsing json:', e);
+                // set page title
+                alertDiv.innerHTML += "Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e+"<br>";
+                return false;
             }
 
-            return data.tests[key];
+            // extract test origin metadata
+            try {
+                metadata = data.origin;
+            } catch (e) {
+                alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a><br>";
+                console.warn('metadata problem, continuing', e);
+            }
+            // convert tests to an array for easier traversal
+            slots[slotID].tests = Object.keys(data.tests).map(function (key) {
+                // add test's name as a property of the test
+                data.tests[key].name = key;
+                if (urlext == "yaml") {
+                    data.tests[key].url = style;
+                } else if (local) {
+                    data.tests[key].imageURL = null;
+                } else {
+                    // add name of pre-rendered image to look for
+                    data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+                }
+
+                return data.tests[key];
+            });
+
+            resolve();
         });
-
-        var button = slotID == "slot1" ? loadButton1 : loadButton2;
-        button.innerHTML = "Loaded!";
-        if (slotID == "slot1") loaded1 = true;
-        if (slotID == "slot2") loaded2 = true;
-
+    }).catch(function(err) {
+            console.log('problem?', err);
     });
 }
 
-function startLocalBuild() {
-    loadButton2.innerHTML = "Load";
+function localBuild() {
     var slot2 = document.getElementById('slot2')
-    slot2.value = "a local build";
-    loadButton2.click();
-        
+    slot2.value = "a local build";        
 }
+
 // setup output divs and canvases
 function prepPage() {
 
@@ -410,21 +407,32 @@ function loadView (view, location) {
 
 function goClick() {
     goButton.blur();
-    if (loaded1 && loaded2) {
+    Promise.all([loadFile('slot1'),loadFile('slot2')]).then(function(){
+        goButton.setAttribute("style","display:none");
+        stopButton.setAttribute("style","display:inline");
         proceed();
-        goButton.innerHTML = "STOP";
-        goButton.setAttribute("style","background-color:#ffcccc");
-        goButton.setAttribute("onclick","stopClick()");
-    } else {
+    }).catch(function(err){
         diffSay("Load two files<br>");
-    }
+        diffSay(err);
+    });
 }
 
 function stopClick() {
-    goButton.blur();
+    stopButton.blur();
     diffSay("Stopping test!<br>");
     stop();
 }
+
+
+function stop() {
+    slots.slot1.tests = [];
+    slots.slot2.tests = [];
+    stopButton.setAttribute("style","display:none");
+    goButton.setAttribute("style","display:inline");
+}
+
+
+
 
 
 
@@ -558,18 +566,6 @@ function doDiff( test1, test2 ) {
     }
     diff2.src = linkFromBlob( blob );
 };
-
-function stop() {
-    slots.slot1.tests = [];
-    slots.slot2.tests = [];
-    loaded1 = false;
-    loaded2 = false;
-    loadButton1.innerHTML = "Load";
-    loadButton2.innerHTML = "Load";
-    goButton.innerHTML = "GO";
-    goButton.setAttribute("style","background-color:#ccffcc");
-    goButton.setAttribute("onclick","goClick()");
-}
 
 function refresh(test) {
     queue.push(test);
@@ -784,7 +780,10 @@ function makeInfoJSON() {
         "time": loadTime,
         "testFile": testsFile
     };
-    j.tests = data.tests;
+    try {
+        j.tests = data.tests;
+    } catch(e) {
+    }
     var newJSON = JSON.stringify(j, null, 2);
     var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
     download(url, "json");
