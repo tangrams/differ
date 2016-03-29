@@ -23,7 +23,7 @@ body {
 }
 
 #alert {
-    height: 200px;
+    height: 100px;
     overflow: scroll;
 }
 
@@ -45,7 +45,7 @@ body {
 }
 
 .slot {
-    width: 70%;
+    width: 80%;
     font-size: 1em;
     border: 1px solid #ccc;
     display: block;
@@ -79,6 +79,9 @@ button {
 .goButton:focus {
     outline:0;
     background-color: white;
+}
+#goButton {
+    background-color: #ccffcc;
 }
 #stopButton {
     background-color: #ffcccc;
