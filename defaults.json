@@ -6,24 +6,6 @@
     },
 
     "tests": {
-        "world0": {
-            "location": [0,0,0]
-        },
-        "world1": {
-            "location": [0,0,1]
-        },
-        "world2": {
-            "location": [0,0,2]
-        },
-        "world3": {
-            "location": [0,0,3]
-        },
-        "world4": {
-            "location": [0,0,4]
-        },
-        "world5": {
-            "location": [0,0,5]
-        },
         "nyc10": {
             "location": [40.714,-74.006,10]
         },
