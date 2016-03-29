@@ -196,7 +196,7 @@ function loadFile(slotID) {
 
         if (urlext == "yaml") {
             style = url.slice(0);
-            url = "defaults.json"
+            url = "tests/default.json"
         }
 
         // load and parse test json
