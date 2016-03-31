@@ -83,6 +83,7 @@ function catchEnter(e){
 
 // split a URL string into pieces
 function splitURL(url) {
+    if (typeof url == 'undefined') return 'undefined';
     var dir = url.substring(0, url.lastIndexOf('/')) + "/";
     var file = url.substring(url.lastIndexOf('/')+1, url.length);
     var ext = url.substring(url.lastIndexOf('.')+1, url.length);
@@ -320,15 +321,15 @@ function parseLocation(loc) {
 function loadImage (url) {
     return new Promise(function(resolve, reject) {
         if (typeof url == "undefined") {
-            return reject();
+            return reject("undefined url");
         }
         var image = new Image();
         // set up events
         image.onload = function() {
             resolve(image);
         };
-        image.onerror = function() {
-            reject();
+        image.onerror = function(e) {
+            return reject("couldn't load image");
         };
         image.crossOrigin = 'anonymous';
         url = convertGithub(url);
@@ -365,7 +366,7 @@ function screenshot (save, name) {
 
         return loadImage(linkFromBlob( data.blob ));
     }).catch(function(err){
-        console.warn('screenshot failed:', err);
+        console.warn('screenshot fail:', err);
         return Promise.reject();
     });
 };
@@ -374,11 +375,13 @@ function screenshot (save, name) {
 var viewCompleteResolve, viewCompleteReject;
 var viewComplete;
 function resetViewComplete() {
+    console.log("> resetting viewComplete");
     viewComplete = new Promise(function(resolve, reject){
         viewCompleteResolve = function(){
             resolve();
         };
-        viewCompleteReject = function(){
+        viewCompleteReject = function(e){
+            console.log("> viewComplete FAIL");
             reject();
         };
     });
@@ -389,6 +392,8 @@ function loadView (view, location) {
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
+        // if (!view.url) reject('no view url');
+        // if (!view.location) reject('no view location');
         // load and draw scene
         var url = convertGithub(view.url);
         var name = splitURL(url).file;
@@ -403,10 +408,13 @@ function loadView (view, location) {
                 return resolve();
             });
         }).catch(function(error){
-            return reject(error);
+            console.log('> scene load error:', error)
+            return reject('scene.load error');
         });
     }).catch(function(error){
-        return(error);
+        console.log('> loadview promise error:', error)
+        throw new Error("loadview throws promise error!", error);
+        // return("loadview throws promise error!", error);
     });
 }
 
@@ -464,24 +472,39 @@ function prepImage(test) {
             return imageData(result, canvas).then(function(result){
                 // then return the the data object
                 return resolve(test.data = result.data);
+            }).catch(function(err){
+                console.log("> imageData err:", err);
             });
         }).catch(function(err) {
+            console.log('loadImage err?', err);
         // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
-            return loadView(test, loc).then(function(){
+            return loadView(test, loc).then(function(result){
+                console.log('loadView result:', result);
                 // grab a screenshot and store it
                 return screenshot(writeScreenshots, test.name).then(function(result){
+                    // console.log('screenshot result:', result);
                     test.img = result;
 
                     // then return the data object
                     return imageData(result, canvas).then(function(result){
+                        // console.log('imageData result:', result);
                         // diffSay(test.name+" mapped; ")
                         return resolve(test.data = result.data);
+                    }).catch(function(error){
+                        console.log('imageData error:', error);
+                        throw new Error(error);
                     });
                 });
             }).catch(function(error){
+                console.log('loadView error:', error);
+                // throw new Error(error);
                 return reject(error);
             });
+        }).catch(function(error){
+            console.log('loadImage error:', error);
+            // throw new Error(error);
+            return reject(error);
         });
     });
 }
@@ -490,9 +513,9 @@ function prepBothImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
-
+    // console.log('test1:', test1);
+    // console.log('test2:', test2);
     if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
-
         diffSay("Missing test in slot ");
         if (typeof test1 == "undefined") diffSay("1");
         if (typeof test2 == "undefined") diffSay("2");
@@ -500,20 +523,27 @@ function prepBothImages() {
     }
 
     // diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
-
     prepImage(test1)
+    .catch(function(err){
+        console.log('prepimage1 err:', err);
+    })
+    .then(prepImage(test2))
+    .catch(function(err){
+        console.log('prepimage2 err:', err);
+    })
     .then(function(result){
-        return prepImage(test2)
-    }).then(function(result){
         doDiff(test1, test2);
-    }).then(function(result){
+        console.log("more?");
         if (slots.slot1.tests.length > 0) {
+            console.log('> next!');
             prepBothImages();
         } else {
             stop();
             diffSay("<br>Done!<br>");
             console.log("Done!");
         }
+    }).catch(function(err){
+        console.log('problem:', err);
     });
 }
 
@@ -525,7 +555,13 @@ function doDiff( test1, test2 ) {
 
     if (test1.data && test2.data) {
         // run the diff
-        var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
+        try {
+            var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
+            // console.log('difference:', difference);
+        } catch(e) {
+            console.log("> diff error:", e);
+            throw new Error("> diff error:", e);
+        }
         // calculate match percentage
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
@@ -594,32 +630,30 @@ function makeRow(test1, test2, matchScore) {
         // clear it out
         testdiv.innerHTML = "";
     }
-
     var title = document.createElement('div');
     title.className = 'testname';
     // make test title a link to a live version of the test"
     var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
     title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
-
     title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
     testdiv.appendChild(title);
 
     var column1 = document.createElement('span');
     column1.className = 'column';
     column1.id = "column1";
-    // column1.innerHTML = "1<br>";
+    column1.innerHTML = "1<br>";
     testdiv.appendChild(column1);
 
     var column2 = document.createElement('span');
     column2.className = 'column';
     column2.id = "column2";
-    // column2.innerHTML = "2<br>";
+    column2.innerHTML = "2<br>";
     testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
     diffcolumn.className = 'column';
     diffcolumn.id = "diff";
-    // diffcolumn.innerHTML = "diff<br>";
+    diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
     // insert images
