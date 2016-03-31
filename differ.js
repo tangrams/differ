@@ -402,7 +402,11 @@ function loadView (view, location) {
             return viewComplete.then(function(){
                 return resolve();
             });
+        }).catch(function(error){
+            return reject(error);
         });
+    }).catch(function(error){
+        return(error);
     });
 }
 
@@ -475,6 +479,8 @@ function prepImage(test) {
                         return resolve(test.data = result.data);
                     });
                 });
+            }).catch(function(error){
+                return reject(error);
             });
         });
     });
@@ -822,4 +828,4 @@ function download(url, type) {
 
 // loadButton1.click();
 // loadButton2.click();
-// goButton.click();
+goButton.click();
