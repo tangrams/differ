@@ -3,7 +3,7 @@
 body {
     /*width: 1080;*/
     max-width: 1080px;
-    margin: auto;
+    margin: 5px;
 }
 
 #header {
@@ -29,6 +29,7 @@ body {
 
 #content {
     max-width: 1080px;
+    margin: auto;
 }
 
 .container {
