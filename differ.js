@@ -158,6 +158,7 @@ function updateProgress(remaining) {
 //
 
 function prepMap() {
+    console.log('prepmap')
     return new Promise(function(resolve, reject) {
         // set sizes
         document.getElementById("map").style.height = size+"px";
@@ -286,6 +287,7 @@ function loadDefaults() {
 
 // make sure tests are ready, fill in any gaps
 function prepTests() {
+    console.log('prepTests');
     // reset progress bar
     updateProgress(numTests);
     // clear stored images
@@ -308,6 +310,8 @@ function prepTests() {
             diffSay('Using views in '+slots.slot1.file+'.');
             slots.slot2.tests = copyTestsFrom(slots.slot1.tests);
             resolve();
+        } else {
+            resolve();
         }
     }).then(function(){
         // count tests
@@ -324,6 +328,7 @@ function prepTests() {
 
 // setup output divs and canvases
 function prepPage() {
+    console.log('prepPage')
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
         // trigger promise resolution
@@ -507,7 +512,6 @@ function goClick() {
     diffSay("Starting Diff");
     goButton.blur();
     Promise.all([loadFile(slot1.value),loadFile(slot2.value)]).then(function(result){
-        // console.log('result:', result);
         slots.slot1 = result[0];
         slots.slot2 = result[1];
         goButton.setAttribute("style","display:none");
@@ -598,7 +602,7 @@ function prepImage(test) {
 // load or create the test images
 function prepBothImages() {
     // load next test in the lists
-    // console.log('prepBothImages, slots:', slots);
+    console.log('prepBothImages');
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
     // console.log('prepBothImages, tests:', test1, test2);
@@ -612,9 +616,8 @@ function prepBothImages() {
     }
     var location = setEither(test1.location, test2.location);
     if (location == null) {
-        diffSay("No locations set for test. ");
-        stopClick();
-        return;
+        diffSay("No locations set for test - using default locations. ");
+        // todo - use default locations
     } else {
         test1.location = location[0];
         test2.location = location[1];
