@@ -1,16 +1,14 @@
 use cases:
 
 a yaml against another yaml
-https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-https://github.com/tangrams/zinc-style/blob/gh-pages/zinc-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/zinc-style/blob/gh-pages/zinc-style.yaml
 
 a yaml against itself
-https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
 
 a yaml against a broken yaml
-https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-tests/bad.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/bad.yaml
+http://localhost:8080/?1=tests/bad.yaml=&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
 
 a yaml against an empty yaml
 https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
