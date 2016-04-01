@@ -292,8 +292,7 @@ function prepTests() {
     images = {};
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
-        if ((typeof slots.slot1.tests == 'undefined' && typeof slots.slot2.tests == 'undefined') ||
-            (slots.slot1.tests.length == 0 && slots.slot2.tests.length == 0)) {
+        if (typeof slots.slot1.tests == 'undefined' && typeof slots.slot2.tests == 'undefined') {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults().then(function(val){slots.slot1.tests = val;}),
@@ -621,6 +620,16 @@ function prepBothImages() {
         test2.location = location[1];
     }
 
+    if (typeof test1.url == 'undefined') {
+        if (typeof slots.slot1.defaultScene != 'undefined') {
+            test1.url = slots.slot1.defaultScene;
+        }
+    }
+    if (typeof test2.url == 'undefined') {
+        if (typeof slots.slot2.defaultScene != 'undefined') {
+            test2.url = slots.slot2.defaultScene;
+        }
+    }
     var url = setEither(test1.url, test2.url);
     if (url == null) url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
     if (url == null) {
@@ -735,6 +744,9 @@ function makeRow(test1, test2, matchScore) {
         // generate one
         var testdiv = document.createElement('div');
         testdiv.className = 'test';
+        if (typeof test1.name == 'undefined') {
+            test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
+        }
         testdiv.id = test1.name;
         allTestsDiv.insertBefore(testdiv, allTestsDiv.firstChild);
     } else {
