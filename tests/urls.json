@@ -1,0 +1,10 @@
+{
+    "tests": {
+        "cinnabar-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml"
+        },
+        "cinnabar-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml"
+        },
+    }
+}

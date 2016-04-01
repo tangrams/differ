@@ -1,0 +1,83 @@
+use cases:
+
+a yaml against another yaml
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+https://github.com/tangrams/zinc-style/blob/gh-pages/zinc-style.yaml
+
+a yaml against itself
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+
+a yaml against a broken yaml
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/bad.yaml
+
+a yaml against an empty yaml
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/empty.yaml
+
+an empty yaml against itself
+tests/empty.yaml
+tests/empty.yaml
+
+a bad yaml against itself
+tests/bad.yaml
+tests/bad.yaml
+
+a yaml against a json with images, scenefile urls, and locations
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+
+a yaml against a json with scenefile urls and locations only
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/locs+urls.json
+
+a yaml against a json with images and locations only
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+
+a yaml against a json with scenefile urls only
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/urls.json
+
+a yaml against a json with locations only
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/locations.json
+
+a yaml against a json with no tests
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/empty-tests.json
+
+a yaml against an empty json
+https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+tests/empty-tests.json
+
+a json with locations only against a json with images, scenefile urls, and locations
+tests/locations.json
+https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+
+a json with locations only against a json with locations and scenefile urls only
+tests/locations.json
+tests/locs+urls.json
+
+a json with locations only against a json with scenefile urls only
+tests/locations.json
+tests/urls.json
+
+a json with locations only against itself
+tests/locations.json
+tests/locations.json
+
+a json with urls only against a json with images, scenefile urls, and locations
+tests/urls.json
+https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+
+a json with urls only against a json with locations and scenefile urls only
+tests/urls.json
+tests/locs+urls.json
+
+a json with urls only against itself
+tests/urls.json
+tests/urls.json
+
+
+

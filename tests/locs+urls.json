@@ -1,0 +1,12 @@
+{
+    "tests": {
+        "cinnabar-1": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [0,0,1]
+        },
+        "cinnabar-2": {
+            "url": "https://raw.githubusercontent.com/tangrams/cinnabar-style/gh-pages/cinnabar-style.yaml",
+            "location": [40.70531887544228,-74.0097749233246,16]
+        },
+    }
+}

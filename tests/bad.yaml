@@ -1,0 +1,16 @@
+Zinc is a light gray style optimized for data visualization overlays. Give 
+OpenStreetMap data a professional basemap skin using the Tangram graphics library 
+and Mapzen's versatile Vector Tiles. 
+#
+Mapzen's Zinc style is comparable to Esri's light gray Canvas style, Mapbox's Light 
+style, and CartoDB's Positron by Stamen style. If you like any of those, Mapzen's 
+Zinc basemap style is for you. Please use and adapt the open source scene file in  
+your own projects!
+#
+Authors: Nathaniel V. Kelso, Geraldine Sarmiento
+Read more: https://github.com/tangrams/zinc-style
+#
+
+labels-global:
+    - &text_visible_continent         true
+    - &text_visible_admin             true
