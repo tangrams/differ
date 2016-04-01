@@ -273,8 +273,6 @@ function prepPage() {
             }
     });
 
-    // clear messages
-    alertDiv.innerHTML = "";
     // clear out any existing tests
     tests.innerHTML = "";
     // set status message
@@ -293,7 +291,7 @@ function prepPage() {
 
 }
 
-function setBothWithEither(var1, var2) {
+function setEither(var1, var2) {
     if (typeof var1 == 'undefined' || typeof var2 == 'undefined') {
         if (typeof var1 == 'undefined' && typeof var2 == 'undefined') {
             return(null);
@@ -428,7 +426,8 @@ function loadView (view, location) {
         var name = splitURL(url).file;
         // if it's drawing, wait for it to finish
         resetViewComplete();
-        return scene.load(url).then(function() {
+        scene.load(url).then(function() {
+            // console.log('scene.load?', r);
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
@@ -438,17 +437,14 @@ function loadView (view, location) {
             });
         }).catch(function(error){
             console.log('> scene load error:', error)
-            return reject('scene.load error');
+            reject(error);
         });
-    }).catch(function(error){
-        console.log('> loadview promise error:', error)
-        throw new Error("loadview throws promise error!", error);
-        // return("loadview throws promise error!", error);
     });
 }
 
 function goClick() {
     alertDiv.innerHTML = '';
+    diffSay("Starting Diff");
     goButton.blur();
     Promise.all([loadFile('slot1'),loadFile('slot2')]).then(function(){
         goButton.setAttribute("style","display:none");
@@ -493,13 +489,14 @@ function proceed() {
 
 // prep an image to send to the diff
 function prepImage(test) {
+    // console.log('PREP');
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
-        return loadImage(test.imageURL).then(function(result){
+        loadImage(test.imageURL).then(function(result){
             diffSay(test.name+imgType+" found; ")
             // store it
             test.img = result;
-            return imageData(result, canvas).then(function(result){
+            imageData(result, canvas).then(function(result){
                 // then return the the data object
                 return resolve(test.data = result.data);
             }).catch(function(err){
@@ -509,12 +506,14 @@ function prepImage(test) {
             console.warn(test.name+": "+err);
         // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
-            return loadView(test, loc).then(function(result){
+            loadView(test, loc).then(function(result){
+                // if (result != "resolve") console.log('loadview result:', result);
                 // grab a screenshot and store it
-                return screenshot(writeScreenshots, name).then(function(result){
+                screenshot(writeScreenshots, name).then(function(result){
                     test.img = result;
                     // then return the data object
-                    return imageData(result, canvas).then(function(result){
+                    imageData(result, canvas).then(function(result){
+                        console.log("DONE");
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
@@ -526,11 +525,8 @@ function prepImage(test) {
                 });;
             }).catch(function(error){
                 console.log('loadView error:', error);
-                return reject(error);
+                reject(error);
             });
-        }).catch(function(error){
-            console.log('loadImage error:', error);
-            return reject(error);
         });
     });
 }
@@ -546,7 +542,7 @@ function prepBothImages() {
         if (typeof test2 == "undefined") diffSay("2");
         stopClick();
     }
-    var location = setBothWithEither(test1.location, test2.location);
+    var location = setEither(test1.location, test2.location);
     if (location == null) {
         diffSay("No locations set for test. ");
         stopClick();
@@ -555,7 +551,7 @@ function prepBothImages() {
         test1.location = location[0];
         test2.location = location[1];
     }
-    var url = setBothWithEither(test1.url, test2.url);
+    var url = setEither(test1.url, test2.url);
     if (url == null) {
         diffSay("No scenefile URLs set for test. ");
         stopClick();
@@ -565,20 +561,27 @@ function prepBothImages() {
         test2.url = url[1];
     }
 
-    Promise.all([prepImage(test1), prepImage(test2)])
-    .then(function(result){
-        try {
-            doDiff(test1, test2);
-        } catch(e) {
-            console.log('doDiff failed:', e.stack);
-        }
-        if (slots.slot1.tests.length > 0) {
-            prepBothImages();
-        } else {
-            stop();
-            diffSay("Done!<br>");
-            console.log("Done!");
-        }
+    prepImage(test1)
+    .then(function(result){prepImage(test2)
+        .then(function(result){
+            // console.log("THEN");
+            try {
+                doDiff(test1, test2);
+            } catch(e) {
+                console.log('doDiff failed:', e.stack);
+            }
+            if (slots.slot1.tests.length > 0) {
+                prepBothImages();
+            } else {
+                stop();
+                diffSay("Done!<br>");
+                console.log("Done!");
+            }
+        }).catch(function(e){
+            console.log('prep2 error:', e);
+        });
+    }).catch(function(e){
+        console.log('prep1 error:', e);
     });
 }
 
