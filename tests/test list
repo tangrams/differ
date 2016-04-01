@@ -31,16 +31,21 @@ done!
 
 a yaml against a json with images, scenefile urls, and locations
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+done!
 
 a yaml against a json with scenefile urls and locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locs+urls.json
+http://localhost:8080/?1=tests/locs+urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+done!
 
 a yaml against a json with images and locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
 
 a yaml against a json with scenefile urls only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-tests/urls.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/urls.json
+http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+!! BROKEN - should use default locations
 
 a yaml against a json with locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
@@ -53,6 +58,10 @@ tests/empty-tests.json
 a yaml against an empty json
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
 tests/empty-tests.json
+
+a json with everything against another json with everything
+http://localhost:8080/?1=tests/tangram01-v.5/tangram01-v.5.json&2=tests/tangram01-v.6/tangram01-v.6.json
+done!
 
 a json with locations only against a json with images, scenefile urls, and locations
 http://localhost:8080/?1=tests/locations.json
