@@ -53,8 +53,10 @@ if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "
 
 // add text to the output div
 function diffSay(txt) {
-    alertDiv.innerHTML += txt;
-    alertDiv.scrollTop = alertDiv.scrollHeight;
+    setTimeout(function() {
+        alertDiv.innerHTML += txt;
+        alertDiv.scrollTop = alertDiv.scrollHeight;
+    }, 50);
 }
 
 // convert github links to raw github files
@@ -197,12 +199,10 @@ function loadFile(slotID) {
 
         if (urlext == "yaml") {
             style = url.slice(0);
-            url = "tests/default.json"
+            url = "tests/default2.json"
         }
-
         // load and parse test json
         readTextFile(url, function(text){
-            if (url == "") return false;
             try {
                 data = JSON.parse(text);
             } catch(e) {
@@ -257,6 +257,13 @@ function prepPage() {
     // clone views array
     var tests1 = slots.slot1.tests.slice(0);
     var tests2 = slots.slot2.tests.slice(0);
+    // count tests
+    if (tests1.length != tests2.length) {
+        numTests = Math.min(tests1.length, tests2.length);
+        diffSay("Note: The two tests have a different number of views.")
+    } else {
+        numTests = slots.slot1.tests.length;
+    }
 
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
@@ -270,8 +277,6 @@ function prepPage() {
     alertDiv.innerHTML = "";
     // clear out any existing tests
     tests.innerHTML = "";
-    // count tests
-    numTests = slots.slot1.tests.length;
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
     msg += (slot2.value == "a local build") ? "a local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
@@ -288,6 +293,18 @@ function prepPage() {
 
 }
 
+function setBothWithEither(var1, var2) {
+    if (typeof var1 == 'undefined' || typeof var2 == 'undefined') {
+        if (typeof var1 == 'undefined' && typeof var2 == 'undefined') {
+            return(null);
+        } else if (typeof var1 == 'undefined') {
+            var1 = var2;
+        } else if (typeof var2 == 'undefined') {
+            var2 = var1;
+        }
+    }
+    return [var1, var2];
+}
 
 
 
@@ -319,23 +336,34 @@ function parseLocation(loc) {
 
 // load an image from a file
 function loadImage (url) {
+    // console.log('loadImage:', url);
     return new Promise(function(resolve, reject) {
-        if (typeof url == "undefined") {
-            return reject("undefined url");
-        }
+        // console.log(1);
+        // if (typeof url == "undefined") {
+        //     return reject("image url undefined");
+        // }
+        // debugger;
+        // console.log(2);
         var image = new Image();
         // set up events
-        image.onload = function() {
-            resolve(image);
+        image.onload = function(r) {
+            // console.log('well?', r);
+            // console.log('this:', this);
+            return resolve(this);
         };
         image.onerror = function(e) {
-            return reject("couldn't load image");
+            // console.log('hmm.', e.stack);
+            // console.log('this:', this);
+
+            return reject("couldn't load "+url);
         };
+        // console.log(3);
         image.crossOrigin = 'anonymous';
         url = convertGithub(url);
         // force-refresh any local images with a cache-buster
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
+        // console.log(4);
         image.src = url;
     });
 }
@@ -360,13 +388,14 @@ function imageData (img, canvas) {
 
 // capture the current tangram map
 function screenshot (save, name) {
+    // console.log(name, 'screenshot:')
     return scene.screenshot().then(function(data) {
+        // console.log(name, 'screenshot success:', data)
         // save it to a file
         if (save) saveImage(data.blob, name);
-
         return loadImage(linkFromBlob( data.blob ));
     }).catch(function(err){
-        console.warn('screenshot fail:', err);
+        // console.warn('screenshot fail:', err);
         return Promise.reject();
     });
 };
@@ -375,13 +404,13 @@ function screenshot (save, name) {
 var viewCompleteResolve, viewCompleteReject;
 var viewComplete;
 function resetViewComplete() {
-    console.log("> resetting viewComplete");
+    // console.log("> resetting viewComplete");
     viewComplete = new Promise(function(resolve, reject){
         viewCompleteResolve = function(){
             resolve();
         };
         viewCompleteReject = function(e){
-            console.log("> viewComplete FAIL");
+            // console.log("> viewComplete FAIL");
             reject();
         };
     });
@@ -405,7 +434,7 @@ function loadView (view, location) {
             // scene.requestRedraw(); // necessary?
             // wait for map to finish drawing, then return
             return viewComplete.then(function(){
-                return resolve();
+                return resolve("resolve");
             });
         }).catch(function(error){
             console.log('> scene load error:', error)
@@ -419,20 +448,21 @@ function loadView (view, location) {
 }
 
 function goClick() {
+    alertDiv.innerHTML = '';
     goButton.blur();
     Promise.all([loadFile('slot1'),loadFile('slot2')]).then(function(){
         goButton.setAttribute("style","display:none");
         stopButton.setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        diffSay("Load two files<br>");
+        diffSay("Please enter two URLs above.<br>");
         diffSay(err);
     });
 }
 
 function stopClick() {
     stopButton.blur();
-    diffSay("Stopping test!<br>");
+    diffSay("Stopping diff.<br>");
     stop();
 }
 
@@ -476,34 +506,30 @@ function prepImage(test) {
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
-            console.log('loadImage err?', err);
+            console.warn(test.name+": "+err);
         // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             return loadView(test, loc).then(function(result){
-                console.log('loadView result:', result);
                 // grab a screenshot and store it
-                return screenshot(writeScreenshots, test.name).then(function(result){
-                    // console.log('screenshot result:', result);
+                return screenshot(writeScreenshots, name).then(function(result){
                     test.img = result;
-
                     // then return the data object
                     return imageData(result, canvas).then(function(result){
-                        // console.log('imageData result:', result);
-                        // diffSay(test.name+" mapped; ")
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
                         throw new Error(error);
                     });
-                });
+                }).catch(function(error){
+                    console.log('screenshot error:', error);
+                    throw new Error(error);
+                });;
             }).catch(function(error){
                 console.log('loadView error:', error);
-                // throw new Error(error);
                 return reject(error);
             });
         }).catch(function(error){
             console.log('loadImage error:', error);
-            // throw new Error(error);
             return reject(error);
         });
     });
@@ -513,37 +539,46 @@ function prepBothImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
-    // console.log('test1:', test1);
-    // console.log('test2:', test2);
-    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
-        diffSay("Missing test in slot ");
+
+    if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
+        diffSay("Missing tests!");
         if (typeof test1 == "undefined") diffSay("1");
         if (typeof test2 == "undefined") diffSay("2");
-        stop();
+        stopClick();
+    }
+    var location = setBothWithEither(test1.location, test2.location);
+    if (location == null) {
+        diffSay("No locations set for test. ");
+        stopClick();
+        return;
+    } else {
+        test1.location = location[0];
+        test2.location = location[1];
+    }
+    var url = setBothWithEither(test1.url, test2.url);
+    if (url == null) {
+        diffSay("No scenefile URLs set for test. ");
+        stopClick();
+        return;
+    } else {
+        test1.url = url[0];
+        test2.url = url[1];
     }
 
-    // diffSay("<br>"+test1.name+' vs. '+test2.name+": ");
-    prepImage(test1)
-    .catch(function(err){
-        console.log('prepimage1 err:', err);
-    })
-    .then(prepImage(test2))
-    .catch(function(err){
-        console.log('prepimage2 err:', err);
-    })
+    Promise.all([prepImage(test1), prepImage(test2)])
     .then(function(result){
-        doDiff(test1, test2);
-        console.log("more?");
+        try {
+            doDiff(test1, test2);
+        } catch(e) {
+            console.log('doDiff failed:', e.stack);
+        }
         if (slots.slot1.tests.length > 0) {
-            console.log('> next!');
             prepBothImages();
         } else {
             stop();
-            diffSay("<br>Done!<br>");
+            diffSay("Done!<br>");
             console.log("Done!");
         }
-    }).catch(function(err){
-        console.log('problem:', err);
     });
 }
 
@@ -554,12 +589,13 @@ function doDiff( test1, test2 ) {
     // statusDiv.innerHTML = count + " of " + views.length;
 
     if (test1.data && test2.data) {
+        // console.log("> datas: ",test1.data, test2.data);
         // run the diff
         try {
             var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
             // console.log('difference:', difference);
         } catch(e) {
-            console.log("> diff error:", e);
+            // console.log("> diff error:", e);
             throw new Error("> diff error:", e);
         }
         // calculate match percentage
@@ -656,6 +692,8 @@ function makeRow(test1, test2, matchScore) {
     diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
+    // console.log('test1.img:', test1.img);
+    // console.log('test2.img:', test2.img);
     // insert images
     test1.img.width = size;
     test1.img.height = size;
