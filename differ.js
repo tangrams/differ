@@ -52,11 +52,14 @@ if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "
 // }
 
 // add text to the output div
-function diffSay(txt) {
+function diffAdd(txt) {
     setTimeout(function() {
         alertDiv.innerHTML += txt;
         alertDiv.scrollTop = alertDiv.scrollHeight;
     }, 50);
+}
+function diffSay(txt) {
+    diffAdd(txt+"<br>")
 }
 
 // convert github links to raw github files
@@ -198,48 +201,54 @@ function loadFile(slotID) {
         slots[slotID].file = urlname;
 
         if (urlext == "yaml") {
-            style = url.slice(0);
-            url = "tests/default2.json"
-        }
+            slots[slotID].defaultScene = url;
+            resolve();
+        } else if (urlext == "json") {
         // load and parse test json
-        readTextFile(url, function(text){
-            try {
-                data = JSON.parse(text);
-            } catch(e) {
-                console.warn('Error parsing json:', e);
-                // set page title
-                alertDiv.innerHTML += "Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e+"<br>";
-                return false;
-            }
-
-            // extract test origin metadata
-            try {
-                metadata = data.origin;
-            } catch (e) {
-                alertDiv.innerHTML += "Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a><br>";
-                console.warn('metadata problem, continuing', e);
-            }
-            // convert tests to an array for easier traversal
-            slots[slotID].tests = Object.keys(data.tests).map(function (key) {
-                // add test's name as a property of the test
-                data.tests[key].name = key;
-                if (urlext == "yaml") {
-                    data.tests[key].url = style;
-                } else if (local) {
-                    data.tests[key].imageURL = null;
-                } else {
-                    // add name of pre-rendered image to look for
-                    data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+            readTextFile(url, function(text){
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    console.warn('Error parsing json:', e);
+                    // set page title
+                    diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
+                    // return false;
                 }
 
-                return data.tests[key];
-            });
+                // extract test origin metadata
+                try {
+                    metadata = data.origin;
+                } catch (e) {
+                    diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
+                    console.warn('metadata problem, continuing', e);
+                }
+                // convert tests to an array for easier traversal
+                slots[slotID].tests = Object.keys(data.tests).map(function (key) {
+                    // add test's name as a property of the test
+                    data.tests[key].name = key;
+                    // if (urlext == "yaml") {
+                        // data.tests[key].url = style;
+                    // } else 
+                    if (local) {
+                        data.tests[key].imageURL = null;
+                    } else {
+                        // add name of pre-rendered image to look for
+                        data.tests[key].imageURL = splitURL(slots[slotID].url).dir + data.tests[key].name + imgType;
+                    }
 
-            resolve();
-        });
+                    return data.tests[key];
+                });
+
+                resolve();
+            });
+        } else {
+            diffSay("Don't know how to parse "+urlname+"!");
+            reject();
+        }
     }).catch(function(err) {
             console.log('problem?', err);
     });
+    console.log('loadFile done:', slotID);
 }
 
 function localBuild() {
@@ -247,24 +256,50 @@ function localBuild() {
     slot2.value = "a local build";        
 }
 
-// setup output divs and canvases
-function prepPage() {
+// copy locations from a test
+function copyTestsFrom(tests) {
+    var copy = [];
+    for (var i = 0; i < tests.length; i++) {
+        copy[i] = {};
+        copy[i].location = tests[i].location;
+        copy[i].name = tests[i].name;
+    }
+    return copy;
+}
 
+// make sure tests are ready, fill in any gaps
+function prepTests() {
     // reset progress bar
     updateProgress(numTests);
     // clear stored images
     images = {};
+    // copy required properties from one test if undefined in the other
+    if (typeof slots.slot1.tests == 'undefined' && typeof slots.slot2.tests == 'undefined') {
+        diffSay('No views defined in either test file, using default views.');
+        loadDefaults(slot1);
+        loadDefaults(slot2);
+    } else if (typeof slots.slot1.tests == 'undefined') {
+        diffSay('Using views in '+slots.slot2.file+'.');
+        slots.slot1.tests = copyTestsFrom(slots.slot2.tests);
+    } else if (typeof slots.slot2.tests == 'undefined') {
+        diffSay('Using views in '+slots.slot1.file+'.');
+        slots.slot2.tests = copyTestsFrom(slots.slot1.tests);
+    }
+
     // clone views array
-    var tests1 = slots.slot1.tests.slice(0);
-    var tests2 = slots.slot2.tests.slice(0);
+    var test1 = slots.slot1.tests[0];
+    var test2 = slots.slot2.tests[0];
     // count tests
-    if (tests1.length != tests2.length) {
-        numTests = Math.min(tests1.length, tests2.length);
+    if (test1.length != test2.length) {
+        numTests = Math.min(test1.length, test2.length);
         diffSay("Note: The two tests have a different number of views.")
     } else {
         numTests = slots.slot1.tests.length;
     }
+}
 
+// setup output divs and canvases
+function prepPage() {
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
         // trigger promise resolution
@@ -451,14 +486,14 @@ function goClick() {
         stopButton.setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        diffSay("Please enter two URLs above.<br>");
+        diffSay("Please enter two URLs above.");
         diffSay(err);
     });
 }
 
 function stopClick() {
     stopButton.blur();
-    diffSay("Stopping diff.<br>");
+    diffSay("Stopping Diff.");
     stop();
 }
 
@@ -482,6 +517,7 @@ function stop() {
 function proceed() {
     return prepMap().then(function(val) {
         map = val;
+        prepTests();
         prepPage();
         prepBothImages();
     });
@@ -513,7 +549,7 @@ function prepImage(test) {
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
-                        console.log("DONE");
+                        // console.log("DONE");
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
@@ -537,9 +573,10 @@ function prepBothImages() {
     var test2 = slots.slot2.tests.shift();
 
     if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
-        diffSay("Missing tests!");
-        if (typeof test1 == "undefined") diffSay("1");
-        if (typeof test2 == "undefined") diffSay("2");
+        diffAdd("Missing test in slot ");
+        if (typeof test1 == "undefined") diffAdd("1");
+        if (typeof test2 == "undefined") diffAdd("2");
+        diffAdd(" - using test from other slot.")
         stopClick();
     }
     var location = setEither(test1.location, test2.location);
@@ -551,9 +588,11 @@ function prepBothImages() {
         test1.location = location[0];
         test2.location = location[1];
     }
+
     var url = setEither(test1.url, test2.url);
+    if (url == null) url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
     if (url == null) {
-        diffSay("No scenefile URLs set for test. ");
+        diffSay("No scenefile URLs found for either test!");
         stopClick();
         return;
     } else {
