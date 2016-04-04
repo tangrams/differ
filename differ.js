@@ -319,7 +319,6 @@ function prepTests() {
         } else {
             numTests = slots.slot1.tests.length;
         }
-        // console.log('slots:', slots);
         return;
     });
 }
@@ -556,7 +555,7 @@ function prepImage(test) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
-            diffSay(test.name+imgType+" found; ")
+            diffSay(test.name+imgType+" found for "+splitURL(test.url).file)
             // store it
             test.img = result;
             imageData(result, canvas).then(function(result){
@@ -684,7 +683,7 @@ function prepBothImages() {
     })
     .catch(function(e){
         // console.log('prep1 error:', e);
-        diffSay("Couldn't load image for "+test1.name+": "+e.name);
+        diffSay("problem with "+test1.name+" in "+splitURL(test1.url).file+": "+e.name);
     })
     .then(function(result){
         return prepImage(test2);
@@ -693,7 +692,7 @@ function prepBothImages() {
         nextDiff();
     }).catch(function(e){
         // console.log('prep2 error:', e);
-        diffSay("Couldn't load image for "+test2.name+": "+e.name);
+        diffSay("problem with "+test2.name+" in "+splitURL(test2.url).file+": "+e.name);
         nextDiff();
     });
 }
