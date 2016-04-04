@@ -158,7 +158,6 @@ function updateProgress(remaining) {
 //
 
 function prepMap() {
-    console.log('prepmap')
     return new Promise(function(resolve, reject) {
         // set sizes
         document.getElementById("map").style.height = size+"px";
@@ -287,7 +286,6 @@ function loadDefaults() {
 
 // make sure tests are ready, fill in any gaps
 function prepTests() {
-    console.log('prepTests');
     // reset progress bar
     updateProgress(numTests);
     // clear stored images
@@ -328,7 +326,6 @@ function prepTests() {
 
 // setup output divs and canvases
 function prepPage() {
-    console.log('prepPage')
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
         // trigger promise resolution
@@ -400,11 +397,9 @@ function parseLocation(loc) {
 function loadImage (url) {
     // console.log('loadImage:', url);
     return new Promise(function(resolve, reject) {
-        // console.log(1);
         // if (typeof url == "undefined") {
         //     return reject("image url undefined");
         // }
-        // console.log(2);
         var image = new Image();
         // set up events
         image.onload = function(r) {
@@ -558,7 +553,6 @@ function proceed() {
 
 // prep an image to send to the diff
 function prepImage(test) {
-    // console.log('PREP');
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
@@ -573,16 +567,14 @@ function prepImage(test) {
             });
         }).catch(function(err) {
             console.warn(test.name+": "+err);
-        // no image? load the test view in the map and make a new image
+            // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             loadView(test, loc).then(function(result){
-                // if (result != "resolve") console.log('loadview result:', result);
                 // grab a screenshot and store it
                 screenshot(writeScreenshots, name).then(function(result){
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
-                        // console.log("DONE");
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
@@ -599,10 +591,56 @@ function prepImage(test) {
         });
     });
 }
+
+// prep scene file urls
+function prepStyles(test1, test2) {
+    return new Promise(function(resolve, reject) {
+        if (typeof test1.url == 'undefined') {
+            if (typeof slots.slot1.defaultScene != 'undefined') {
+                test1.url = slots.slot1.defaultScene;
+            }
+        }
+        if (typeof test2.url == 'undefined') {
+            if (typeof slots.slot2.defaultScene != 'undefined') {
+                test2.url = slots.slot2.defaultScene;
+            }
+        }
+        var url = setEither(test1.url, test2.url);
+        if (url == null) url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
+        if (url == null) {
+            diffSay("No scenefile URLs found for either test!");
+            stopClick();
+            return;
+        } else {
+            test1.url = url[0];
+            test2.url = url[1];
+        }
+        return resolve({'url1': test1.url, 'url2': test2.url});
+    });
+}
+
+function prepLocations(test1, test2) {
+    return new Promise(function(resolve, reject) {
+        var location = setEither(test1.location, test2.location);
+        if (location == null) {
+            diffSay("No locations set for test - using default locations. ");
+            // todo - use default locations
+            // location = loadFile("tests/default.json")
+            loadFile("tests/default1.json").then(function(result) {
+                location = result;
+                return resolve({'loc1': test1.location, 'loc2': test2.location});
+            });
+        } else {
+            test1.location = location[0];
+            test2.location = location[1];
+            return resolve({'loc1': test1.location, 'loc2': test2.location});
+        }
+    });
+}
+
 // load or create the test images
 function prepBothImages() {
     // load next test in the lists
-    console.log('prepBothImages');
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
     // console.log('prepBothImages, tests:', test1, test2);
@@ -613,35 +651,6 @@ function prepBothImages() {
         if (typeof test2 == "undefined") diffAdd("2");
         diffSay(" - using test from other slot.")
         stopClick();
-    }
-    var location = setEither(test1.location, test2.location);
-    if (location == null) {
-        diffSay("No locations set for test - using default locations. ");
-        // todo - use default locations
-    } else {
-        test1.location = location[0];
-        test2.location = location[1];
-    }
-
-    if (typeof test1.url == 'undefined') {
-        if (typeof slots.slot1.defaultScene != 'undefined') {
-            test1.url = slots.slot1.defaultScene;
-        }
-    }
-    if (typeof test2.url == 'undefined') {
-        if (typeof slots.slot2.defaultScene != 'undefined') {
-            test2.url = slots.slot2.defaultScene;
-        }
-    }
-    var url = setEither(test1.url, test2.url);
-    if (url == null) url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
-    if (url == null) {
-        diffSay("No scenefile URLs found for either test!");
-        stopClick();
-        return;
-    } else {
-        test1.url = url[0];
-        test2.url = url[1];
     }
 
     function nextDiff() {
@@ -659,19 +668,33 @@ function prepBothImages() {
         }
     }
 
-    prepImage(test1)
+    // prep scene file urls
+    var p1 = prepStyles(test1, test2).then(function(styles) {
+        test1.url = styles.url1;
+        test2.url = styles.url2;
+    });
+    // prep locations
+    var p2 = prepLocations(test1, test2).then(function(locations) {
+        test1.location = locations.loc1;
+        test2.location = locations.loc2;
+    });
+    Promise.all([p1, p2])
+    .then(function(result){
+        return prepImage(test1);
+    })
     .catch(function(e){
         // console.log('prep1 error:', e);
         diffSay("Couldn't load image for "+test1.name+": "+e.name);
     })
-    .then(function(result){prepImage(test2)
-        .then(function(result){
-            nextDiff();
-        }).catch(function(e){
-            // console.log('prep2 error:', e);
-            diffSay("Couldn't load image for "+test2.name+": "+e.name);
-            nextDiff();
-        });
+    .then(function(result){
+        return prepImage(test2);
+    })
+    .then(function(result){
+        nextDiff();
+    }).catch(function(e){
+        // console.log('prep2 error:', e);
+        diffSay("Couldn't load image for "+test2.name+": "+e.name);
+        nextDiff();
     });
 }
 
