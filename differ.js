@@ -111,6 +111,12 @@ function splitURL(url) {
     return {"dir" : dir, "file": file, "ext": ext};
 }
 
+function parseURL(url) {
+    var parser = document.createElement('a');
+    parser.href = url;
+    console.log('parser:', parser);
+    return parser;
+}
 // load a file from a URL
 function readTextFile(file, callback) {
     var filename = splitURL(file).file;
@@ -202,7 +208,7 @@ function loadFile(url) {
         var local = false;
         if (url == "a local build") {
             local = true;
-            if (slot1.value == "a local build") url = slot1.value;
+            if (slot2.value == "a local build") url = slot1.value;
             else url = slot2.value;
         }
         url = convertGithub(url);
@@ -780,7 +786,7 @@ function makeRow(test1, test2, matchScore) {
     }
     var title = document.createElement('div');
     title.className = 'testname';
-    // make test title a link to a live version of the test"
+    // make test title a link to a live version of the test
     var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
     title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
     title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
@@ -1017,5 +1023,5 @@ window.onload = function() {
     parseQuery();
     // loadButton1.click();
     // loadButton2.click();
-    goButton.click();
+    // goButton.click();
 }
