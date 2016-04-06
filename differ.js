@@ -267,6 +267,7 @@ function loadFile(url) {
             reject();
         }
     }).catch(function(err) {
+        if (typeof err == 'undefined') err = "Load failed.";
         console.log(err);
         throw new Error(err);
     });
@@ -525,6 +526,7 @@ function goClick() {
         proceed();
     }).catch(function(err){
         diffSay("Please enter two URLs above.");
+        console.log('err:', err);
         diffSay(err);
     });
 }
