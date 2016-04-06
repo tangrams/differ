@@ -32,7 +32,7 @@ var slot2input = document.getElementById("slot2");
 var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default1.json";
+var defaultFile = "tests/default.json";
 
 if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
 
@@ -1063,5 +1063,5 @@ function download(url, type) {
 
 window.onload = function() {
     parseQuery();
-    goButton.click();
+    // goButton.click();
 }
