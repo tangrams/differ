@@ -644,18 +644,22 @@ function prepStyles(test1, test2) {
 function prepLocations(test1, test2) {
     return new Promise(function(resolve, reject) {
         var location = setEither(test1.location, test2.location);
-        if (location == null) {
-            diffSay("No locations set for test - using default locations. ");
-            // todo - use default locations
-            // location = loadFile("tests/default.json")
-            loadFile("tests/default1.json").then(function(result) {
-                location = result;
-                return resolve({'loc1': test1.location, 'loc2': test2.location});
-            });
-        } else {
+        if (location != null) {
             test1.location = location[0];
             test2.location = location[1];
             return resolve({'loc1': test1.location, 'loc2': test2.location});
+        } else {
+            diffSay("No locations set for either test - using default location.");
+            // todo - use a series of default locations?
+            // loadFile("tests/locations.json").then(function(result) {
+            //     console.log('result:', result);            
+            //     location = result;
+            //     test1.location = location[0];
+            //     test2.location = location[1];
+            //     return resolve({'loc1': test1.location, 'loc2': test2.location});
+            // });
+            location = [40.70532700869127,-74.00976419448854,16];
+            return resolve({'loc1': location, 'loc2': location});
         }
     });
 }
@@ -665,7 +669,6 @@ function prepBothImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
-    // console.log('prepBothImages, tests:', test1, test2);
 
     if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
         diffAdd("Missing test in slot ");
@@ -703,6 +706,7 @@ function prepBothImages() {
         test1.location = locations.loc1;
         test2.location = locations.loc2;
     });
+
     Promise.all([p1, p2])
     .then(function(result){
         return prepImage(test1);
@@ -807,6 +811,8 @@ function makeRow(test1, test2, matchScore) {
     var title = document.createElement('div');
     title.className = 'testname';
     // make test title a link to a live version of the test
+
+    // test1 is undefined
     var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
     title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
     title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
@@ -1041,7 +1047,5 @@ function download(url, type) {
 
 window.onload = function() {
     parseQuery();
-    // loadButton1.click();
-    // loadButton2.click();
-    // goButton.click();
+    goButton.click();
 }
