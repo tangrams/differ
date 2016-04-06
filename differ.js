@@ -567,7 +567,7 @@ function prepImage(test) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
-            diffSay(test.name+imgType+" found for "+splitURL(test.url).file)
+            diffSay(test.name+imgType+" found for "+test.file)
             // store it
             test.img = result;
             imageData(result, canvas).then(function(result){
@@ -614,15 +614,26 @@ function prepStyles(test1, test2) {
         if (typeof test2.url == 'undefined') {
             if (typeof slots.slot2.defaultScene != 'undefined') {
                 test2.url = slots.slot2.defaultScene;
+                console.log('test2.url:', test2.url);
             }
         }
         var url = setEither(test1.url, test2.url);
-        if (url == null) url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
+        if (url == null) {
+            url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
+        }
         if (url == null) {
             diffSay("No scenefile URLs found for either test!");
             stopClick();
             return;
         } else {
+
+            // if (typeof test1.url == 'undefined') {
+            //     diffSay(test1.name+': no scene found in '+test1.file+' – copying from '+test2.file);
+            // }
+            // if (typeof test2.url == 'undefined') {
+            //     diffSay(test2.name+': no scene found in '+test2.file+' – copying from '+test1.file);
+            // }
+
             test1.url = url[0];
             test2.url = url[1];
         }
@@ -678,6 +689,9 @@ function prepBothImages() {
             console.log("Done!");
         }
     }
+
+    test1.file = slots.slot1.file;
+    test2.file = slots.slot2.file;
 
     // prep scene file urls
     var p1 = prepStyles(test1, test2).then(function(styles) {

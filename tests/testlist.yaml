@@ -40,8 +40,9 @@ http://localhost:8080/?1=tests/locs+urls.json&2=https://github.com/tangrams/refi
 ✅
 
 # a yaml against a json with images and locations only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-! Need to make file:
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/images+locs/images+locs.json
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/images+locs/images+locs.json
+✅
 
 # a yaml against a json with scenefile urls only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/urls.json
