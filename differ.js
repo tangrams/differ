@@ -206,11 +206,16 @@ function prepMap() {
 function loadFile(url) {
     return new Promise(function(resolve, reject) {
         var local = false;
-        if (url == "a local build") {
+        if (url == "") {
+            throw new Error("Empty slot");
+            reject();
+        }
+        if (url == "Local renders") {
             local = true;
-            if (slot2.value == "a local build") url = slot1.value;
+            if (slot2.value == "Local renders") url = slot1.value;
             else url = slot2.value;
         }
+        diffSay("Loading "+url);
         url = convertGithub(url);
         var urlname = splitURL(url).file;
         var urlext = splitURL(url).ext;
@@ -262,13 +267,14 @@ function loadFile(url) {
             reject();
         }
     }).catch(function(err) {
-            console.log('problem?', err);
+        console.log(err);
+        throw new Error(err);
     });
 }
 
 function localBuild() {
     var slot2 = document.getElementById('slot2')
-    slot2.value = "a local build";        
+    slot2.value = "Local renders";
 }
 
 // copy locations from a collection
@@ -343,7 +349,7 @@ function prepPage() {
     tests.innerHTML = "";
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
-    msg += (slot2.value == "a local build") ? "a local build" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+    msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
     msg += "<br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
