@@ -146,6 +146,14 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
+function updateURL(url) {
+    var parser = document.createElement('a');
+    parser.href = url;
+    url = "/?1="+slot1input.value+"&2="+slot2input.value;
+    var currentstate = history.state;
+    window.history.pushState(currentstate, "", url);
+}
+
 // get link for blob
 function linkFromBlob(blob) {
     var urlCreator = window.URL || window.webkitURL;
@@ -268,7 +276,6 @@ function loadFile(url) {
         }
     }).catch(function(err) {
         if (typeof err == 'undefined') err = "Load failed.";
-        console.log(err);
         throw new Error(err);
     });
 }
@@ -517,6 +524,7 @@ function loadView (view, location) {
 function goClick() {
     alertDiv.innerHTML = '';
     diffSay("Starting Diff");
+    updateURL();
     goButton.blur();
     Promise.all([loadFile(slot1.value),loadFile(slot2.value)]).then(function(result){
         slots.slot1 = result[0];
@@ -526,7 +534,7 @@ function goClick() {
         proceed();
     }).catch(function(err){
         diffSay("Please enter two URLs above.");
-        console.log('err:', err);
+        console.log(err);
         diffSay(err);
     });
 }
