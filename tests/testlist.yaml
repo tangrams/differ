@@ -31,7 +31,7 @@ http://localhost:8080/?1=tests/bad.yaml&2=tests/bad.yaml
 
 # a yaml against a json with images, scenefile urls, and locations
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
 ✅
 
 # a yaml against a json with scenefile urls and locations only
@@ -41,11 +41,12 @@ http://localhost:8080/?1=tests/locs+urls.json&2=https://github.com/tangrams/refi
 
 # a yaml against a json with images and locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+! Need to make file:
 
 # a yaml against a json with scenefile urls only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/urls.json
 http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
-!! BROKEN - should use default locations:
+! BROKEN - should use default locations:
 
 # a yaml against a json with locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locations.json
@@ -53,11 +54,11 @@ http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/
 
 # a yaml against a json with no tests
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json
-!! BROKEN:
+! BROKEN:
 
 # a yaml against an empty json
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json
-!! BROKEN:
+! BROKEN:
 
 # a json with everything against another json with everything
 http://localhost:8080/?1=tests/tangram01-v.5/tangram01-v.5.json&2=tests/tangram01-v.6/tangram01-v.6.json
