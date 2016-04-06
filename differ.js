@@ -670,12 +670,18 @@ function prepBothImages() {
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
 
-    if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
-        diffAdd("Missing test in slot ");
-        if (typeof test1 == "undefined") diffAdd("1");
-        if (typeof test2 == "undefined") diffAdd("2");
-        diffSay(" - using test from other slot.")
+    // if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
+    //     diffAdd("Missing test in slot ");
+    //     if (typeof test1 == "undefined") diffAdd("1");
+    //     if (typeof test2 == "undefined") diffAdd("2");
+    //     diffSay(" - using test from other slot.")
+    //     stopClick();
+    // }
+
+    if (typeof test1 == 'undefined' && typeof test2 == 'undefined' ) {
+        diffSay("No tests defined in either file.");
         stopClick();
+        return false;
     }
 
     function nextDiff() {
