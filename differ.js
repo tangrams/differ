@@ -146,10 +146,10 @@ function readTextFile(file, callback) {
     rawFile.send(null);
 }
 
-function updateURL(url) {
+function updateURL() {
     var parser = document.createElement('a');
-    parser.href = url;
-    url = "/?1="+slot1input.value+"&2="+slot2input.value;
+    parser.href = window.location;
+    var url = parser.pathname+"?1="+slot1input.value+"&2="+slot2input.value;
     var currentstate = history.state;
     window.history.pushState(currentstate, "", url);
 }
