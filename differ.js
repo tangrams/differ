@@ -819,7 +819,7 @@ function makeRow(test1, test2, matchScore) {
     // make test title a link to a live version of the test
 
     // test1 is undefined
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+test1.url+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
     title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
     title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
     testdiv.appendChild(title);
