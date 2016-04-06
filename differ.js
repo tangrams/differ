@@ -215,7 +215,7 @@ function loadFile(url) {
             if (slot2.value == "Local renders") url = slot1.value;
             else url = slot2.value;
         }
-        diffSay("Loading "+url);
+        // diffSay("Loading "+url);
         url = convertGithub(url);
         var urlname = splitURL(url).file;
         var urlext = splitURL(url).ext;
