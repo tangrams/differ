@@ -153,9 +153,11 @@ function readTextFile(file, callback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+slot1input.value+"&2="+slot2input.value;
-    var currentstate = history.state;
-    window.history.pushState(currentstate, "", url);
+    var url = parser.pathname+"?1="+escape(slot1input.value)+"&2="+escape(slot2input.value);
+    if (parser.origin+url+"&go" != window.location) {
+        var currentstate = history.state;
+        window.history.pushState(currentstate, "", url);
+    }
 }
 
 // get link for blob
