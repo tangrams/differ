@@ -67,6 +67,10 @@ function parseQuery() {
     if (url != "") {
         slot2.value = url;
     }
+    url = getQueryVariable("go")
+    if (url != "") {
+        goButton.click();
+    }
 }
 
 // add text to the output div
