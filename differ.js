@@ -33,6 +33,7 @@ var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default.json";
 
+// can only use saveButton if running on a local node server
 if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
 
 
@@ -358,8 +359,6 @@ function prepPage() {
             }
     });
 
-    // clear out any existing tests
-    tests.innerHTML = "";
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
     msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
@@ -531,6 +530,12 @@ function goClick() {
     diffSay("Starting Diff");
     updateURL();
     goButton.blur();
+
+    // clear out any existing tests
+    tests.innerHTML = "";
+    data = null;
+    metadata = null;
+
     Promise.all([loadFile(slot1.value),loadFile(slot2.value)]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
