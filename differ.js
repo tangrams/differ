@@ -370,12 +370,9 @@ function prepPage() {
     // make canvas
     if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
     canvas = document.createElement('canvas');
-    // canvas.height = lsize;
-    // canvas.width = lsize;
     canvas.height = size;
     canvas.width = size;
     ctx = canvas.getContext('2d');
-    // diff = ctx.createImageData(lsize, lsize);
     diff = ctx.createImageData(size, size);
 
 }
@@ -461,7 +458,6 @@ function imageData (img, canvas) {
                           0, 0, img.width, img.height,
                           0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
-        // var data = context.getImageData(0, 0, lsize, lsize);
         var data = context.getImageData(0, 0, size, size);
         resolve(data);
     }, function(err) {
@@ -758,7 +754,6 @@ function doDiff( test1, test2 ) {
     if (test1.data && test2.data) {
         // run the diff
         try {
-            // var difference = pixelmatch(test1.data, test2.data, diff.data, lsize, lsize, {threshold: 0.1});
             var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.1});
         } catch(e) {
             throw new Error("> diff error:", e);
@@ -804,14 +799,9 @@ function doDiff( test1, test2 ) {
     var diff2 = new Image();
     diff2.height=size;
     diff2.width=size;
-    // diff2.height=lsize;
-    // diff2.width=lsize;
     diff2.onload = function() {
         images[test1.name].diffImg = diff2;
-        // small diff when diff height is lsize
         images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
-        // diff right size but giant cropped others when diff is lsize
-        // images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], size);
     }
     diff2.src = linkFromBlob( blob );
 };
@@ -980,8 +970,7 @@ function makeStrip(images, size) {
     c.height = size;
     var ctx=c.getContext("2d");
     for (var x = 0; x < images.length; x++) {
-        // ctx.drawImage(images[x], size * x, 0); // low-rez on retina
-        ctx.drawImage(images[x], lsize * x, 0); // high-rez on retina but diff is wrong size
+        ctx.drawImage(images[x], size * x, 0, size, size);
     }
     return c.toDataURL("image/png");
 }
