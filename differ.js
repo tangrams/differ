@@ -25,10 +25,9 @@ var alertDiv = document.getElementById("alert");
 var totalScoreDiv = document.getElementById("totalScore");
 var goButton = document.getElementById("goButton");
 var stopButton = document.getElementById("stopButton");
-var localButton = document.getElementById("localButton");
 var saveButton = document.getElementById("saveButton");
-var slot1input = document.getElementById("slot1");
-var slot2input = document.getElementById("slot2");
+var slot1 = document.getElementById("slot1");
+var slot2 = document.getElementById("slot2");
 var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
@@ -153,7 +152,7 @@ function readTextFile(file, callback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+escape(slot1input.value)+"&2="+escape(slot2input.value);
+    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value);
     if (parser.origin+url+"&go" != window.location) {
         var currentstate = history.state;
         window.history.pushState(currentstate, "", url);
