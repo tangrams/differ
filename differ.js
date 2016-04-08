@@ -1050,21 +1050,26 @@ function makeInfoJSON() {
     try {
         j.tests = data.tests;
     } catch(e) {
+        throw new Error(e);
+        return false;
     }
-    var newJSON = JSON.stringify(j, null, 2);
-    var url = 'data:text/json;charset=utf8,' + encodeURIComponent(newJSON);
-    download(url, "json");
+    saveData(j, 'differ-' + (+new Date()) + '.json');
 }
 
-function download(url, type) {
-    // var w = window.open(url, '_blank');
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = "differ-"+new Date().getTime()+"."+type;
-    document.body.appendChild(a); // necessary for Firefox
-    a.click();
-    document.body.removeChild(a);
-}
+var saveData = (function () {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    return function (data, fileName) {
+        var json = JSON.stringify(data, null, 2),
+            blob = new Blob([json], {type: "octet/stream"}),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
 
 window.onload = function() {
     parseQuery();
