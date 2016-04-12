@@ -1,7 +1,7 @@
 # differ
 A map-render-testing framework for Tangram
 
-Live at: http://tagrams.github.io/differ
+Live at: https://tangrams.github.io/differ
 
 <img width="404" alt="screen shot 2016-04-07 at 11 05 24 am" src="https://cloud.githubusercontent.com/assets/459970/14355919/bae21cf2-fcb0-11e5-8675-ac86b5531065.png">
 
