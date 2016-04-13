@@ -1,0 +1,138 @@
+sources:
+    osm:
+        type: TopoJSON
+        url:  https://vector.mapzen.com/osm/all/{z}/{x}/{y}.topojson?api_key=vector-tiles-
+styles:
+    blend-lines:
+        base: lines
+        blend: add
+global:
+    line-width: .4px
+    font-family: arial
+    font-size: 6px
+scene:
+    background:
+        color: black
+layers:
+    boundaries:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [.6, .6, .6]
+                width: global.line-width
+    boundaries-labels:
+        data: { source: osm, layer: boundaries }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    earth:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [1., .6, .6]
+                width: global.line-width
+    earth-labels:
+        data: { source: osm, layer: earth }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    water:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [.6, .6, 1.]
+                width: global.line-width
+    water-labels:
+        data: { source: osm, layer: water }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    buildings:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [1., .6, 1.]
+                width: global.line-width
+    buildings-labels:
+        data: { source: osm, layer: buildings }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    landuse:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [.6, 1., .6]
+                width: global.line-width
+    landuse_labels:
+        data: { source: osm }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    labels:
+        data: { source: osm }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    pois:
+        data: { source: osm }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    places:
+        data: { source: osm }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    roads:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [1., 1., 1.]
+                width: global.line-width
+    roads-labels:
+        data: { source: osm, layer: roads }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size
+    transit:
+        data: { source: osm }
+        draw:
+            blend-lines:
+                color: [.6, .6, 1.]
+                width: global.line-width
+    transit-labels:
+        data: { source: osm, layer: transit }
+        draw:
+            color: [.6, 1., .6]
+            text:
+                font:
+                    family: global.font-family
+                    size: global.font-size

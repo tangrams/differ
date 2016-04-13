@@ -1,0 +1,249 @@
+{
+    "origin": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36",
+        "devicePixelRatio": 2,
+        "time": "Wed Apr 13 2016 14:54:53 GMT-0400 (EDT)",
+        "testFile": "tiles01.json"
+    },
+
+    "tests": {
+        "world0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,0,0]
+        },
+        "world1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,90,1]
+        },
+        "world2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,-180,1]
+        },
+        "world3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,-90,1]
+        },
+        "world4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,0,3]
+        },
+        "world5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,90,3]
+        },
+        "world6": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,-180,3]
+        },
+        "world7": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [0,-90,3]
+        },
+        "nyc0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,8]
+        },
+        "nyc1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,10]
+        },
+        "nyc2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,15]
+        },
+        "nyc3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,16]
+        },
+        "nyc4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,17]
+        },
+        "nyc5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.70532700869127,-74.0097749233246,18]
+        },
+        "zoo": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.767653506304654,-73.97185871788633,18.35]
+        },
+        "berlin0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,8]
+        },
+        "berlin1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,10]
+        },
+        "berlin2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,15]
+        },
+        "berlin3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,16]
+        },
+        "berlin4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,17]
+        },
+        "berlin5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [52.524,13.411,18]
+        },
+        "paris0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,8]
+        },
+        "paris1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,10]
+        },
+        "paris2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,15]
+        },
+        "paris3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,16]
+        },
+        "paris4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,17]
+        },
+        "paris5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [48.853,2.349,18]
+        },
+        "sf0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,8]
+        },
+        "sf1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,10]
+        },
+        "sf2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,15]
+        },
+        "sf3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,16]
+        },
+        "sf4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,17]
+        },
+        "sf5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.794320114406965,-122.39521661967713,18]
+        },
+        "oak0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,8]
+        },
+        "oak1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,10]
+        },
+        "oak2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,15]
+        },
+        "oak3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,16]
+        },
+        "oak4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,17]
+        },
+        "oak5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.804,-122.271,18]
+        },
+        "tok0": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,8]
+        },
+        "tok1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,10]
+        },
+        "tok2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,15]
+        },
+        "tok3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,16]
+        },
+        "tok4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,17]
+        },
+        "tok5": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [35.69000367523146,139.69199627637863,18]
+        },
+
+        "bkbridge": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.71148940753243,-74.00395994758611,17.5]
+        },
+        "bqe1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.700670648879,-73.99016172404833,18]
+        },
+        "bqe2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.680158142468244,-74.00420833056701,17]
+        },
+        "jfk": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [40.644548507060854,-73.78533814798226,15.625]
+        },
+        "atl": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [33.891744,-84.259164,16]
+        },
+        "bcn": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [41.38319564807807,2.1767943761804625,16]
+        },
+        "bcn2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [41.425056262144864,2.2162650446394854,16.75]
+        },
+        "la": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [34.03783,-118.27437,16.5]
+        },
+
+        "lombard": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80205,-122.41893,18.475]
+        },
+        "stair": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80096,-122.42076,19]
+        },
+        "greenwich1": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80269,-122.40618,16]
+        },
+        "greenwich2": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80269,-122.40618,17]
+        },
+        "greenwich3": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80269,-122.40618,18]
+        },
+        "greenwich4": {
+            "url": "tests/tiles/tiles.yaml",
+            "location": [37.80269,-122.40618,19]
+        }
+    }
+}
