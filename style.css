@@ -118,7 +118,7 @@ button.chooser {
     background-color: #33ee33;
 }
 
-#map {
+#mapdiv {
     background: rgba(0, 0, 0, 0);
     visibility: hidden;
     position: absolute;

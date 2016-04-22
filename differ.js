@@ -1,4 +1,4 @@
-"use strict";
+// "use strict";
 /*jslint browser: true*/
 /*global Tangram, gui */
 
@@ -184,14 +184,14 @@ function updateProgress(remaining) {
 function prepMap() {
     return new Promise(function(resolve, reject) {
         // set sizes
-        document.getElementById("map").style.height = size+"px";
-        document.getElementById("map").style.width = size+"px";
+        document.getElementById("mapdiv").style.height = size+"px";
+        document.getElementById("mapdiv").style.width = size+"px";
 
         // initialize Tangram
         /*** Map ***/
         if (typeof window.map == "undefined") {
 
-            var map = L.map('map', {
+            var map = L.map('mapdiv', {
                 keyboardZoomOffset : .05,
                 zoomControl: false,
                 attributionControl : false
