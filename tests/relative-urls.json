@@ -1,0 +1,12 @@
+{
+    "tests": {
+        "simple-1": {
+            "url": "simple.yaml",
+            "location": [0,0,1]
+        },
+        "simple-2": {
+            "url": "simple.yaml",
+            "location": [40.70531887544228,-74.0097749233246,16]
+        }
+    }
+}

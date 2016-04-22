@@ -58,6 +58,10 @@ function getQueryVariable(variable) {
     return "";
 }
 
+function isPathAbsolute(path) {
+  return /^(?:\/|[a-z]+:\/\/)/.test(path);
+}
+
 function parseQuery() {
     var url = getQueryVariable("1")
     if (url != "") {
@@ -238,6 +242,7 @@ function loadFile(url) {
         // populate slots array
         slot = {};
         slot.url = url;
+        slot.dir = splitURL(url).dir;
         slot.file = urlname;
 
         if (urlext == "yaml") {
@@ -270,7 +275,7 @@ function loadFile(url) {
                         data.tests[key].imageURL = null;
                     } else {
                         // add name of pre-rendered image to look for
-                        data.tests[key].imageURL = splitURL(url).dir + data.tests[key].name + imgType;
+                        data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
                     }
                     return data.tests[key];
                 });
@@ -436,13 +441,11 @@ function loadImage (url) {
 
             return reject("couldn't load "+url);
         };
-        // console.log(3);
         image.crossOrigin = 'anonymous';
         url = convertGithub(url);
         // force-refresh any local images with a cache-buster
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
-        // console.log(4);
         image.src = url;
     });
 }
@@ -656,6 +659,12 @@ function prepStyles(test1, test2) {
 
             test1.url = url[0];
             test2.url = url[1];
+            if (!isPathAbsolute(test1.url)) {
+                test1.url = test1.dir + test1.url;
+            }
+            if (!isPathAbsolute(test2.url)) {
+                test2.url = test2.dir + test2.url;
+            }
         }
         return resolve({'url1': test1.url, 'url2': test2.url});
     });
@@ -721,6 +730,8 @@ function prepBothImages() {
 
     test1.file = slots.slot1.file;
     test2.file = slots.slot2.file;
+    test1.dir = slots.slot1.dir;
+    test2.dir = slots.slot2.dir;
 
     // prep scene file urls
     var p1 = prepStyles(test1, test2).then(function(styles) {

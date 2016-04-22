@@ -94,3 +94,7 @@ http://localhost:8080/?1=tests/urls.json&2=tests/locs+urls.json
 http://localhost:8080/?1=tests/urls.json&2=tests/urls.json
 ✅
 
+# a json with relative urls against local renders
+http://localhost:8080/?1=tests/relative-urls.json&2=Local%20renders
+
+
