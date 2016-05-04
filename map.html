@@ -27,9 +27,31 @@
         }
 
     </style>
+
+    <script>
+    	function respond() {
+    		setTimeout(function() {
+	    		console.log("iframe respond")
+	    	}, 1000);
+    		setTimeout(function() {
+	    		parent.end();
+	    	}, 2000);
+    	}
+
+	    function testPromise() {
+    		console.log("iframe promise?")
+	        return new Promise(function(resolve, reject) {
+	        	setTimeout(function () {
+		            resolve("iframe resolved");
+	        	}, 1000);
+	        });
+	    }
+
+    </script>
   </head>
 
   <body>
+    <div id="test">TEST</div>
     <div id="map"></div>
 
     <!-- leaflet -->
