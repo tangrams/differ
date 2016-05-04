@@ -33,6 +33,14 @@ var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default.json";
 
+// new:
+map1frame = document.getElementById("map1");
+map2frame = document.getElementById("map2");
+map1window = map1frame.contentWindow;
+map2window = map2frame.contentWindow;
+map1document = map1frame.contentDocument;
+map2document = map2frame.contentDocument;
+
 // can only use saveButton if running on a local node server
 if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
 
@@ -181,14 +189,29 @@ function updateProgress(remaining) {
 // prep scene
 //
 
+// todo: prep map in two iframes - pass each iframe's contentDocument as the document
+// another issue: lots of this code assumes a single global 'map' var
+// todo: make sure each 'map' is referring to a specific iframe's 'map' each time
+// and determine which one it should be at every point
+
 function prepMap() {
     return new Promise(function(resolve, reject) {
         // set sizes
+        // old:
         document.getElementById("mapdiv").style.height = size+"px";
         document.getElementById("mapdiv").style.width = size+"px";
+        // new:
+        map1frame.style.height = size+"px";
+        map1frame.style.width = size+"px";
+        map2frame.style.height = size+"px";
+        map2frame.style.width = size+"px";
+
 
         // initialize Tangram
+        // todo: this is probably no longer necessary - replace this with a promise
+        // which resolves with each iframe's onload()
         /*** Map ***/
+        // old:
         if (typeof window.map == "undefined") {
 
             var map = L.map('mapdiv', {
