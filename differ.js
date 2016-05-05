@@ -31,15 +31,19 @@ var slot2 = document.getElementById("slot2");
 var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default.json";
+var defaultFile = "tests/default1.json";
 
 // new:
-map1frame = document.getElementById("map1");
-map2frame = document.getElementById("map2");
-map1window = map1frame.contentWindow;
-map2window = map2frame.contentWindow;
-map1document = map1frame.contentDocument;
-map2document = map2frame.contentDocument;
+var frame1 = {
+    'iframe': document.getElementById("map1"),
+    'window': document.getElementById("map1").contentWindow,
+    'document': document.getElementById("map1").contentDocument
+}
+var frame2 = {
+    'iframe': document.getElementById("map2"),
+    'window': document.getElementById("map2").contentWindow,
+    'document': document.getElementById("map2").contentDocument
+}
 
 // can only use saveButton if running on a local node server
 if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
@@ -194,18 +198,54 @@ function updateProgress(remaining) {
 // todo: make sure each 'map' is referring to a specific iframe's 'map' each time
 // and determine which one it should be at every point
 
+function newPrepMap(which) {
+    return new Promise(function(resolve, reject) {
+        // debugger;
+        var frame = which.iframe;
+        var mapWindow = which.window;
+        frame.style.height = size+"px";
+        frame.style.width = size+"px";
+
+        // initialize Tangram
+        // todo: maybe no longer necessary - replace this with a promise
+        // which resolves with each iframe's onload()
+        /*** Map ***/
+        // new:
+        if (typeof mapWindow.map == "undefined") {
+
+            mapWindow.map = L.map('mapdiv', {
+                keyboardZoomOffset : 1.,
+                zoomControl: false,
+                attributionControl : false
+            });
+            mapWindow.map.setView([0,0],5);
+
+            var layer = Tangram.leafletLayer({
+                scene: null,
+                // highDensityDisplay: false
+            });
+
+            mapWindow.layer = layer;
+            mapWindow.scene = layer.scene;
+
+            layer.on('init', function () {
+                resolve(mapWindow.map);
+            });
+
+            layer.addTo(mapWindow.map);
+
+        } else{
+            resolve(mapWindow.map);
+        }
+    }); 
+}
+
 function prepMap() {
     return new Promise(function(resolve, reject) {
         // set sizes
         // old:
         document.getElementById("mapdiv").style.height = size+"px";
         document.getElementById("mapdiv").style.width = size+"px";
-        // new:
-        map1frame.style.height = size+"px";
-        map1frame.style.width = size+"px";
-        map2frame.style.height = size+"px";
-        map2frame.style.width = size+"px";
-
 
         // initialize Tangram
         // todo: this is probably no longer necessary - replace this with a promise
@@ -339,6 +379,7 @@ function loadDefaults() {
 }
 
 // make sure tests are ready, fill in any gaps
+// old:
 function prepTests() {
     // reset progress bar
     updateProgress(numTests);
@@ -378,6 +419,41 @@ function prepTests() {
 }
 
 // setup output divs and canvases
+// new:
+function newPrepPage() {
+    // subscribe to Tangram's published view_complete event
+    // todo: make one for each frame
+    frame1.window.scene.subscribe({
+        // trigger promise resolution
+        view_complete: function () {
+                viewComplete1Resolve();
+            }
+    });
+    frame2.window.scene.subscribe({
+        // trigger promise resolution
+        view_complete: function () {
+                viewComplete2Resolve();
+            }
+    });
+
+    // set status message
+    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
+    msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+    msg += "<br>" + numTests + " tests:<br>";
+    statusDiv.innerHTML = msg;
+
+    // make canvas
+    if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
+    canvas = document.createElement('canvas');
+    canvas.height = size;
+    canvas.width = size;
+    ctx = canvas.getContext('2d');
+    diff = ctx.createImageData(size, size);
+
+}
+
+// setup output divs and canvases
+// old:
 function prepPage() {
     // subscribe to Tangram's published view_complete event
     scene.subscribe({
@@ -492,6 +568,22 @@ function imageData (img, canvas) {
 };
 
 // capture the current tangram map
+function newScreenshot (save, name, frame) {
+    // console.log(name, 'screenshot:')
+    var scene = frame.window.scene;
+    return scene.screenshot().then(function(data) {
+        // console.log(name, 'screenshot success:', data)
+        // save it to a file
+        if (save) saveImage(data.blob, name);
+        return loadImage(linkFromBlob( data.blob ));
+    }).catch(function(err){
+        // console.warn('screenshot fail:', err);
+        return Promise.reject();
+    });
+};
+
+// capture the current tangram map
+// old:
 function screenshot (save, name) {
     // console.log(name, 'screenshot:')
     return scene.screenshot().then(function(data) {
@@ -506,10 +598,44 @@ function screenshot (save, name) {
 };
 
 // use Tangram's view_complete event to resolve a promise
+// new: make one for each frame
+var viewComplete1Resolve, viewComplete1Reject;
+var viewComplete1;
+var viewComplete2Resolve, viewComplete2Reject;
+var viewComplete2;
+// todo: make this less fugly
+function newResetViewComplete(frame) {
+    console.log("> resetting viewComplete", frame);
+    if (frame.id == "map1") {
+        viewComplete1 = new Promise(function(resolve, reject){
+            viewComplete1Resolve = function(){
+                console.log('map1 view_complete');
+                resolve();
+            };
+            viewComplete1Reject = function(e){
+                // console.log("> viewComplete FAIL");
+                reject();
+            };
+        });
+    } else if (frame.id == "map2 view_complete") {
+        viewComplete2 = new Promise(function(resolve, reject){
+            viewComplete2Resolve = function(){
+                console.log('2 resolve');
+                resolve();
+            };
+            viewComplete2Reject = function(e){
+                // console.log("> viewComplete FAIL");
+                reject();
+            };
+        });
+    }
+}
+
+// use Tangram's view_complete event to resolve a promise
+// old
 var viewCompleteResolve, viewCompleteReject;
 var viewComplete;
 function resetViewComplete() {
-    // console.log("> resetting viewComplete");
     viewComplete = new Promise(function(resolve, reject){
         viewCompleteResolve = function(){
             resolve();
@@ -522,6 +648,52 @@ function resetViewComplete() {
 }
 
 // load a map position and zoom
+// todo: use new per-iframe viewComplete
+function newLoadView (view, location, frame) {
+    var t = 0;
+    return new Promise(function(resolve, reject) {
+        if (!view) reject('no view');
+        // if (!view.url) reject('no view url');
+        // if (!view.location) reject('no view location');
+        // load and draw scene
+        var url = convertGithub(view.url);
+        var name = splitURL(url).file;
+        // if it's drawing, wait for it to finish
+        newResetViewComplete(frame);
+        var scene = frame.window.scene;
+        var map = frame.window.map;
+        scene.last_valid_config_source = null; // overriding a Tangram fail-safe
+        return scene.load(url).then(function(r) {
+            scene.animated = false;
+            map.setView([location[0], location[1]], location[2]);
+            // scene.requestRedraw(); // necessary?
+            // wait for map to finish drawing, then return
+            // todo: trigger each frame's viewComplete
+            // not sure how this is going to work.
+            // todo: make this less fugly
+            if (frame.id == "map1") {
+                return viewComplete1.then(function(){
+                    console.log('map1 view_complete')
+                    resolve();
+                }).catch(function(error) {
+                    reject(error);
+                });
+            } else if (frame.id == "map2") {
+                return viewComplete2.then(function(){
+                    resolve();
+                }).catch(function(error) {
+                    reject(error);
+                });
+            }
+        }).catch(function(error) {
+            // console.log('scene.load() error:', error)
+            reject(error);
+        });
+    });
+}
+
+// load a map position and zoom
+// old:
 function loadView (view, location) {
     var t = 0;
     return new Promise(function(resolve, reject) {
@@ -599,9 +771,13 @@ function stop() {
 //
 
 function proceed() {
-    return prepMap().then(function(val) {
-        map = val;
+    // todo: prep two maps
+    // something like:
+    return Promise.all([prepMap(), newPrepMap(frame1), newPrepMap(frame2)]).then(function(val) {
+    // return prepMap().then(function(val) {
+        map = val[0];
         prepTests().then(function() {
+            newPrepPage();
             prepPage();
             prepBothImages();
         });
@@ -609,6 +785,79 @@ function proceed() {
 }
 
 // prep an image to send to the diff
+// todo: send test data to a map in an iframe and return the data from the canvas
+// new:
+function newPrepImage(test, frame) {
+    console.log('newPrepImage', test.name, frame.iframe.id)
+    return new Promise(function(resolve, reject) {
+        // if there's an image for the test, load it
+        loadImage(test.imageURL).then(function(result){
+            diffSay(test.name+imgType+" found for "+test.file)
+            // store it
+            test.img = result;
+            imageData(result, canvas).then(function(result){
+                // then return the the data object
+                return resolve(test.data = result.data);
+            }).catch(function(err){
+                console.log("> imageData err:", err);
+            });
+        }).catch(function(err) {
+            console.log(1);
+            console.warn(test.name+": "+err);
+            // no image? load the test view in the map and make a new image
+            var loc = parseLocation(test.location);
+            // todo: replace with new version
+            newLoadView(test, loc, frame).then(function(result){
+                console.log(2);
+                // grab a screenshot and store it
+                // todo: screenshot a specific frame
+                newScreenshot(writeScreenshots, name, frame).then(function(result){
+                    console.log(3);
+                    test.img = result;
+                    // then return the data object
+                    imageData(result, canvas).then(function(result){
+                        console.log('imageData result:', result);
+                        return resolve(test.data = result.data);
+                    }).catch(function(error){
+                        console.log('imageData error:', error);
+                        throw new Error(error);
+                    });
+                }).catch(function(error){
+                    console.log('screenshot error:', error);
+                    throw new Error(error);
+                });;
+            }).catch(function(error){
+                console.log('loadView error:', error);
+                reject(error);
+            });
+
+            // todo: replace with new version
+            // loadView(test, loc).then(function(result){
+            //     // grab a screenshot and store it
+            //     screenshot(writeScreenshots, name).then(function(result){
+            //         test.img = result;
+            //         // then return the data object
+            //         imageData(result, canvas).then(function(result){
+            //             return resolve(test.data = result.data);
+            //         }).catch(function(error){
+            //             console.log('imageData error:', error);
+            //             throw new Error(error);
+            //         });
+            //     }).catch(function(error){
+            //         console.log('screenshot error:', error);
+            //         throw new Error(error);
+            //     });;
+            // }).catch(function(error){
+            //     // console.log('loadView error:', error);
+            //     reject(error);
+            // });
+
+        });
+    });
+}
+
+// prep an image to send to the diff
+// old:
 function prepImage(test) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
@@ -660,7 +909,7 @@ function prepStyles(test1, test2) {
         if (typeof test2.url == 'undefined') {
             if (typeof slots.slot2.defaultScene != 'undefined') {
                 test2.url = slots.slot2.defaultScene;
-                console.log('test2.url:', test2.url);
+                // console.log('test2.url:', test2.url);
             }
         }
         var url = setEither(test1.url, test2.url);
@@ -738,6 +987,7 @@ function prepBothImages() {
 
     function nextDiff() {
         try {
+            // todo: replace with newDoDiff()
             doDiff(test1, test2);
         } catch(e) {
             console.log('doDiff failed:', e.stack);
@@ -767,24 +1017,38 @@ function prepBothImages() {
         test2.location = locations.loc2;
     });
 
+    // todo: replace with concurrent rendering - something like:
     Promise.all([p1, p2])
+    .then(Promise.all([newPrepImage(test1, frame1), newPrepImage(test2, frame2)]))
     .then(function(result){
-        return prepImage(test1);
-    })
-    .catch(function(e){
-        // console.log('prep1 error:', e);
-        diffSay("problem with "+test1.name+" in "+splitURL(test1.url).file+": "+e.name);
-    })
-    .then(function(result){
-        return prepImage(test2);
-    })
-    .then(function(result){
+        console.log('prepimage result:', result)
+        return result;
+    }).then(function(result){
         nextDiff();
     }).catch(function(e){
-        // console.log('prep2 error:', e);
         diffSay("problem with "+test2.name+" in "+splitURL(test2.url).file+": "+e.name);
         nextDiff();
     });
+
+    // old:
+    // Promise.all([p1, p2])
+    // .then(function(result){
+    //     return prepImage(test1);
+    // })
+    // .catch(function(e){
+    //     // console.log('prep1 error:', e);
+    //     diffSay("problem with "+test1.name+" in "+splitURL(test1.url).file+": "+e.name);
+    // })
+    // .then(function(result){
+    //     return prepImage(test2);
+    // })
+    // .then(function(result){
+    //     nextDiff();
+    // }).catch(function(e){
+    //     // console.log('prep2 error:', e);
+    //     diffSay("problem with "+test2.name+" in "+splitURL(test2.url).file+": "+e.name);
+    //     nextDiff();
+    // });
 }
 
 // perform the image comparison and update the html
