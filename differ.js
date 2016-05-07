@@ -1034,9 +1034,10 @@ function prepBothImages() {
 
     // todo: replace with concurrent rendering - something like:
     Promise.all([p1, p2])
-    .then(Promise.all([newPrepImage(test1, frame1), newPrepImage(test2, frame2)]))
-    .then(function(result){
-        console.log('prepimage result:', result)
+    .then(function() {
+        return Promise.all([newPrepImage(test1, frame1), newPrepImage(test2, frame2)]);
+    }).then(function(result){
+        // console.log('prepimage result:', result)
         return result;
     }).then(function(result){
         nextDiff();
