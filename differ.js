@@ -423,17 +423,19 @@ function prepTests() {
 function newPrepPage() {
     // subscribe to Tangram's published view_complete event
     // todo: make one for each frame
-    console.log('subscribing to frame1 view_complete:', frame1.window.scene)
+    // console.log('newPrepPage, scene?', frame1.window.scene);
+    // console.log('newPrepPage, scene.subscribe?', frame1.window.scene.subscribe);
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
+                console.log('viewComplete1Resolve()?')
                 viewComplete1Resolve();
             }
     });
-    console.log('subscribing to frame2 view_complete:', frame2.window.scene)
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
+                console.log('viewComplete2Resolve()?')
                 viewComplete2Resolve();
             }
     });
@@ -457,7 +459,10 @@ function newPrepPage() {
 // setup output divs and canvases
 // old:
 function prepPage() {
+    // console.log('prepPage')
     // subscribe to Tangram's published view_complete event
+    // console.log('prepPage scene?', scene)
+    // console.log('prepPage scene.subscribe?', scene.subscribe)
     scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
@@ -607,11 +612,11 @@ var viewComplete2Resolve, viewComplete2Reject;
 var viewComplete2;
 // todo: make this less fugly
 function newResetViewComplete(frame) {
-    console.log("> resetting viewComplete", frame.iframe.id);
-    if (frame.id == "map1") {
+    if (frame.iframe.id == "map1") {
+        // console.log('setting viewcomplete1')
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
-                console.log('viewComplete1');
+                console.log('viewComplete1Resolve()!');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -619,10 +624,11 @@ function newResetViewComplete(frame) {
                 reject();
             };
         });
-    } else if (frame.id == "map2") {
+    } else if (frame.iframe.id == "map2") {
+        // console.log('setting viewcomplete2')
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
-                console.log('viewComplete2');
+                console.log('viewComplete2Resolve()!');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -652,7 +658,7 @@ function resetViewComplete() {
 // load a map position and zoom
 // todo: use new per-iframe viewComplete
 function newLoadView (view, location, frame) {
-    console.log('newLoadView');
+    // console.log('newLoadView');
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
@@ -667,7 +673,7 @@ function newLoadView (view, location, frame) {
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
         return scene.load(url).then(function(r) {
-            console.log(frame.iframe.id, 'view_complete:')
+            // console.log(frame.iframe.id, 'scene.load() triggered')
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
@@ -675,18 +681,22 @@ function newLoadView (view, location, frame) {
             // todo: trigger each frame's viewComplete
             // not sure how this is going to work.
             // todo: make this less fugly
-            if (frame.id == "map1") {
+            if (frame.iframe.id == "map1") {
+                // console.log('triggering viewcomplete1:', viewComplete1)
                 return viewComplete1.then(function(){
-                    console.log('map1 view_complete')
+                    console.log('map1 view_complete!')
                     resolve();
                 }).catch(function(error) {
+                    // console.log('map1 view_complete error')
                     reject(error);
                 });
-            } else if (frame.id == "map2") {
+            } else if (frame.iframe.id == "map2") {
+                // console.log('triggering viewcomplete2:')
                 return viewComplete2.then(function(){
-                    console.log('map2 view_complete')
+                    console.log('map2 view_complete!')
                     resolve();
                 }).catch(function(error) {
+                    // console.log('map2 view_complete error')
                     reject(error);
                 });
             }
@@ -793,7 +803,7 @@ function proceed() {
 // todo: send test data to a map in an iframe and return the data from the canvas
 // new:
 function newPrepImage(test, frame) {
-    console.log('newPrepImage', test.name, frame.iframe.id)
+    // console.log('newPrepImage', test.name, frame.iframe.id)
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
@@ -807,17 +817,17 @@ function newPrepImage(test, frame) {
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
-            console.log(1);
-            console.warn(1, test.name+": "+err);
+            console.warn(test.name+": "+err);
+            // console.warn(1, test.name+": "+err);
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             // todo: replace with new version
             newLoadView(test, loc, frame).then(function(result){
-                console.log(2);
+                // console.log(2);
                 // grab a screenshot and store it
                 // todo: screenshot a specific frame
                 newScreenshot(writeScreenshots, name, frame).then(function(result){
-                    console.log(3);
+                    // console.log(3);
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
