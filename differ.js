@@ -430,14 +430,14 @@ function newPrepPage() {
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                console.log('viewComplete1Resolve()?')
+                // console.log('viewComplete1Resolve()?')
                 viewComplete1Resolve();
             }
     });
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                console.log('viewComplete2Resolve()?')
+                // console.log('viewComplete2Resolve()?')
                 viewComplete2Resolve();
             }
     });
@@ -448,7 +448,7 @@ function newPrepPage() {
     msg += "<br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
-    // make canvas
+    // make diffing canvas
     if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
     canvas = document.createElement('canvas');
     canvas.height = size;
@@ -618,7 +618,7 @@ function newResetViewComplete(frame) {
         // console.log('setting viewcomplete1')
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
-                console.log('viewComplete1Resolve()!');
+                // console.log('viewComplete1Resolve()!');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -630,7 +630,7 @@ function newResetViewComplete(frame) {
         // console.log('setting viewcomplete2')
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
-                console.log('viewComplete2Resolve()!');
+                // console.log('viewComplete2Resolve()!');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -686,7 +686,7 @@ function newLoadView (view, location, frame) {
             if (frame.iframe.id == "map1") {
                 // console.log('triggering viewcomplete1:', viewComplete1)
                 return viewComplete1.then(function(){
-                    console.log('map1 view_complete!')
+                    // console.log('map1 view_complete!')
                     resolve();
                 }).catch(function(error) {
                     // console.log('map1 view_complete error')
@@ -695,7 +695,7 @@ function newLoadView (view, location, frame) {
             } else if (frame.iframe.id == "map2") {
                 // console.log('triggering viewcomplete2:')
                 return viewComplete2.then(function(){
-                    console.log('map2 view_complete!')
+                    // console.log('map2 view_complete!')
                     resolve();
                 }).catch(function(error) {
                     // console.log('map2 view_complete error')
@@ -813,7 +813,8 @@ function newPrepImage(test, frame) {
             // store it
             test.img = result;
             imageData(result, canvas).then(function(result){
-                // then return the the data object
+                // then return the data object
+                // console.log(1);
                 return resolve(test.data = result.data);
             }).catch(function(err){
                 console.log("> imageData err:", err);
@@ -833,18 +834,24 @@ function newPrepImage(test, frame) {
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
-                        console.log('imageData result:', result);
+                        // console.log('imageData result:', result);
+                        // console.log('test:', test);
+                        // return "test resolve"
+                        // console.log(2);
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
+                        // console.log(3);
                         throw new Error(error);
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
+                    // console.log(4);
                     throw new Error(error);
                 });
             }).catch(function(error){
                 console.log('loadView error:', error);
+                // console.log(5);
                 reject(error);
             });
 
