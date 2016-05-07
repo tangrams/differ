@@ -423,12 +423,14 @@ function prepTests() {
 function newPrepPage() {
     // subscribe to Tangram's published view_complete event
     // todo: make one for each frame
+    console.log('subscribing to frame1 view_complete:', frame1.window.scene)
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
                 viewComplete1Resolve();
             }
     });
+    console.log('subscribing to frame2 view_complete:', frame2.window.scene)
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
@@ -605,11 +607,11 @@ var viewComplete2Resolve, viewComplete2Reject;
 var viewComplete2;
 // todo: make this less fugly
 function newResetViewComplete(frame) {
-    console.log("> resetting viewComplete", frame);
+    console.log("> resetting viewComplete", frame.iframe.id);
     if (frame.id == "map1") {
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
-                console.log('map1 view_complete');
+                console.log('viewComplete1');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -617,10 +619,10 @@ function newResetViewComplete(frame) {
                 reject();
             };
         });
-    } else if (frame.id == "map2 view_complete") {
+    } else if (frame.id == "map2") {
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
-                console.log('2 resolve');
+                console.log('viewComplete2');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -650,6 +652,7 @@ function resetViewComplete() {
 // load a map position and zoom
 // todo: use new per-iframe viewComplete
 function newLoadView (view, location, frame) {
+    console.log('newLoadView');
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
@@ -664,6 +667,7 @@ function newLoadView (view, location, frame) {
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
         return scene.load(url).then(function(r) {
+            console.log(frame.iframe.id, 'view_complete:')
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
@@ -680,13 +684,14 @@ function newLoadView (view, location, frame) {
                 });
             } else if (frame.id == "map2") {
                 return viewComplete2.then(function(){
+                    console.log('map2 view_complete')
                     resolve();
                 }).catch(function(error) {
                     reject(error);
                 });
             }
         }).catch(function(error) {
-            // console.log('scene.load() error:', error)
+            console.log('scene.load() error:', error)
             reject(error);
         });
     });
@@ -803,7 +808,7 @@ function newPrepImage(test, frame) {
             });
         }).catch(function(err) {
             console.log(1);
-            console.warn(test.name+": "+err);
+            console.warn(1, test.name+": "+err);
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             // todo: replace with new version
@@ -825,7 +830,7 @@ function newPrepImage(test, frame) {
                 }).catch(function(error){
                     console.log('screenshot error:', error);
                     throw new Error(error);
-                });;
+                });
             }).catch(function(error){
                 console.log('loadView error:', error);
                 reject(error);
@@ -851,7 +856,7 @@ function newPrepImage(test, frame) {
             //     // console.log('loadView error:', error);
             //     reject(error);
             // });
-
+            // console.log(4);
         });
     });
 }
