@@ -205,6 +205,8 @@ function newPrepMap(which) {
         var mapWindow = which.window;
         frame.style.height = size+"px";
         frame.style.width = size+"px";
+        which['document'].getElementById("map").style.height = size+"px";
+        which['document'].getElementById("map").style.width = size+"px";
 
         // initialize Tangram
         // todo: maybe no longer necessary - replace this with a promise
