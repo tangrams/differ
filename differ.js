@@ -461,7 +461,11 @@ function loadImage (url) {
         if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
         // try to load the image
         image.src = url;
-    });
+    }).catch(function(error){
+                console.log('loadImage error:', error);
+                throw new Error(error);
+                // reject(error);
+            });
 }
 
 // get image data object using a canvas
@@ -659,9 +663,14 @@ function prepImage(test, frame) {
                 });
             }).catch(function(error){
                 console.log('loadView error:', error);
-                reject(error);
+                throw new Error(error);
+                // reject(error);
             });
         });
+    }).catch(function(error){
+        console.log('prepImage error:', error);
+        throw new Error(error);
+        // reject(error);
     });
 }
 
