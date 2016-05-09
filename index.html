@@ -49,8 +49,9 @@
     <button onclick="testIframe()">TEST</button><br>
     <button onclick="testIframePromise()">TEST PROMISE</button>
 
-    <iframe style="border: 2px solid gold" id="map1" src="map.html"></iframe>
-    <iframe style="border: 2px solid gold" id="map2" src="map.html"></iframe>
+    <iframe style="border: 2px solid gold" id="map1" src="map.html" onload="frame1Resolve()"></iframe>
+    <iframe style="border: 2px solid gold" id="map2" src="map.html" onload="frame2Resolve()"></iframe>
+
     <div id="content" style="margin: auto">
     <!-- headers -->
     <div id="header">

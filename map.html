@@ -51,7 +51,6 @@
   </head>
 
   <body>
-    <div id="test">TEST</div>
     <div id="map"></div>
 
     <!-- leaflet -->
@@ -77,6 +76,12 @@
 
         var scene = layer.scene;
 
+        window.onload = function() {
+			var id = window.frameElement.id;
+			console.log(id, "ready");
+			if (id == "map1") window.parent.frame1Resolve();
+			else if (id == "map2") window.parent.frame2Resolve();
+		}
     </script>
 
   </body>

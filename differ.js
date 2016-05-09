@@ -205,8 +205,14 @@ function newPrepMap(which) {
         var mapWindow = which.window;
         frame.style.height = size+"px";
         frame.style.width = size+"px";
-        which['document'].getElementById("map").style.height = size+"px";
-        which['document'].getElementById("map").style.width = size+"px";
+
+        // not sure why the others hit a race condition but this doesn't ಠ_ಠ
+        frame.contentDocument.getElementById("map").style.height = size+"px";
+        frame.contentDocument.getElementById("map").style.width = size+"px";
+        // which['document'].getElementById("map").style.height = size+"px";
+        // which['document'].getElementById("map").style.width = size+"px";
+        // which.document.getElementById("map").style.height = size+"px";
+        // which.document.getElementById("map").style.width = size+"px";
 
         // initialize Tangram
         // todo: maybe no longer necessary - replace this with a promise
@@ -284,6 +290,19 @@ function prepMap() {
 
     });
 }
+
+// ensure iFrames are loaded before we start manipulating them
+// todo: make this less fugly
+// function to report when iframes have loaded
+var frame1Resolve, frame2Resolve;
+var frame1Ready = new Promise(function(resolve, reject) {
+        console.log('frame1 loaded');
+        frame1Resolve = resolve;
+    });
+var frame2Ready = new Promise(function(resolve, reject) {
+        console.log('frame2 loaded');
+        frame2Resolve = resolve;
+    });
 
 // parse url and load the appropriate file
 function loadFile(url) {
@@ -424,20 +443,15 @@ function prepTests() {
 // new:
 function newPrepPage() {
     // subscribe to Tangram's published view_complete event
-    // todo: make one for each frame
-    // console.log('newPrepPage, scene?', frame1.window.scene);
-    // console.log('newPrepPage, scene.subscribe?', frame1.window.scene.subscribe);
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                // console.log('viewComplete1Resolve()?')
                 viewComplete1Resolve();
             }
     });
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                // console.log('viewComplete2Resolve()?')
                 viewComplete2Resolve();
             }
     });
@@ -615,7 +629,6 @@ var viewComplete2;
 // todo: make this less fugly
 function newResetViewComplete(frame) {
     if (frame.iframe.id == "map1") {
-        // console.log('setting viewcomplete1')
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
                 // console.log('viewComplete1Resolve()!');
@@ -627,7 +640,6 @@ function newResetViewComplete(frame) {
             };
         });
     } else if (frame.iframe.id == "map2") {
-        // console.log('setting viewcomplete2')
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
                 // console.log('viewComplete2Resolve()!');
@@ -751,7 +763,7 @@ function goClick() {
     data = null;
     metadata = null;
 
-    Promise.all([loadFile(slot1.value),loadFile(slot2.value)]).then(function(result){
+    Promise.all([loadFile(slot1.value),loadFile(slot2.value),frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
         goButton.setAttribute("style","display:none");
