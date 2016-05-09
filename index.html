@@ -20,35 +20,10 @@
         console.log('newlocation:', newlocation);
         window.location = newlocation;
     }
-
-    function testIframe() {
-        var target = document.getElementById("map1");
-        console.log('target:', target)
-        var txt = target.contentDocument.getElementById("test");
-        txt.innerHTML = "NEW";
-        target.contentWindow.respond();
-    }
-
-    function testIframePromise() {
-        var target = document.getElementById("map1").contentWindow;
-        // console.log('target:', target)
-        return(target.testPromise()).then(function(result) {
-            console.log(result);
-        });
-    }
-
-    function end() {
-        console.log('the end');
-    }
-
-
     </script>
   </head>
 
   <body>
-    <button onclick="testIframe()">TEST</button><br>
-    <button onclick="testIframePromise()">TEST PROMISE</button>
-
     <iframe style="border: 2px solid gold" id="map1" src="map.html" onload="frame1Resolve()"></iframe>
     <iframe style="border: 2px solid gold" id="map2" src="map.html" onload="frame2Resolve()"></iframe>
 
