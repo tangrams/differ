@@ -27,27 +27,6 @@
         }
 
     </style>
-
-    <script>
-    	function respond() {
-    		setTimeout(function() {
-	    		console.log("iframe respond")
-	    	}, 1000);
-    		setTimeout(function() {
-	    		parent.end();
-	    	}, 2000);
-    	}
-
-	    function testPromise() {
-    		console.log("iframe promise?")
-	        return new Promise(function(resolve, reject) {
-	        	setTimeout(function () {
-		            resolve("iframe resolved");
-	        	}, 1000);
-	        });
-	    }
-
-    </script>
   </head>
 
   <body>
@@ -70,17 +49,12 @@
         map.setView([0,0],1);
 
         var layer = Tangram.leafletLayer({
-            // scene: 'scene.yaml'
+            scene: 'scene.yaml'
+            // scene: 'empty.yaml'
         });
         layer.addTo(map);
 
         var scene = layer.scene;
-
-        window.onload = function() {
-			var id = window.frameElement.id;
-			if (id == "map1") window.parent.frame1Resolve();
-			else if (id == "map2") window.parent.frame2Resolve();
-		}
     </script>
 
   </body>

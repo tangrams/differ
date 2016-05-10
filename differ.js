@@ -1,3 +1,7 @@
+// A utility to draw two Tangram maps and compare them.
+// Uses Vladimir Agafonkin's pixelmatch: https://github.com/mapbox/pixelmatch
+// (c) 2016 Peter Richardson, MIT license
+
 // "use strict";
 /*jslint browser: true*/
 /*global Tangram, gui */
@@ -9,7 +13,7 @@
 // initialize variables
 //
 
-var map, slots = {}, queue, nextView,
+var slots = {}, queue, nextView,
     diffImg = new Image(), diff, canvas, ctx,
     images = {};
 var testsFile = "";
@@ -33,7 +37,7 @@ var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default1.json";
 
-// new:
+// two iframes to hold maps
 var frame1 = {
     'iframe': document.getElementById("map1"),
     'window': document.getElementById("map1").contentWindow,
@@ -232,14 +236,12 @@ function prepMap(which) {
 }
 
 // allow iframes to resolve a promise with their onload()
-var frame1Resolve, frame2Resolve;
+var frame1Loaded, frame2Loaded;
 var frame1Ready = new Promise(function(resolve, reject) {
-        console.log('frame1 loaded');
-        frame1Resolve = resolve;
+        frame1Loaded = resolve;
     });
 var frame2Ready = new Promise(function(resolve, reject) {
-        console.log('frame2 loaded');
-        frame2Resolve = resolve;
+        frame2Loaded = resolve;
     });
 
 // parse url and load the appropriate file
@@ -382,12 +384,14 @@ function prepPage() {
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
+                console.log('frame1 view_complete triggered');
                 viewComplete1Resolve();
             }
     });
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
+                console.log('frame2 view_complete triggered');
                 viewComplete2Resolve();
             }
     });
@@ -445,24 +449,19 @@ function loadImage (url) {
         var image = new Image();
         // set up events
         image.onload = function(r) {
-            // console.log('well?', r);
-            // console.log('this:', this);
             return resolve(this);
         };
         image.onerror = function(e) {
-            // console.log('hmm.', e.stack);
-            // console.log('this:', this);
-
-            return reject("couldn't load "+url);
+            return reject(url);
         };
         image.crossOrigin = 'anonymous';
         url = convertGithub(url);
         // force-refresh any local images with a cache-buster
-        if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
+        if (url.slice(-4) == imgType) url += "?" + String(new Date().getTime()).slice(-5);
         // try to load the image
         image.src = url;
     }).catch(function(error){
-                console.log('loadImage error:', error);
+                // console.log('loadImage error:', error);
                 throw new Error(error);
                 // reject(error);
             });
@@ -511,6 +510,7 @@ function resetViewComplete(frame) {
     if (frame.iframe.id == "map1") {
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
+                console.log('viewComplete1Resolve()');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -520,6 +520,7 @@ function resetViewComplete(frame) {
     } else if (frame.iframe.id == "map2") {
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
+                console.log('viewComplete2Resolve()');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -581,8 +582,7 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
-
-    Promise.all([loadFile(slot1.value),loadFile(slot2.value),frame1Ready, frame2Ready]).then(function(result){
+    Promise.all([loadFile(slot1.value), loadFile(slot2.value), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
         goButton.setAttribute("style","display:none");
@@ -619,8 +619,7 @@ function stop() {
 //
 
 function proceed() {
-    return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function(val) {
-        map = val[0];
+    return Promise.all([prepMap(frame1), prepMap(frame2), viewComplete1, viewComplete2]).then(function() {
         prepTests().then(function() {
             prepPage();
             prepTestImages();
