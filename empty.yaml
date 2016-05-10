@@ -1,0 +1,4 @@
+sources:
+    none:
+        type: TopoJSON
+        url: none
