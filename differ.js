@@ -235,15 +235,6 @@ function prepMap(which) {
     }); 
 }
 
-// allow iframes to resolve a promise with their onload()
-var frame1Loaded, frame2Loaded;
-var frame1Ready = new Promise(function(resolve, reject) {
-        frame1Loaded = resolve;
-    });
-var frame2Ready = new Promise(function(resolve, reject) {
-        frame2Loaded = resolve;
-    });
-
 // parse url and load the appropriate file
 function loadFile(url) {
     return new Promise(function(resolve, reject) {
@@ -396,9 +387,11 @@ function prepPage() {
             }
     });
 
-    // reset triggers to account for the initialization scenes
-    resetViewComplete(frame1);
-    resetViewComplete(frame2);
+    // reset view_complete triggers if the frames are still loading
+    if (frame1.window.scene.initialized != true) {
+        resetViewComplete(frame1);
+        resetViewComplete(frame2);
+    }
 
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";

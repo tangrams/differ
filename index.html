@@ -20,6 +20,15 @@
         console.log('newlocation:', newlocation);
         window.location = newlocation;
     }
+
+    // allow iframes to resolve a promise with their onload()
+    var frame1Loaded, frame2Loaded;
+    var frame1Ready = new Promise(function(resolve, reject) {
+        frame1Loaded = resolve;
+    });
+    var frame2Ready = new Promise(function(resolve, reject) {
+        frame2Loaded = resolve;
+    });
     </script>
   </head>
 
