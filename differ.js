@@ -384,17 +384,21 @@ function prepPage() {
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                console.log('frame1 view_complete triggered');
+                // console.log('frame1 view_complete triggered');
                 viewComplete1Resolve();
             }
     });
     frame2.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                console.log('frame2 view_complete triggered');
+                // console.log('frame2 view_complete triggered');
                 viewComplete2Resolve();
             }
     });
+
+    // reset triggers to account for the initialization scenes
+    resetViewComplete(frame1);
+    resetViewComplete(frame2);
 
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
@@ -510,7 +514,7 @@ function resetViewComplete(frame) {
     if (frame.iframe.id == "map1") {
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
-                console.log('viewComplete1Resolve()');
+                // console.log('viewComplete1Resolve()');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -520,7 +524,7 @@ function resetViewComplete(frame) {
     } else if (frame.iframe.id == "map2") {
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
-                console.log('viewComplete2Resolve()');
+                // console.log('viewComplete2Resolve()');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -619,9 +623,12 @@ function stop() {
 //
 
 function proceed() {
-    return Promise.all([prepMap(frame1), prepMap(frame2), viewComplete1, viewComplete2]).then(function() {
+    return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
             prepPage();
+        }).then(function() {
+            return Promise.all([viewComplete1, viewComplete2]);
+        }).then(function() {
             prepTestImages();
         });
     });
