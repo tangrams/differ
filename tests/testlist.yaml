@@ -65,19 +65,23 @@ http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/
 ✅ # could maybe revert to a default series of tests
 
 # a json with everything against another json with everything
-http://localhost:8080/?1=tests/tangram01-v.5/tangram01-v.5.json&2=tests/tangram01-v.6/tangram01-v.6.json&go
+http://localhost:8080/?1=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.6/tangram01-v.6.json&go
+http://localhost:8080/?2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&1=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.6/tangram01-v.6.json&go
 ✅
 
 # a json with locations only against a json with images, scenefile urls, and locations
 http://localhost:8080/?1=tests/locations.json&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
+http://localhost:8080/?2=tests/locations.json&1=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
 ✅
 
 # a json with locations only against a json with locations and scenefile urls only
 http://localhost:8080/?1=tests/locations.json&2=tests/locs+urls.json&go
+http://localhost:8080/?2=tests/locations.json&1=tests/locs+urls.json&go
 ✅ # could maybe have a warning about differing locations
 
 # a json with locations only against a json with scenefile urls only
 http://localhost:8080/?1=tests/locations.json&2=tests/urls.json&go
+http://localhost:8080/?2=tests/locations.json&1=tests/urls.json&go
 ✅ # could maybe have a warning about same scenefile and location
 
 # a json with locations only against itself
@@ -86,10 +90,12 @@ http://localhost:8080/?1=tests/locations.json&2=tests/locations.json&go
 
 # a json with urls only against a json with images, scenefile urls, and locations
 http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
+http://localhost:8080/?2=tests/urls.json&1=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
 ✅ # warn about differing locations
 
 # a json with urls only against a json with locations and scenefile urls only
 http://localhost:8080/?1=tests/urls.json&2=tests/locs+urls.json&go
+http://localhost:8080/?2=tests/urls.json&1=tests/locs+urls.json&go
 ✅
 
 # a json with urls only against itself
@@ -98,5 +104,6 @@ http://localhost:8080/?1=tests/urls.json&2=tests/urls.json&go
 
 # a json with relative urls against local renders
 http://localhost:8080/?1=tests/relative-urls.json&2=Local%20renders&go
+✅
 
 
