@@ -545,32 +545,62 @@ function loadView (view, location, frame) {
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
         return scene.load(url).then(function(r) {
+            // console.log('scene.load result:', r)
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
-            // scene.requestRedraw(); // necessary?
+            // scene.requestRedraw(); // necessary? guess not
+
+            // set timeout timer in case something hangs
+            var timeout = setTimeout(function() {
+                diffSay(view.name+": timeout");
+                console.log(view.name+": now your candy's gone");
+                reject("that's what happened");
+            }, 5000);
+
             // wait for map to finish drawing, then return
             // todo: make this less fugly
             if (frame.iframe.id == "map1") {
                 return viewComplete1.then(function(){
+                    clearTimeout(timeout);
+                    // console.log('map1 complete')
+                    // resolve("loadview resolve");
                     resolve();
                 }).catch(function(error) {
+                    clearTimeout(timeout);
+                    console.log('map1 scene load error')
                     reject(error);
                 });
             } else if (frame.iframe.id == "map2") {
                 return viewComplete2.then(function(){
+                    clearTimeout(timeout);
+                    // console.log('map2 complete')
+                    // resolve("loadview resolve");
                     resolve();
                 }).catch(function(error) {
+                    clearTimeout(timeout);
+                    console.log('map2 scene load error')
                     reject(error);
                 });
             }
         }).catch(function(error) {
-            // console.log('scene.load() error:', error)
+            console.log('scene.load() error:', error)
             reject(error);
         });
     });
 }
 
 function goClick() {
+    // reset iframe promises
+    frame1Ready = new Promise(function(resolve, reject) {
+        frame1Loaded = resolve;
+    });
+    frame2Ready = new Promise(function(resolve, reject) {
+        frame2Loaded = resolve;
+    });
+    // reload iframes with specified versions of Tangram
+    map1.src = "map.html?url="+document.getElementById("library1").value;
+    map2.src = "map.html?url="+document.getElementById("library2").value;
+
     alertDiv.innerHTML = '';
     diffSay("Starting Diff");
     updateURL();
@@ -580,7 +610,8 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
-    Promise.all([loadFile(slot1.value), loadFile(slot2.value), frame1Ready, frame2Ready]).then(function(result){
+    return Promise.all([loadFile(slot1.value), loadFile(slot2.value), frame1Ready, frame2Ready]).then(function(result){
+        // console.log('ready to go');
         slots.slot1 = result[0];
         slots.slot2 = result[1];
         goButton.setAttribute("style","display:none");
@@ -660,17 +691,19 @@ function prepImage(test, frame, msg) {
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
-                    throw new Error(error);
-                    // resolve(error)
+                    diffSay(test.name+': screenshot failed')
+                    // throw new Error(error);
+                    resolve(error)
                 });
             }).catch(function(error){
-                // console.log('loadView error:', error);
+                console.log('loadView error:', error);
                 // throw new Error(error);
                 diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error.name);
                 resolve(error);
             });
         });
     }).catch(function(error){
+        console.log('prepImage error:', error);
         throw new Error(error);
         // resolve(error);
     });
