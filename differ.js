@@ -1,3 +1,7 @@
+// A utility to draw two Tangram maps and compare them.
+// Uses Vladimir Agafonkin's pixelmatch: https://github.com/mapbox/pixelmatch
+// (c) 2016 Peter Richardson, MIT license
+
 // "use strict";
 /*jslint browser: true*/
 /*global Tangram, gui */
@@ -9,7 +13,7 @@
 // initialize variables
 //
 
-var map, slots = {}, queue, nextView,
+var slots = {}, queue, nextView,
     diffImg = new Image(), diff, canvas, ctx,
     images = {};
 var testsFile = "";
@@ -31,7 +35,19 @@ var slot2 = document.getElementById("slot2");
 var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default.json";
+var defaultFile = "tests/default1.json";
+
+// two iframes to hold maps
+var frame1 = {
+    'iframe': document.getElementById("map1"),
+    'window': document.getElementById("map1").contentWindow,
+    'document': document.getElementById("map1").contentDocument
+}
+var frame2 = {
+    'iframe': document.getElementById("map2"),
+    'window': document.getElementById("map2").contentWindow,
+    'document': document.getElementById("map2").contentDocument
+}
 
 // can only use saveButton if running on a local node server
 if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
@@ -176,48 +192,47 @@ function updateProgress(remaining) {
     progressBar.setAttribute("style", "width:"+percent + "%");
 }
 
+function setEither(var1, var2) {
+    if (typeof var1 == 'undefined' || typeof var2 == 'undefined') {
+        if (typeof var1 == 'undefined' && typeof var2 == 'undefined') {
+            return(null);
+        } else if (typeof var1 == 'undefined') {
+            var1 = var2;
+        } else if (typeof var2 == 'undefined') {
+            var2 = var1;
+        }
+    }
+    return [var1, var2];
+}
+
+
+
 
 //
 // prep scene
 //
 
-function prepMap() {
+// todo: prep map in two iframes - pass each iframe's contentDocument as the document
+// another issue: lots of this code assumes a single global 'map' var
+// todo: make sure each 'map' is referring to a specific iframe's 'map' each time
+// and determine which one it should be at every point
+
+function prepMap(which) {
     return new Promise(function(resolve, reject) {
-        // set sizes
-        document.getElementById("mapdiv").style.height = size+"px";
-        document.getElementById("mapdiv").style.width = size+"px";
+        var frame = which.iframe;
+        var mapWindow = which.window;
+        frame.style.height = size+"px";
+        frame.style.width = size+"px";
 
-        // initialize Tangram
-        /*** Map ***/
-        if (typeof window.map == "undefined") {
+        // not sure why the others hit a race condition but this doesn't ಠ_ಠ
+        var map = frame.contentDocument.getElementById("map");
+        // var map = which['document'].getElementById("map");
+        // var map = which.document.getElementById("map");
+        map.style.height = size+"px";
+        map.style.width = size+"px";
 
-            var map = L.map('mapdiv', {
-                keyboardZoomOffset : .05,
-                zoomControl: false,
-                attributionControl : false
-            });
-            map.setView([0,0],5);
-
-            var layer = Tangram.leafletLayer({
-                scene: null,
-                // highDensityDisplay: false
-            });
-
-            window.layer = layer;
-            var scene = layer.scene;
-            window.scene = scene;
-
-            layer.on('init', function () {
-                resolve(map);
-            });
-
-            layer.addTo(map);
-
-        } else{
-            resolve(window.map);
-        }
-
-    });
+        resolve(mapWindow.map);
+    }); 
 }
 
 // parse url and load the appropriate file
@@ -323,7 +338,8 @@ function prepTests() {
     images = {};
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
-        if (typeof slots.slot1.tests == 'undefined' && typeof slots.slot2.tests == 'undefined') {
+        if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length == 0)
+         && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults().then(function(val){slots.slot1.tests = val;}),
@@ -357,12 +373,26 @@ function prepTests() {
 // setup output divs and canvases
 function prepPage() {
     // subscribe to Tangram's published view_complete event
-    scene.subscribe({
+    frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
-                viewCompleteResolve();
+                // console.log('frame1 view_complete triggered');
+                viewComplete1Resolve();
             }
     });
+    frame2.window.scene.subscribe({
+        // trigger promise resolution
+        view_complete: function () {
+                // console.log('frame2 view_complete triggered');
+                viewComplete2Resolve();
+            }
+    });
+
+    // reset view_complete triggers if the frames are still loading
+    if (frame1.window.scene.initialized != true) {
+        resetViewComplete(frame1);
+        resetViewComplete(frame2);
+    }
 
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
@@ -370,7 +400,7 @@ function prepPage() {
     msg += "<br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
-    // make canvas
+    // make diffing canvas
     if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
     canvas = document.createElement('canvas');
     canvas.height = size;
@@ -379,20 +409,6 @@ function prepPage() {
     diff = ctx.createImageData(size, size);
 
 }
-
-function setEither(var1, var2) {
-    if (typeof var1 == 'undefined' || typeof var2 == 'undefined') {
-        if (typeof var1 == 'undefined' && typeof var2 == 'undefined') {
-            return(null);
-        } else if (typeof var1 == 'undefined') {
-            var1 = var2;
-        } else if (typeof var2 == 'undefined') {
-            var2 = var1;
-        }
-    }
-    return [var1, var2];
-}
-
 
 
 
@@ -431,23 +447,22 @@ function loadImage (url) {
         var image = new Image();
         // set up events
         image.onload = function(r) {
-            // console.log('well?', r);
-            // console.log('this:', this);
             return resolve(this);
         };
         image.onerror = function(e) {
-            // console.log('hmm.', e.stack);
-            // console.log('this:', this);
-
-            return reject("couldn't load "+url);
+            return reject(url);
         };
         image.crossOrigin = 'anonymous';
         url = convertGithub(url);
         // force-refresh any local images with a cache-buster
-        if (url.slice(-4) == imgType) url += "?" + new Date().getTime();
+        if (url.slice(-4) == imgType) url += "?" + String(new Date().getTime()).slice(-5);
         // try to load the image
         image.src = url;
-    });
+    }).catch(function(error){
+                // console.log('loadImage error:', error);
+                throw new Error(error);
+                // reject(error);
+            });
 }
 
 // get image data object using a canvas
@@ -469,8 +484,9 @@ function imageData (img, canvas) {
 };
 
 // capture the current tangram map
-function screenshot (save, name) {
+function screenshot (save, name, frame) {
     // console.log(name, 'screenshot:')
+    var scene = frame.window.scene;
     return scene.screenshot().then(function(data) {
         // console.log(name, 'screenshot success:', data)
         // save it to a file
@@ -483,23 +499,38 @@ function screenshot (save, name) {
 };
 
 // use Tangram's view_complete event to resolve a promise
-var viewCompleteResolve, viewCompleteReject;
-var viewComplete;
-function resetViewComplete() {
-    // console.log("> resetting viewComplete");
-    viewComplete = new Promise(function(resolve, reject){
-        viewCompleteResolve = function(){
-            resolve();
-        };
-        viewCompleteReject = function(e){
-            // console.log("> viewComplete FAIL");
-            reject();
-        };
-    });
+var viewComplete1Resolve, viewComplete1Reject;
+var viewComplete1;
+var viewComplete2Resolve, viewComplete2Reject;
+var viewComplete2;
+
+function resetViewComplete(frame) {
+    if (frame.iframe.id == "map1") {
+        viewComplete1 = new Promise(function(resolve, reject){
+            viewComplete1Resolve = function(){
+                // console.log('viewComplete1Resolve()');
+                resolve();
+            };
+            viewComplete1Reject = function(e){
+                reject();
+            };
+        });
+    } else if (frame.iframe.id == "map2") {
+        viewComplete2 = new Promise(function(resolve, reject){
+            viewComplete2Resolve = function(){
+                // console.log('viewComplete2Resolve()');
+                resolve();
+            };
+            viewComplete2Reject = function(e){
+                reject();
+            };
+        });
+    }
 }
 
 // load a map position and zoom
-function loadView (view, location) {
+function loadView (view, location, frame) {
+    // console.log('loadView');
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
@@ -509,18 +540,29 @@ function loadView (view, location) {
         var url = convertGithub(view.url);
         var name = splitURL(url).file;
         // if it's drawing, wait for it to finish
-        resetViewComplete();
+        resetViewComplete(frame);
+        var scene = frame.window.scene;
+        var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
         return scene.load(url).then(function(r) {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2]);
             // scene.requestRedraw(); // necessary?
             // wait for map to finish drawing, then return
-            return viewComplete.then(function(){
-                resolve();
-            }).catch(function(error) {
-                reject(error);
-            });
+            // todo: make this less fugly
+            if (frame.iframe.id == "map1") {
+                return viewComplete1.then(function(){
+                    resolve();
+                }).catch(function(error) {
+                    reject(error);
+                });
+            } else if (frame.iframe.id == "map2") {
+                return viewComplete2.then(function(){
+                    resolve();
+                }).catch(function(error) {
+                    reject(error);
+                });
+            }
         }).catch(function(error) {
             // console.log('scene.load() error:', error)
             reject(error);
@@ -538,8 +580,7 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
-
-    Promise.all([loadFile(slot1.value),loadFile(slot2.value)]).then(function(result){
+    Promise.all([loadFile(slot1.value), loadFile(slot2.value), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
         goButton.setAttribute("style","display:none");
@@ -576,17 +617,19 @@ function stop() {
 //
 
 function proceed() {
-    return prepMap().then(function(val) {
-        map = val;
+    return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
-            prepPage();
-            prepBothImages();
+            return prepPage();
+        }).then(function() {
+            return Promise.all([viewComplete1, viewComplete2]);
+        }).then(function() {
+            prepTestImages();
         });
     });
 }
 
 // prep an image to send to the diff
-function prepImage(test) {
+function prepImage(test, frame, msg) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
@@ -594,35 +637,42 @@ function prepImage(test) {
             // store it
             test.img = result;
             imageData(result, canvas).then(function(result){
-                // then return the the data object
+                // then return the data object
                 return resolve(test.data = result.data);
             }).catch(function(err){
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
-            console.warn(test.name+": "+err);
+            console.warn("couldn't load image '"+test.name+"': "+err);
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
-            loadView(test, loc).then(function(result){
+            loadView(test, loc, frame).then(function(result){
                 // grab a screenshot and store it
-                screenshot(writeScreenshots, name).then(function(result){
+                screenshot(writeScreenshots, name, frame).then(function(result){
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
+                        // resolve(error);
                         throw new Error(error);
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
                     throw new Error(error);
-                });;
+                    // resolve(error)
+                });
             }).catch(function(error){
                 // console.log('loadView error:', error);
-                reject(error);
+                // throw new Error(error);
+                diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error.name);
+                resolve(error);
             });
         });
+    }).catch(function(error){
+        throw new Error(error);
+        // resolve(error);
     });
 }
 
@@ -637,7 +687,6 @@ function prepStyles(test1, test2) {
         if (typeof test2.url == 'undefined') {
             if (typeof slots.slot2.defaultScene != 'undefined') {
                 test2.url = slots.slot2.defaultScene;
-                console.log('test2.url:', test2.url);
             }
         }
         var url = setEither(test1.url, test2.url);
@@ -693,8 +742,8 @@ function prepLocations(test1, test2) {
     });
 }
 
-// load or create the test images
-function prepBothImages() {
+// load or create the test images and advance the tests
+function prepTestImages() {
     // load next test in the lists
     var test1 = slots.slot1.tests.shift();
     var test2 = slots.slot2.tests.shift();
@@ -720,7 +769,7 @@ function prepBothImages() {
             console.log('doDiff failed:', e.stack);
         }
         if (slots.slot1.tests.length > 0) {
-            prepBothImages();
+            prepTestImages();
         } else {
             stop();
             diffSay("Done!<br>");
@@ -728,6 +777,11 @@ function prepBothImages() {
         }
     }
 
+    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+        // stop();
+        diffSay("Missing test, stopping.");
+        return stop();
+    }
     test1.file = slots.slot1.file;
     test2.file = slots.slot2.file;
     test1.dir = slots.slot1.dir;
@@ -745,23 +799,13 @@ function prepBothImages() {
     });
 
     Promise.all([p1, p2])
-    .then(function(result){
-        return prepImage(test1);
-    })
-    .catch(function(e){
-        // console.log('prep1 error:', e);
-        diffSay("problem with "+test1.name+" in "+splitURL(test1.url).file+": "+e.name);
-    })
-    .then(function(result){
-        return prepImage(test2);
-    })
-    .then(function(result){
-        nextDiff();
-    }).catch(function(e){
-        // console.log('prep2 error:', e);
-        diffSay("problem with "+test2.name+" in "+splitURL(test2.url).file+": "+e.name);
-        nextDiff();
+    .then(function() {
+        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
+            .then(function() {
+                nextDiff();
+            });
     });
+
 }
 
 // perform the image comparison and update the html
@@ -799,11 +843,12 @@ function doDiff( test1, test2 ) {
 
     // make an output row
     makeRow(test1, test2, matchScore);
-
+    // store the images
     images[test1.name] = {};
     images[test1.name].img1 = test1.img;
     images[test1.name].img2 = test2.img;
 
+    // console.log('diffImg?', diffImg);
     // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
     var buffer = new Uint8Array(data.length);
@@ -873,8 +918,6 @@ function makeRow(test1, test2, matchScore) {
     diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
-    // console.log('test1.img:', test1.img);
-    // console.log('test2.img:', test2.img);
     // insert images
     try {
         test1.img.width = size;
@@ -896,6 +939,7 @@ function makeRow(test1, test2, matchScore) {
 
     var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
 
+    // console.log('matchScore?', matchScore);
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
@@ -980,6 +1024,7 @@ function saveImages() {
 }
 
 function makeStrip(images, size) {
+    // console.log('makeStrip images:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;

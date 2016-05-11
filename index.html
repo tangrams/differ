@@ -20,10 +20,22 @@
         console.log('newlocation:', newlocation);
         window.location = newlocation;
     }
+
+    // allow iframes to resolve a promise with their onload()
+    var frame1Loaded, frame2Loaded;
+    var frame1Ready = new Promise(function(resolve, reject) {
+        frame1Loaded = resolve;
+    });
+    var frame2Ready = new Promise(function(resolve, reject) {
+        frame2Loaded = resolve;
+    });
     </script>
   </head>
 
   <body>
+    <iframe style="border: 2px solid gold" id="map1" src="map.html" onload="frame1Loaded()"></iframe>
+    <iframe style="border: 2px solid gold" id="map2" src="map.html" onload="frame2Loaded()"></iframe>
+
     <div id="content" style="margin: auto">
     <!-- headers -->
     <div id="header">
