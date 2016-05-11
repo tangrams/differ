@@ -33,8 +33,8 @@
   </head>
 
   <body>
-    <iframe style="border: 2px solid gold" id="map1" src="map.html" onload="frame1Loaded()"></iframe>
-    <iframe style="border: 2px solid gold" id="map2" src="map.html?url=https://mapzen.com/tangram/0.7/tangram.debug.js" onload="frame2Loaded()"></iframe>
+    <iframe class="mapFrame" id="map1" src="map.html" onload="frame1Loaded()"></iframe>
+    <iframe class="mapFrame" id="map2" src="map.html" onload="frame2Loaded()"></iframe>
 
     <div id="content" style="margin: auto">
     <!-- headers -->
@@ -51,7 +51,7 @@
         <div style="width: 100%;"><button id="localButton" class="chooser" onclick="localBuild()">Local renders</button></div>
 
         <br>or to:<br>
-        <input id="slot2" class="slot" value="" onkeypress="catchEnter(event)"></input>
+        <input id="slot2" class="slot" value="" onkeypress="catchEnter(event)"></input><br>
 
         Using this Tangram library:<br>
         <input id="library2" class="slot" value="https://mapzen.com/tangram/0.7/tangram.debug.js" onkeypress="catchEnter(event)"></input>

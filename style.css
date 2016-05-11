@@ -124,6 +124,12 @@ button.chooser {
     position: absolute;
 }
 
+.mapFrame {
+    border: 2px solid gold;
+    position: absolute;
+    top: -1000px;
+}
+
 canvas {
     visibility: hidden;
     position: absolute;
