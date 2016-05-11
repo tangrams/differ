@@ -338,7 +338,8 @@ function prepTests() {
     images = {};
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
-        if (typeof slots.slot1.tests == 'undefined' && typeof slots.slot2.tests == 'undefined') {
+        if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length == 0)
+         && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults().then(function(val){slots.slot1.tests = val;}),
@@ -842,7 +843,7 @@ function doDiff( test1, test2 ) {
     images[test1.name].img1 = test1.img;
     images[test1.name].img2 = test2.img;
 
-    console.log('diffImg?', diffImg);
+    // console.log('diffImg?', diffImg);
     // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
     var buffer = new Uint8Array(data.length);
@@ -933,7 +934,7 @@ function makeRow(test1, test2, matchScore) {
 
     var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
 
-    console.log('matchScore?', matchScore);
+    // console.log('matchScore?', matchScore);
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
@@ -1018,7 +1019,7 @@ function saveImages() {
 }
 
 function makeStrip(images, size) {
-    console.log('makeStrip images:', images);
+    // console.log('makeStrip images:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
