@@ -13,28 +13,15 @@
     <link rel="stylesheet" href="style.css" />
 
     <script>
-    // load scene from url
-    function loadButton() {
-        var url = window.location;
-        var newlocation = "?" + document.getElementById("loadtext").value;
-        console.log('newlocation:', newlocation);
-        window.location = newlocation;
-    }
-
-    // allow iframes to resolve a promise with their onload()
-    var frame1Loaded, frame2Loaded;
-    var frame1Ready = new Promise(function(resolve, reject) {
-        frame1Loaded = resolve;
-    });
-    var frame2Ready = new Promise(function(resolve, reject) {
-        frame2Loaded = resolve;
-    });
+    // initialize iframe onload functions
+    function frame1Loaded() {};
+    function frame2Loaded() {};
     </script>
   </head>
 
   <body>
-    <iframe class="mapFrame" id="map1" src="map.html" onload="frame1Loaded()"></iframe>
-    <iframe class="mapFrame" id="map2" src="map.html" onload="frame2Loaded()"></iframe>
+    <iframe class="mapFrame" id="map1" onload="frame1Loaded()"></iframe>
+    <iframe class="mapFrame" id="map2" onload="frame2Loaded()"></iframe>
 
     <div id="content" style="margin: auto">
     <!-- headers -->

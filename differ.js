@@ -590,17 +590,16 @@ function loadView (view, location, frame) {
 }
 
 function goClick() {
-
-    // if alternate version of Tangram specified for either test, reload that iframe
-    if (document.getElementById("library1").value != "https://mapzen.com/tangram/0.7/tangram.debug.js") {
-        frame1Ready = new Promise(function(resolve, reject) {
-            frame1Loaded = resolve;
-        });
-        map1.src = "map.html?url="+document.getElementById("library1").value;
-    }
-    if (document.getElementById("library2").value != "https://mapzen.com/tangram/0.7/tangram.debug.js") {
-        map1.src = "map.html?url="+document.getElementById("library2").value;
-    }
+    // reset iframe promises
+    frame1Ready = new Promise(function(resolve, reject) {
+        frame1Loaded = resolve;
+    });
+    frame2Ready = new Promise(function(resolve, reject) {
+        frame2Loaded = resolve;
+    });
+    // reload iframes with specified versions of Tangram
+    map1.src = "map.html?url="+document.getElementById("library1").value;
+    map2.src = "map.html?url="+document.getElementById("library2").value;
 
     alertDiv.innerHTML = '';
     diffSay("Starting Diff");
