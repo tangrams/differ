@@ -691,17 +691,19 @@ function prepImage(test, frame, msg) {
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
-                    throw new Error(error);
-                    // resolve(error)
+                    diffSay(test.name+': screenshot failed')
+                    // throw new Error(error);
+                    resolve(error)
                 });
             }).catch(function(error){
-                // console.log('loadView error:', error);
+                console.log('loadView error:', error);
                 // throw new Error(error);
                 diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error.name);
                 resolve(error);
             });
         });
     }).catch(function(error){
+        console.log('prepImage error:', error);
         throw new Error(error);
         // resolve(error);
     });
