@@ -779,7 +779,7 @@ function prepTestImages() {
 
     if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
         // stop();
-        diffSay("Empty test, stopping.");
+        diffSay("Missing test, stopping.");
         return stop();
     }
     test1.file = slots.slot1.file;
