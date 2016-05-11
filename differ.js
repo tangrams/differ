@@ -777,6 +777,11 @@ function prepTestImages() {
         }
     }
 
+    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+        // stop();
+        diffSay("Empty test, stopping.");
+        return stop();
+    }
     test1.file = slots.slot1.file;
     test2.file = slots.slot2.file;
     test1.dir = slots.slot1.dir;
