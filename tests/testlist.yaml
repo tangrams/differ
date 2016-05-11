@@ -51,6 +51,7 @@ http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/refill-st
 
 # a yaml against a json with locations only
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locations.json&go
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/locations.json&go
 ✅ # could maybe use a warning
 
 # a yaml against a json with no tests
@@ -60,6 +61,7 @@ http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/
 
 # a yaml against an empty json
 http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json&go
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/empty-tests.json&go
 ✅ # could maybe revert to a default series of tests
 
 # a json with everything against another json with everything
