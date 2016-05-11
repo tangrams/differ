@@ -4,97 +4,97 @@ use cases:
 # &2=
 
 # a yaml against another yaml
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/zinc-style/blob/gh-pages/zinc-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/zinc-style/blob/gh-pages/zinc-style.yaml&go
 ✅
 
 # a yaml against itself
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&go
 ✅
 
 # a yaml against a broken yaml
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/bad.yaml
-http://localhost:8080/?1=tests/bad.yaml=&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/bad.yaml&go
+http://localhost:8080/?1=tests/bad.yaml=&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&go
 ✅
 
 # a yaml against an empty yaml
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty.yaml
-http://localhost:8080/?1=tests/empty.yaml&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty.yaml&go
+http://localhost:8080/?1=tests/empty.yaml&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&go
 ✅
 
 # an empty yaml against itself
-http://localhost:8080/?1=tests/empty.yaml&2=tests/empty.yaml
+http://localhost:8080/?1=tests/empty.yaml&2=tests/empty.yaml&go
 ✅
 
 # a bad yaml against itself
-http://localhost:8080/?1=tests/bad.yaml&2=tests/bad.yaml
+http://localhost:8080/?1=tests/bad.yaml&2=tests/bad.yaml&go
 ✅
 
 # a yaml against a json with images, scenefile urls, and locations
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
-http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
 ✅
 
 # a yaml against a json with scenefile urls and locations only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locs+urls.json
-http://localhost:8080/?1=tests/locs+urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locs+urls.json&go
+http://localhost:8080/?1=tests/locs+urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&go
 ✅
 
 # a yaml against a json with images and locations only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/images+locs/images+locs.json
-http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/images+locs/images+locs.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/images+locs/images+locs.json&go
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/images+locs/images+locs.json&go
 ✅
 
 # a yaml against a json with scenefile urls only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/urls.json
-http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/urls.json&go
+http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&go
 ✅ # maybe use a list of default locations
 
 # a yaml against a json with locations only
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locations.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/locations.json&go
 ✅ # could maybe use a warning
 
 # a yaml against a json with no tests
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json
-http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/empty-tests.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json&go
+http://localhost:8080/?2=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&1=tests/empty-tests.json&go
 ✅ # could maybe revert to a default series of tests
 
 # a yaml against an empty json
-http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json
+http://localhost:8080/?1=https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml&2=tests/empty-tests.json&go
 ✅ # could maybe revert to a default series of tests
 
 # a json with everything against another json with everything
-http://localhost:8080/?1=tests/tangram01-v.5/tangram01-v.5.json&2=tests/tangram01-v.6/tangram01-v.6.json
+http://localhost:8080/?1=tests/tangram01-v.5/tangram01-v.5.json&2=tests/tangram01-v.6/tangram01-v.6.json&go
 ✅
 
 # a json with locations only against a json with images, scenefile urls, and locations
-http://localhost:8080/?1=tests/locations.json&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+http://localhost:8080/?1=tests/locations.json&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
 ✅
 
 # a json with locations only against a json with locations and scenefile urls only
-http://localhost:8080/?1=tests/locations.json&2=tests/locs+urls.json
+http://localhost:8080/?1=tests/locations.json&2=tests/locs+urls.json&go
 ✅ # could maybe have a warning about differing locations
 
 # a json with locations only against a json with scenefile urls only
-http://localhost:8080/?1=tests/locations.json&2=tests/urls.json
+http://localhost:8080/?1=tests/locations.json&2=tests/urls.json&go
 ✅ # could maybe have a warning about same scenefile and location
 
 # a json with locations only against itself
-http://localhost:8080/?1=tests/locations.json&2=tests/locations.json
+http://localhost:8080/?1=tests/locations.json&2=tests/locations.json&go
 ✅
 
 # a json with urls only against a json with images, scenefile urls, and locations
-http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/differ/blob/gh-pages/tests/tangram01-v.5/tangram01-v.5.json
+http://localhost:8080/?1=tests/urls.json&2=https://github.com/tangrams/differ-tests/blob/master/tangram01-v.5/tangram01-v.5.json&go
 ✅ # warn about differing locations
 
 # a json with urls only against a json with locations and scenefile urls only
-http://localhost:8080/?1=tests/urls.json&2=tests/locs+urls.json
+http://localhost:8080/?1=tests/urls.json&2=tests/locs+urls.json&go
 ✅
 
 # a json with urls only against itself
-http://localhost:8080/?1=tests/urls.json&2=tests/urls.json
+http://localhost:8080/?1=tests/urls.json&2=tests/urls.json&go
 ✅
 
 # a json with relative urls against local renders
-http://localhost:8080/?1=tests/relative-urls.json&2=Local%20renders
+http://localhost:8080/?1=tests/relative-urls.json&2=Local%20renders&go
 
 
