@@ -563,7 +563,7 @@ function loadView (view, location, frame) {
                 });
             }
         }).catch(function(error) {
-            console.log('scene.load() error:', error)
+            // console.log('scene.load() error:', error)
             reject(error);
         });
     });
@@ -618,7 +618,7 @@ function stop() {
 function proceed() {
     return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
-            prepPage();
+            return prepPage();
         }).then(function() {
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
@@ -628,7 +628,7 @@ function proceed() {
 }
 
 // prep an image to send to the diff
-function prepImage(test, frame) {
+function prepImage(test, frame, msg) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
@@ -642,7 +642,7 @@ function prepImage(test, frame) {
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
-            console.warn(test.name+": "+err);
+            console.warn("couldn't load image '"+test.name+"': "+err);
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             loadView(test, loc, frame).then(function(result){
@@ -654,22 +654,24 @@ function prepImage(test, frame) {
                         return resolve(test.data = result.data);
                     }).catch(function(error){
                         console.log('imageData error:', error);
+                        // resolve(error);
                         throw new Error(error);
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
                     throw new Error(error);
+                    // resolve(error)
                 });
             }).catch(function(error){
-                console.log('loadView error:', error);
-                throw new Error(error);
-                // reject(error);
+                // console.log('loadView error:', error);
+                // throw new Error(error);
+                diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error.name);
+                resolve(error);
             });
         });
     }).catch(function(error){
-        console.log('prepImage error:', error);
         throw new Error(error);
-        // reject(error);
+        // resolve(error);
     });
 }
 
@@ -792,14 +794,10 @@ function prepTestImages() {
 
     Promise.all([p1, p2])
     .then(function() {
-        return Promise.all([prepImage(test1, frame1), prepImage(test2, frame2)]);
-    }).then(function(result){
-        return result;
-    }).then(function(result){
-        nextDiff();
-    }).catch(function(e){
-        diffSay("problem with "+test2.name+" in "+splitURL(test2.url).file+": "+e.name);
-        nextDiff();
+        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
+            .then(function() {
+                nextDiff();
+            });
     });
 
 }
@@ -844,6 +842,7 @@ function doDiff( test1, test2 ) {
     images[test1.name].img1 = test1.img;
     images[test1.name].img2 = test2.img;
 
+    console.log('diffImg?', diffImg);
     // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
     var buffer = new Uint8Array(data.length);
@@ -913,8 +912,6 @@ function makeRow(test1, test2, matchScore) {
     diffcolumn.innerHTML = "diff<br>";
     testdiv.appendChild(diffcolumn);
 
-    // console.log('test1.img:', test1.img);
-    // console.log('test2.img:', test2.img);
     // insert images
     try {
         test1.img.width = size;
@@ -936,6 +933,7 @@ function makeRow(test1, test2, matchScore) {
 
     var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
 
+    console.log('matchScore?', matchScore);
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
@@ -1020,6 +1018,7 @@ function saveImages() {
 }
 
 function makeStrip(images, size) {
+    console.log('makeStrip images:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
