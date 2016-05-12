@@ -805,8 +805,13 @@ function prepTestImages() {
             prepTestImages();
         } else {
             stop();
-            diffSay("Done!<br>");
             console.log("Done!");
+            progressBar.setAttribute("style", "width:0%");
+            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
+            msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
+            msg += "<br>" + numTests + " tests: Done!";
+            diffSay(msg);
+            statusDiv.innerHTML = "";
         }
     }
 
@@ -846,7 +851,7 @@ function doDiff( test1, test2 ) {
     if (test1.data && test2.data) {
         // run the diff
         try {
-            var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.1});
+            var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.05});
         } catch(e) {
             throw new Error("> diff error:", e);
         }
