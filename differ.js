@@ -932,8 +932,9 @@ function makeRow(test1, test2, matchScore) {
     title.className = 'testname';
     // make test title a link to a live version of the test
 
-    // test1 is undefined
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)+"#"+test1.location[2]+"/"+test1.location[0]+"/"+test1.location[1];
+    // parse locationss
+    var loc = parseLocation(test1.location);
+    var testlink = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
     title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
     title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
     testdiv.appendChild(title);
@@ -960,13 +961,21 @@ function makeRow(test1, test2, matchScore) {
     try {
         test1.img.width = size;
         test1.img.height = size;
-        column1.appendChild( test1.img );
+        var a = document.createElement('a');
+        a.href = testlink;
+        a.target = "_blank";
+        column1.appendChild( a );
+        a.appendChild( test1.img );
     } catch(e) {}
     
     try {
         test2.img.width = size;
         test2.img.height = size;
-        column2.appendChild( test2.img );
+        var a = document.createElement('a');
+        a.href = testlink;
+        a.target = "_blank";
+        column2.appendChild( a );
+        a.appendChild( test2.img );
     } catch(e) {}
 
     // CONTROLS //
