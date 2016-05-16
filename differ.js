@@ -87,6 +87,14 @@ function parseQuery() {
     if (url != "") {
         slot2.value = url;
     }
+    var lib = getQueryVariable("lib1")
+    if (lib != "") {
+        library1.value = lib;
+    }
+    lib = getQueryVariable("lib2")
+    if (lib != "") {
+        library2.value = lib;
+    }
     url = getQueryVariable("go")
     if (url != "") {
         goButton.click();
@@ -173,7 +181,7 @@ function readTextFile(file, callback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value);
+    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value)+"&lib1="+escape(library1.value)+"&lib2="+escape(library2.value)+"&go";
     if (parser.origin+url+"&go" != window.location) {
         var currentstate = history.state;
         window.history.pushState(currentstate, "", url);
