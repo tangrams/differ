@@ -35,7 +35,7 @@ var slot2 = document.getElementById("slot2");
 var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default1.json";
+var defaultFile = "tests/default3.json";
 
 // two iframes to hold maps
 var frame1 = {
