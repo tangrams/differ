@@ -246,15 +246,9 @@ function prepMap(which) {
 // parse url and load the appropriate file
 function loadFile(url) {
     return new Promise(function(resolve, reject) {
-        var local = false;
         if (url == "") {
             throw new Error("Empty slot");
             reject();
-        }
-        if (url == "Local renders") {
-            local = true;
-            if (slot2.value == "Local renders") url = slot1.value;
-            else url = slot2.value;
         }
         // diffSay("Loading "+url);
         url = convertGithub(url);
@@ -294,12 +288,8 @@ function loadFile(url) {
                 slot.tests = Object.keys(data.tests).map(function (key) {
                     // add test's name as a property of the test
                     data.tests[key].name = key;
-                    if (local) {
-                        data.tests[key].imageURL = null;
-                    } else {
-                        // add name of pre-rendered image to look for
-                        data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
-                    }
+                    // add name of pre-rendered image to look for
+                    data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
                     return data.tests[key];
                 });
                 resolve(slot);
@@ -312,11 +302,6 @@ function loadFile(url) {
         if (typeof err == 'undefined') err = "Load failed.";
         throw new Error(err);
     });
-}
-
-function localBuild() {
-    var slot2 = document.getElementById('slot2')
-    slot2.value = "Local renders";
 }
 
 // copy locations from a collection
@@ -403,9 +388,7 @@ function prepPage() {
     }
 
     // set status message
-    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
-    msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
-    msg += "<br>" + numTests + " tests:<br>";
+    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
     statusDiv.innerHTML = msg;
 
     // make diffing canvas
@@ -815,9 +798,7 @@ function prepTestImages() {
             stop();
             console.log("Done!");
             progressBar.setAttribute("style", "width:0%");
-            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. ";
-            msg += (slot2.value == "Local renders") ? "Local renders" : "<a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a>";
-            msg += "<br>" + numTests + " tests: Done!";
+            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
             diffSay(msg);
             statusDiv.innerHTML = "";
         }
