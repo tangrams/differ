@@ -592,6 +592,10 @@ function goClick() {
     map1.src = "map.html?url="+document.getElementById("library1").value;
     map2.src = "map.html?url="+document.getElementById("library2").value;
 
+    var buttonloc = document.getElementById("goButton").offsetTop - 10;
+    document.body.style.height = window.innerHeight + buttonloc + "px";
+    document.body.scrollTop = buttonloc;
+
     alertDiv.innerHTML = '';
     diffSay("Starting Diff");
     updateURL();
@@ -627,6 +631,7 @@ function stop() {
     slots.slot2.tests = [];
     stopButton.setAttribute("style","display:none");
     goButton.setAttribute("style","display:inline");
+    document.body.scrollTop = 0;
 }
 
 
