@@ -604,10 +604,10 @@ function loadView (view, location, frame) {
 
             // set timeout timer in case something hangs
             var timeout = setTimeout(function() {
-                diffSay(view.name+": timeout");
-                console.log(view.name+": now your candy's gone");
-                reject("that's what happened");
-            }, 5000);
+                diffSay(view.name+": timed out.");
+                console.log(view.name+": timed out");
+                resolve("timeout");
+            }, 2500);
 
             // wait for map to finish drawing, then return
             // todo: make this less fugly
@@ -740,12 +740,17 @@ function prepImage(test, frame, msg) {
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             loadView(test, loc, frame).then(function(result){
+                if (result == "timeout") {
+                    console.log('result == timeout')
+                    test.timeout = true;
+                }
                 // grab a screenshot and store it
                 screenshot(writeScreenshots, name, frame).then(function(result){
                     test.img = result;
                     // then return the data object
                     imageData(result, canvas).then(function(result){
-                        return resolve(test.data = result.data);
+                        test.data = result.data;
+                        return resolve(test);
                     }).catch(function(error){
                         console.log('imageData error:', error);
                         // resolve(error);
@@ -1024,13 +1029,29 @@ function makeRow(test1, test2, matchScore) {
     var column1 = document.createElement('span');
     column1.className = 'column';
     column1.id = "column1";
-    column1.innerHTML = "1<br>";
+    column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
+
+    if (test1.timeout) {
+        var timer = document.createElement('div');
+        timer.className = 'timeout';
+        timer.innerHTML = "🚫";
+    }
+    column1.appendChild(timer);
+
     testdiv.appendChild(column1);
 
     var column2 = document.createElement('span');
     column2.className = 'column';
     column2.id = "column2";
-    column2.innerHTML = "2<br>";
+    column2.innerHTML = "<a target='_blank' href='"+convertGithub(test2link)+"'>"+splitURL(test2.url).file+"</a><br>";
+
+    if (test2.timeout) {
+        var timer = document.createElement('div');
+        timer.className = 'timeout';
+        timer.innerHTML = "🚫";
+    }
+    column1.appendChild(timer);
+
     testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
