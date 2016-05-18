@@ -213,6 +213,67 @@ function setEither(var1, var2) {
     return [var1, var2];
 }
 
+// first add raf shim
+// http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+window.requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+// main function
+function scrollToY(scrollTargetY, speed, easing) {
+    // scrollTargetY: the target scrollY property of the window
+    // speed: time in pixels per second
+    // easing: easing equation to use
+
+    var scrollY = window.scrollY,
+        scrollTargetY = scrollTargetY || 0,
+        speed = speed || 2000,
+        easing = easing || 'easeOutSine',
+        currentTime = 0;
+
+    // min time .1, max time .8 seconds
+    var time = Math.max(.1, Math.min(Math.abs(scrollY - scrollTargetY) / speed, .8));
+
+    // easing equations from https://github.com/danro/easing-js/blob/master/easing.js
+    var PI_D2 = Math.PI / 2,
+        easingEquations = {
+            easeOutSine: function (pos) {
+                return Math.sin(pos * (Math.PI / 2));
+            },
+            easeInOutSine: function (pos) {
+                return (-0.5 * (Math.cos(Math.PI * pos) - 1));
+            },
+            easeInOutQuint: function (pos) {
+                if ((pos /= 0.5) < 1) {
+                    return 0.5 * Math.pow(pos, 5);
+                }
+                return 0.5 * (Math.pow((pos - 2), 5) + 2);
+            }
+        };
+
+    // add animation loop
+    function tick() {
+        currentTime += 1 / 60;
+        var p = currentTime / time;
+        var t = easingEquations[easing](p);
+
+        if (p < 1) {
+            requestAnimFrame(tick);
+            window.scrollTo(0, scrollY + ((scrollTargetY - scrollY) * t));
+        } else {
+            // console.log('scroll done');
+            window.scrollTo(0, scrollTargetY);
+        }
+    }
+
+    // call it once to get started
+    tick();
+}
 
 
 
@@ -592,14 +653,19 @@ function goClick() {
     map1.src = "map.html?url="+document.getElementById("library1").value;
     map2.src = "map.html?url="+document.getElementById("library2").value;
 
-    var buttonloc = document.getElementById("goButton").offsetTop - 10;
-    document.body.style.height = window.innerHeight + buttonloc + "px";
-    document.body.scrollTop = buttonloc;
-
     alertDiv.innerHTML = '';
     diffSay("Starting Diff");
     updateURL();
     goButton.blur();
+
+    var buttonloc = document.getElementById("goButton").offsetTop;
+    console.log('buttonloc:', buttonloc);
+    document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
+    console.log('document.body.style.height:', document.body.style.height);
+    scrollToY(getHeight() - window.innerHeight);
+    console.log('document.body.scrollTop:', document.body.scrollTop);
+    console.log('document.documentElement.scrollTop:', document.documentElement.scrollTop);
+
 
     // clear out any existing tests
     tests.innerHTML = "";
@@ -903,10 +969,32 @@ function refresh(test) {
     startRender();
 }
 
+function getHeight() {
+        var body = document.body,
+        html = document.documentElement;
+
+    var height = Math.max( body.scrollHeight, body.offsetHeight, 
+                           html.clientHeight, html.scrollHeight, html.offsetHeight );
+    return height;
+}
+function checkscroll() {
+   if ((window.innerHeight + window.scrollY) >= getHeight() - 30) {
+        return getHeight();
+    } else {
+        return false;
+    }
+}
+
 function makeRow(test1, test2, matchScore) {
     // console.log('makeRow:', test1, test2);
     // check to see if div already exists (if re-running a test);
     var testdiv = document.getElementById(test1.name);
+    var scrollTrack = false;
+
+    // check if scroll is currently at bottom of page
+    if( checkscroll() ) {
+        scrollTrack = true;
+    }
 
     // if a row for this test doesn't already exist:
     if (testdiv === null) {
@@ -917,7 +1005,7 @@ function makeRow(test1, test2, matchScore) {
             test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
         }
         testdiv.id = test1.name;
-        allTestsDiv.insertBefore(testdiv, allTestsDiv.firstChild);
+        allTestsDiv.appendChild(testdiv);
     } else {
         // clear it out
         testdiv.innerHTML = "";
@@ -971,6 +1059,10 @@ function makeRow(test1, test2, matchScore) {
         column2.appendChild( a );
         a.appendChild( test2.img );
     } catch(e) {}
+
+    if (scrollTrack) {
+        scrollToY(getHeight() - window.innerHeight, 3000);
+    }
 
     // CONTROLS //
 
