@@ -281,11 +281,6 @@ function scrollToY(scrollTargetY, speed, easing) {
 // prep scene
 //
 
-// todo: prep map in two iframes - pass each iframe's contentDocument as the document
-// another issue: lots of this code assumes a single global 'map' var
-// todo: make sure each 'map' is referring to a specific iframe's 'map' each time
-// and determine which one it should be at every point
-
 function prepMap(which) {
     return new Promise(function(resolve, reject) {
         var frame = which.iframe;
@@ -432,6 +427,9 @@ function prepPage() {
         view_complete: function () {
                 // console.log('frame1 view_complete triggered');
                 viewComplete1Resolve();
+            },
+        warning: function(e) {
+            // console.log('frame1 scene warning:', e);
             }
     });
     frame2.window.scene.subscribe({
@@ -439,6 +437,9 @@ function prepPage() {
         view_complete: function () {
                 // console.log('frame2 view_complete triggered');
                 viewComplete2Resolve();
+            },
+        warning: function(e) {
+            // console.log('frame2 scene warning:', e);
             }
     });
 
@@ -683,6 +684,7 @@ function goClick() {
         console.log(err);
         diffSay(err);
     });
+
 }
 
 function stopClick() {
@@ -1019,11 +1021,13 @@ function makeRow(test1, test2, matchScore) {
     title.className = 'testname';
     // make test title a link to a live version of the test
 
-    // parse locationss
+    // parse locations
     var loc = parseLocation(test1.location);
-    var testlink = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    title.innerHTML = "<a target='_blank' href='"+convertGithub(testlink)+"'>"+test1.name+"</a>";
-    title.innerHTML += " <a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a>";
+    var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
+        +"&lib="+library1.value
+        +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+    var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+    title.innerHTML = "<a target='_blank' href='"+convertGithub(test1link)+"'>"+test1.name+"</a> <small>"+test1.location+"</small>";
     testdiv.appendChild(title);
 
     var column1 = document.createElement('span');
@@ -1065,7 +1069,7 @@ function makeRow(test1, test2, matchScore) {
         test1.img.width = size;
         test1.img.height = size;
         var a = document.createElement('a');
-        a.href = testlink;
+        a.href = test1link;
         a.target = "_blank";
         column1.appendChild( a );
         a.appendChild( test1.img );
@@ -1075,7 +1079,7 @@ function makeRow(test1, test2, matchScore) {
         test2.img.width = size;
         test2.img.height = size;
         var a = document.createElement('a');
-        a.href = testlink;
+        a.href = test2link;
         a.target = "_blank";
         column2.appendChild( a );
         a.appendChild( test2.img );
@@ -1124,6 +1128,7 @@ function makeRow(test1, test2, matchScore) {
         makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
     };
     controls.appendChild(exportGifButton);
+
 }
 
 
@@ -1288,5 +1293,4 @@ var saveData = (function () {
 
 window.onload = function() {
     parseQuery();
-    // goButton.click();
 }
