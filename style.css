@@ -118,6 +118,22 @@ button.chooser {
     float: left;
     background-color: #33ee33;
 }
+#progressTop {
+    width: 100%;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 6px;
+    border: 1px solid lightgray;
+    visibility: hidden;
+    z-index: 999;
+}
+#progressbarTop {
+    height: 100%;
+    float: left;
+    background-color: #33ee33;
+    z-index: 1000;
+}
 
 #mapdiv {
     background: rgba(0, 0, 0, 0);

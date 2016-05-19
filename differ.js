@@ -25,6 +25,7 @@ var numTests, scores = [], totalScore = 0;
 var allTestsDiv = document.getElementById("tests");
 var statusDiv = document.getElementById("statustext");
 var progressBar = document.getElementById("progressbar");
+var progressBarTop = document.getElementById("progressbarTop");
 var alertDiv = document.getElementById("alert");
 var totalScoreDiv = document.getElementById("totalScore");
 var goButton = document.getElementById("goButton");
@@ -198,6 +199,7 @@ function linkFromBlob(blob) {
 function updateProgress(remaining) {
     var percent = 100 - (remaining / numTests) * 100;
     progressBar.setAttribute("style", "width:"+percent + "%");
+    progressBarTop.setAttribute("style", "width:"+percent + "%");
 }
 
 function setEither(var1, var2) {
@@ -1293,4 +1295,16 @@ var saveData = (function () {
 
 window.onload = function() {
     parseQuery();
+
+    var myScrollFunc = function() {
+      var y = window.scrollY;
+      if (y >= progressBar.offsetTop) {
+        progressTop.style['visibility'] = "visible";
+      } else {
+        progressTop.style['visibility'] = "hidden";
+      }
+    };
+
+    window.addEventListener("scroll", myScrollFunc);
+
 }
