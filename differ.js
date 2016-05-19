@@ -1029,7 +1029,7 @@ function makeRow(test1, test2, matchScore) {
         +"&lib="+library1.value
         +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
     var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    title.innerHTML = "<a target='_blank' href='"+convertGithub(test1link)+"'>"+test1.name+"</a> <small>"+test1.location+"</small>";
+    title.innerHTML = "<h3><a target='_blank' href='"+convertGithub(test1link)+"'>"+test1.name+"</a>:</h3> <small>"+test1.location+"</small>";
     testdiv.appendChild(title);
 
     var column1 = document.createElement('span');
@@ -1049,7 +1049,7 @@ function makeRow(test1, test2, matchScore) {
     var column2 = document.createElement('span');
     column2.className = 'column';
     column2.id = "column2";
-    column2.innerHTML = "<a target='_blank' href='"+convertGithub(test2link)+"'>"+splitURL(test2.url).file+"</a><br>";
+    column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
 
     if (test2.timeout) {
         var timer = document.createElement('div');
