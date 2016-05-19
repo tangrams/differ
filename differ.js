@@ -383,8 +383,6 @@ function loadDefaults() {
 
 // make sure tests are ready, fill in any gaps
 function prepTests() {
-    // reset progress bar
-    updateProgress(numTests);
     // clear stored images
     images = {};
     // copy required properties from one test if undefined in the other
@@ -645,6 +643,14 @@ function loadView (view, location, frame) {
 }
 
 function goClick() {
+    // reset progress bar
+    updateProgress(numTests);
+
+    alertDiv.innerHTML = '';
+    diffSay("Starting Diff");
+    updateURL();
+    goButton.blur();
+
     // reset iframe promises
     frame1Ready = new Promise(function(resolve, reject) {
         frame1Loaded = resolve;
@@ -655,11 +661,6 @@ function goClick() {
     // reload iframes with specified versions of Tangram
     map1.src = "map.html?url="+document.getElementById("library1").value;
     map2.src = "map.html?url="+document.getElementById("library2").value;
-
-    alertDiv.innerHTML = '';
-    diffSay("Starting Diff");
-    updateURL();
-    goButton.blur();
 
     var buttonloc = document.getElementById("goButton").offsetTop;
     document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
@@ -872,7 +873,6 @@ function prepTestImages() {
         } else {
             stop();
             console.log("Done!");
-            progressBar.setAttribute("style", "width:0%");
             var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
             diffSay(msg);
             statusDiv.innerHTML = "";
