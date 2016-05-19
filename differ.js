@@ -1041,9 +1041,8 @@ function makeRow(test1, test2, matchScore) {
         var timer = document.createElement('div');
         timer.className = 'timeout';
         timer.innerHTML = "🚫";
+        column1.appendChild(timer);
     }
-    column1.appendChild(timer);
-
     testdiv.appendChild(column1);
 
     var column2 = document.createElement('span');
@@ -1055,9 +1054,8 @@ function makeRow(test1, test2, matchScore) {
         var timer = document.createElement('div');
         timer.className = 'timeout';
         timer.innerHTML = "🚫";
+        column2.appendChild(timer);
     }
-    column1.appendChild(timer);
-
     testdiv.appendChild(column2);
 
     var diffcolumn = document.createElement('span');
