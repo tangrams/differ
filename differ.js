@@ -876,6 +876,13 @@ function prepTestImages() {
             var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
             diffSay(msg);
             statusDiv.innerHTML = "";
+
+            var doneDiv = document.createElement('div');
+            doneDiv.innerHTML = '<a style="text-align: center" href="#" onclick="scrollToY(0)"><H3>Done!</H3></a>';
+            doneDiv.className = 'test';
+            allTestsDiv.appendChild(doneDiv);
+
+            if (checkscroll()) scrollToY(getHeight(), 10000);
         }
     }
 
