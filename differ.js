@@ -662,13 +662,9 @@ function goClick() {
     goButton.blur();
 
     var buttonloc = document.getElementById("goButton").offsetTop;
-    console.log('buttonloc:', buttonloc);
     document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
-    console.log('document.body.style.height:', document.body.style.height);
+    // scroll to stop button
     scrollToY(getHeight() - window.innerHeight);
-    console.log('document.body.scrollTop:', document.body.scrollTop);
-    console.log('document.documentElement.scrollTop:', document.documentElement.scrollTop);
-
 
     // clear out any existing tests
     tests.innerHTML = "";
@@ -745,7 +741,6 @@ function prepImage(test, frame, msg) {
             var loc = parseLocation(test.location);
             loadView(test, loc, frame).then(function(result){
                 if (result == "timeout") {
-                    console.log('result == timeout')
                     test.timeout = true;
                 }
                 // grab a screenshot and store it
