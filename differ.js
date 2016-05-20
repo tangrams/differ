@@ -1048,11 +1048,15 @@ function makeRow(test1, test2, matchScore) {
 
     // parse locations
     var loc = parseLocation(test1.location);
+    // make links
     var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
         +"&lib="+library1.value
         +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+    var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
+        +"&lib="+library2.value
+        +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
     var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    title.innerHTML = "<large><a target='_blank' href='"+convertGithub(test1link)+"'>"+test1.name+"</a>:</large>   <small>"+test1.location+"</small>";
+    title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
     testdiv.appendChild(title);
 
     var column1 = document.createElement('span');

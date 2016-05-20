@@ -20,6 +20,12 @@ body {
     padding: 1em;
 }
 
+.titletext {
+    font-weight: bold;
+    font-size: 1.25em;
+    margin-right: .25em;
+}
+
 #alert {
     height: 100px;
     overflow: scroll;
