@@ -3,7 +3,7 @@ A map-render-testing framework for Tangram
 
 Live at: https://tangrams.github.io/differ
 
-<img width="404" alt="screen shot 2016-04-07 at 11 05 24 am" src="https://cloud.githubusercontent.com/assets/459970/14355919/bae21cf2-fcb0-11e5-8675-ac86b5531065.png">
+<img width="450" alt="screen shot 2016-05-20 at 11 13 11 am" src="https://cloud.githubusercontent.com/assets/459970/15432366/eb52b83c-1e7b-11e6-87fa-4bf1c7e0091d.png">
 
 ### requirements
 
