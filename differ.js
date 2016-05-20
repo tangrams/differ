@@ -22,6 +22,12 @@ var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = size * window.devicePixelRatio; // logical pixels
 var numTests, scores = [], totalScore = 0;
+var data, metadata;
+var loadTime = Date();
+var writeScreenshots = false; // write new map images to disk?
+var defaultFile = "tests/default3.json";
+
+// shortcuts to elements
 var allTestsDiv = document.getElementById("tests");
 var statusDiv = document.getElementById("statustext");
 var progressBar = document.getElementById("progressbar");
@@ -33,10 +39,10 @@ var stopButton = document.getElementById("stopButton");
 var saveButton = document.getElementById("saveButton");
 var slot1 = document.getElementById("slot1");
 var slot2 = document.getElementById("slot2");
-var data, metadata;
-var loadTime = Date();
-var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default3.json";
+var library1 = document.getElementById("library1");
+var library2 = document.getElementById("library2");
+var checkbox1 = document.getElementById("checkbox1");
+var checkbox2 = document.getElementById("checkbox2");
 
 // two iframes to hold maps
 var frame1 = {
@@ -80,6 +86,7 @@ function isPathAbsolute(path) {
 }
 
 function parseQuery() {
+    // test or yaml file
     var url = getQueryVariable("1")
     if (url != "") {
         slot1.value = url;
@@ -88,6 +95,7 @@ function parseQuery() {
     if (url != "") {
         slot2.value = url;
     }
+    // tangram version
     var lib = getQueryVariable("lib1")
     if (lib != "") {
         library1.value = lib;
@@ -169,7 +177,7 @@ function readTextFile(file, callback) {
             console.error("404 – can't load file", file);
             diffSay("404 - can't load file <a href='"+file+"'>"+filename+"</a>");
         } else if (rawFile.readyState === 4) {
-            diffSay("Had trouble loading that file.");
+            diffSay("Had trouble loading the file: <a href='"+file+"'>"+filename+"</a>");
             if (parseURL.host == "github.com") {
                 diffSay("I notice you're trying to load a file from github, make sure you're using the \"raw\" file!");
             }
@@ -608,7 +616,7 @@ function loadView (view, location, frame) {
                 diffSay(view.name+": timed out.");
                 console.log(view.name+": timed out");
                 resolve("timeout");
-            }, 2500);
+            }, 4000);
 
             // wait for map to finish drawing, then return
             // todo: make this less fugly
@@ -878,7 +886,7 @@ function prepTestImages() {
             statusDiv.innerHTML = "";
 
             var doneDiv = document.createElement('div');
-            doneDiv.innerHTML = '<a style="text-align: center" href="#" onclick="scrollToY(0)"><H3>Done!</H3></a>';
+            doneDiv.innerHTML = '<a style="text-align: center" href="#" onclick="scrollToY(0)"><H3>Done! 🎉</H3></a>';
             doneDiv.className = 'test';
             allTestsDiv.appendChild(doneDiv);
 
