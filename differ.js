@@ -1295,7 +1295,15 @@ function makeInfoJSON() {
         "testFile": testsFile
     };
     try {
-        j.tests = data.tests;
+        j.tests = {};
+        for (test in data.tests) {
+            j.tests[test] = {};
+            for (key in data.tests[test]) {
+                if (key != "data") {
+                    j.tests[test][key] = data.tests[test][key];
+                }
+            }
+        }
     } catch(e) {
         throw new Error(e);
         return false;
