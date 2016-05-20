@@ -104,6 +104,16 @@ function parseQuery() {
     if (lib != "") {
         library2.value = lib;
     }
+    // ignore prerendered images checkbox
+    var check = getQueryVariable("ignore1")
+    if (check) {
+        checkbox1.checked = true;
+    }
+    check = getQueryVariable("ignore2")
+    if (check) {
+        checkbox2.checked = true;
+    }
+    // start immediately
     url = getQueryVariable("go")
     if (url != "") {
         goButton.click();
@@ -190,7 +200,7 @@ function readTextFile(file, callback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value)+"&lib1="+escape(library1.value)+"&lib2="+escape(library2.value)+"&go";
+    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value)+"&lib1="+escape(library1.value)+"&lib2="+escape(library2.value)+(checkbox1.checked ? "&ignore1" : "")+(checkbox2.checked ? "&ignore2" : "")+"&go";
     if (parser.origin+url+"&go" != window.location) {
         var currentstate = history.state;
         window.history.pushState(currentstate, "", url);
@@ -309,8 +319,8 @@ function prepMap(which) {
     }); 
 }
 
-// parse url and load the appropriate file
-function loadFile(url) {
+// parse url and load the appropriate file, then create tests
+function loadFile(url, ignoreImages) {
     return new Promise(function(resolve, reject) {
         if (url == "") {
             throw new Error("Empty slot");
@@ -354,8 +364,11 @@ function loadFile(url) {
                 slot.tests = Object.keys(data.tests).map(function (key) {
                     // add test's name as a property of the test
                     data.tests[key].name = key;
-                    // add name of pre-rendered image to look for
-                    data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                    // if checkbox isn't checked
+                    if (!ignoreImages) {
+                        // add name of pre-rendered image to look for
+                        data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                    }
                     return data.tests[key];
                 });
                 resolve(slot);
@@ -679,7 +692,7 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
-    return Promise.all([loadFile(slot1.value), loadFile(slot2.value), frame1Ready, frame2Ready]).then(function(result){
+    return Promise.all([loadFile(slot1.value, checkbox1.checked), loadFile(slot2.value, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
         // console.log('ready to go');
         slots.slot1 = result[0];
         slots.slot2 = result[1];

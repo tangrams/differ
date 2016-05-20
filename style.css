@@ -197,3 +197,9 @@ canvas {
     width: 93%;
     text-align: center;
 }
+input[type="checkbox"] {
+    opacity: 1 !important;
+    display: inline;
+    position: relative;
+    top: 5px;
+}

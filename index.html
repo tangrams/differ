@@ -34,13 +34,14 @@
         Using this Tangram library:<br>
         <input id="library1" class="slot" value="https://mapzen.com/tangram/0.7/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
         <datalist id='libslist'>
-           <option value='https://mapzen.com/tangram/0.7/tangram.debug.js'>
-           <option value='https://mapzen.com/tangram/0.6/tangram.debug.js'>
+           <option value='0.7'>
+           <option value='0.6'>
            <option value='https://mapzen.com/tangram/0.5/tangram.debug.js'>
            <option value='http://localhost:8080/dist/tangram.debug.js'>
         </datalist>
+        <input type="checkbox" id="checkbox1"> (ignoring any prerendered images)<br><br>
 
-        <br>to this this .json test file or .yaml scene file:<br>
+        to this this .json test file or .yaml scene file:<br>
         <input id="slot2" class="slot" value="" onkeypress="catchEnter(event)" list='testlist' autocomplete="on"></input>
         <datalist id='testlist'>
            <option value='tests/default.json'>
@@ -55,6 +56,8 @@
 
         Using this Tangram library:<br>
         <input id="library2" class="slot" value="https://mapzen.com/tangram/0.7/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
+        <input type="checkbox" id="checkbox2"> (ignoring any prerendered images)<br>
+
         <button class="goButton" id="goButton" onclick="goClick()">GO👍</button>
         <button class="goButton" id="stopButton" onclick="stopClick()">STOP✋</button>
     </div>
