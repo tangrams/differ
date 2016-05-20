@@ -1,5 +1,5 @@
 # differ
-A map-render-testing framework for Tangram
+A map-render-testing tool for [Tangram](http://github.com/tangrams/tangram)
 
 Live at: https://tangrams.github.io/differ
 
