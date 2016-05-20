@@ -1,8 +1,6 @@
 /*border: 2px solid gold;*/
 
 body {
-    /*width: 1080;*/
-    max-width: 1080px;
     margin: 5px;
 }
 
@@ -125,6 +123,7 @@ button.chooser {
     top: 0;
     height: 6px;
     border: 1px solid lightgray;
+    background-color: #f8f8f8;
     visibility: hidden;
     z-index: 999;
 }
