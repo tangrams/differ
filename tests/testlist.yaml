@@ -82,7 +82,7 @@ http://localhost:8080/?2=tests/locations.json&1=tests/locs+urls.json&go
 # a json with locations only against a json with scenefile urls only
 http://localhost:8080/?1=tests/locations.json&2=tests/urls.json&go
 http://localhost:8080/?2=tests/locations.json&1=tests/urls.json&go
-✅ # could maybe have a warning about same scenefile and location
+✅ # could maybe have a warning about same scenefile, location, library
 
 # a json with locations only against itself
 http://localhost:8080/?1=tests/locations.json&2=tests/locations.json&go
@@ -101,9 +101,4 @@ http://localhost:8080/?2=tests/urls.json&1=tests/locs+urls.json&go
 # a json with urls only against itself
 http://localhost:8080/?1=tests/urls.json&2=tests/urls.json&go
 ✅
-
-# a json with relative urls against local renders
-http://localhost:8080/?1=tests/relative-urls.json&2=Local%20renders&go
-✅
-
 
