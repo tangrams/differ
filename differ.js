@@ -621,7 +621,7 @@ function loadView (view, location, frame) {
         return scene.load(url).then(function(r) {
             // console.log('scene.load result:', r)
             scene.animated = false;
-            map.setView([location[0], location[1]], location[2]);
+            map.setView([location[0], location[1]], location[2], { animate: false});
             // scene.requestRedraw(); // necessary? guess not
 
             // set timeout timer in case something hangs
