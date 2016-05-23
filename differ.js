@@ -14,7 +14,7 @@
 //
 
 var slots = {}, queue, nextView,
-    diffImg = new Image(), diff, canvas, ctx,
+    diffImg = new Image(), diffData, diffCanvas, diffCtx,
     images = {};
 var testsFile = "";
 var queryFile = "";
@@ -475,12 +475,12 @@ function prepPage() {
     statusDiv.innerHTML = msg;
 
     // make diffing canvas
-    if (typeof canvas != 'undefined') return; // if it already exists, skip the rest
-    canvas = document.createElement('canvas');
-    canvas.height = size;
-    canvas.width = size;
-    ctx = canvas.getContext('2d');
-    diff = ctx.createImageData(size, size);
+    if (typeof diffCanvas != 'undefined') return; // if it already exists, skip the rest
+    diffCanvas = document.createElement('canvas');
+    diffCanvas.height = size;
+    diffCanvas.width = size;
+    diffCtx = diffCanvas.getContext('2d');
+    diffData = diffCtx.createImageData(size, size);
 
 }
 
@@ -751,7 +751,7 @@ function prepImage(test, frame, msg) {
             diffSay(test.name+imgType+" found for "+test.file)
             // store it
             test.img = result;
-            imageData(result, canvas).then(function(result){
+            imageData(result, diffCanvas).then(function(result){
                 // then return the data object
                 return resolve(test.data = result.data);
             }).catch(function(err){
@@ -769,7 +769,7 @@ function prepImage(test, frame, msg) {
                 screenshot(writeScreenshots, name, frame).then(function(result){
                     test.img = result;
                     // then return the data object
-                    imageData(result, canvas).then(function(result){
+                    imageData(result, diffCanvas).then(function(result){
                         test.data = result.data;
                         return resolve(test);
                     }).catch(function(error){
@@ -943,7 +943,7 @@ function doDiff( test1, test2 ) {
     if (test1.data && test2.data) {
         // run the diff
         try {
-            var difference = pixelmatch(test1.data, test2.data, diff.data, size, size, {threshold: 0.05});
+            var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
         } catch(e) {
             throw new Error("> diff error:", e);
         }
@@ -951,7 +951,7 @@ function doDiff( test1, test2 ) {
         var match = 100-(difference/(lsize*lsize)*100*100)/100;
         var matchScore = Math.floor(match);
         // put the diff in its canvas
-        ctx.putImageData(diff, 0, 0);
+        diffCtx.putImageData(diffData, 0, 0);
     } else {
         // generating new image
         match = 100;
@@ -994,6 +994,9 @@ function doDiff( test1, test2 ) {
         images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
     }
     diff2.src = linkFromBlob( blob );
+
+    // clear the diff canvas
+    diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
 };
 
 function refresh(test) {
@@ -1128,7 +1131,7 @@ function makeRow(test1, test2, matchScore) {
     if (matchScore != "") {
         matchScore += "% match";
         diffImg = document.createElement('img');
-        diffImg.src = canvas.toDataURL("image/png");
+        diffImg.src = diffCanvas.toDataURL("image/png");
         diffImg.width = size;
         diffImg.height = size;
         diffcolumn.appendChild( diffImg );
