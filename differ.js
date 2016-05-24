@@ -1058,7 +1058,6 @@ function makeRow(test1, test2, matchScore) {
     var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
         +"&lib="+library2.value
         +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)+"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
     title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
     testdiv.appendChild(title);
 
