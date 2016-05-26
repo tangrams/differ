@@ -73,9 +73,9 @@
 
         var url = getQueryVariable("url");
         var scriptElement = document.getElementById("tangram");
-        if (url == "") url = "https://mapzen.com/tangram/0.7/tangram.debug.js";
-
-        if (url.indexOf("/") > -1) {
+        if (url == "") {
+            lib_url = "https://mapzen.com/tangram/tangram.debug.js";
+        } else if (url.indexOf("/") > -1) {
             // assume it's a full path
             // check that it's a tangram library
             if (url.substr(url.length - 17) == '/tangram.debug.js' ||
@@ -83,16 +83,15 @@
                 var lib_url = url;
             } else {
                 // noooo you don't
-                console.log('lib param error:', url, "is not a valid tangram library, defaulting to 0.7");
-                url = '0.7';
+                console.log('lib param error:', url, "is not a valid tangram library, defaulting to latest release");
+                lib_url = 'https://mapzen.com/tangram/tangram.debug.js';
             }
-        }
-        if (url.indexOf("/") == -1) {
+        } else if (url.indexOf("/") == -1) {
             // assume it's a version # only
-            url = "https://mapzen.com/tangram/"+url+"/tangram.debug.js";
+            lib_url = "https://mapzen.com/tangram/"+url+"/tangram.debug.js";
         }
 
-        scriptElement.src = url;
+        scriptElement.src = lib_url;
 
     </script>
 
