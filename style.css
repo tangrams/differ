@@ -148,8 +148,8 @@ button.chooser {
 
 .mapFrame {
     border: 2px solid gold;
-    position: absolute;
-    top: -1000px;
+    position: fixed;
+    opacity: 0;
 }
 
 canvas {
