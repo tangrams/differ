@@ -44,6 +44,18 @@ var library2 = document.getElementById("library2");
 var checkbox1 = document.getElementById("checkbox1");
 var checkbox2 = document.getElementById("checkbox2");
 
+// browser check
+var ua = navigator.userAgent.toLowerCase();
+var chrome = false;
+var safari = false;
+if (ua.indexOf('safari') != -1) {
+  if (ua.indexOf('chrome') > -1) {
+    chrome = true;
+  } else {
+    safari = true;
+  }
+}
+
 // two iframes to hold maps
 var frame1 = {
     'iframe': document.getElementById("map1"),
@@ -680,9 +692,13 @@ function goClick() {
         frame2Loaded = resolve;
     });
     // reload iframes with specified versions of Tangram
-    map1.src = "map.html?url="+document.getElementById("library1").value;
-    map2.src = "map.html?url="+document.getElementById("library2").value;
-
+    if (safari) {
+        map1.location = "map.html?url="+document.getElementById("library1").value;
+        map2.location = "map.html?url="+document.getElementById("library2").value;
+    } else {
+        map1.src = "map.html?url="+document.getElementById("library1").value;
+        map2.src = "map.html?url="+document.getElementById("library2").value;
+    }
     var buttonloc = document.getElementById("goButton").offsetTop;
     document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
     // scroll to stop button
