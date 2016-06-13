@@ -245,6 +245,34 @@ function setEither(var1, var2) {
     return [var1, var2];
 }
 
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+// flash background color {
+function flashDone () {
+    for (var x = 1; x < 11; x++) {
+        setColorDelay(x);
+    }
+}
+
+function setColorDelay(x) {
+    var stepms = 40;
+    setTimeout(function() {
+        var c = 255 - 255 / x;
+        var color = rgbToHex(parseInt(c), 255, parseInt(c))
+        document.body.style.background = color;
+    }, x * stepms)
+    setTimeout(function() {
+        document.body.style.background = 'white';
+    }, stepms * 11);
+}
+
 // first add raf shim
 // http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 window.requestAnimFrame = (function(){
@@ -735,7 +763,6 @@ function stop() {
     slots.slot2.tests = [];
     stopButton.setAttribute("style","display:none");
     goButton.setAttribute("style","display:inline");
-    document.body.scrollTop = 0;
 }
 
 
@@ -909,17 +936,25 @@ function prepTestImages() {
             prepTestImages();
         } else {
             stop();
+            // debugger;
             console.log("Done!");
             var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
             diffSay(msg);
             statusDiv.innerHTML = "";
 
             var doneDiv = document.createElement('div');
-            doneDiv.innerHTML = '<a style="text-align: center" href="#" onclick="scrollToY(0)"><H3>Done! 🎉</H3></a>';
+            doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
             doneDiv.className = 'test';
-            allTestsDiv.appendChild(doneDiv);
-
-            if (checkscroll()) scrollToY(getHeight(), 10000);
+            // debugger;
+            if (checkscroll()) {
+                allTestsDiv.appendChild(doneDiv);
+                console.log('scrolling')
+                scrollToY(getHeight());
+            } else {
+                allTestsDiv.appendChild(doneDiv);
+                console.log('flashing')
+                flashDone();
+            }
         }
     }
 
@@ -1021,15 +1056,14 @@ function refresh(test) {
 }
 
 function getHeight() {
-        var body = document.body,
-        html = document.documentElement;
-
-    var height = Math.max( body.scrollHeight, body.offsetHeight, 
-                           html.clientHeight, html.scrollHeight, html.offsetHeight );
+    var body = document.body;
+    var html = document.documentElement;
+    var height = Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
     return height;
 }
+
 function checkscroll() {
-   if ((window.innerHeight + window.scrollY) >= getHeight() - 30) {
+   if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
         return getHeight();
     } else {
         return false;
