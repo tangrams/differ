@@ -127,7 +127,7 @@ button.chooser {
     position: fixed;
     left: 0;
     top: 0;
-    height: 6px;
+    height: 10px;
     border: 1px solid lightgray;
     background-color: #f8f8f8;
     visibility: hidden;
@@ -207,4 +207,11 @@ input[type="checkbox"] {
     display: inline;
     position: relative;
     top: 5px;
+}
+
+.done h2 {
+    text-align: center;
+    background-color: white;
+    padding-bottom: 50px;
+    width: 100%;
 }
