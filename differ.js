@@ -948,11 +948,9 @@ function prepTestImages() {
             // debugger;
             if (checkscroll()) {
                 allTestsDiv.appendChild(doneDiv);
-                console.log('scrolling')
                 scrollToY(getHeight());
             } else {
                 allTestsDiv.appendChild(doneDiv);
-                console.log('flashing')
                 flashDone();
             }
         }
