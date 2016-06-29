@@ -26,6 +26,14 @@ body {
     margin-right: .25em;
 }
 
+#github{
+    text-align: right;
+    margin: auto;
+    width: 80%;
+    top: -1.5em;
+    margin-bottom: -1.5em;
+    position: relative;}
+
 #alert {
     height: 100px;
     overflow: scroll;
