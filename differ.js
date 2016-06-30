@@ -669,7 +669,7 @@ function loadView (view, location, frame) {
                 diffSay(view.name+": timed out.");
                 console.log(view.name+": timed out");
                 resolve("timeout");
-            }, 4000);
+            }, 6000);
 
             // wait for map to finish drawing, then return
             // todo: make this less fugly
