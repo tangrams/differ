@@ -734,7 +734,7 @@ function goClick() {
     metadata = null;
 
     // if one slot is empty, assume the value of the other
-    if (slot1.value == "" && slot2.value != "") {slot1.value = slot2.value;
+    if (slot1.value == "" && slot2.value != "") slot1.value = slot2.value;
     if (slot2.value == "" && slot1.value != "") slot2.value = slot1.value;
 
     return Promise.all([loadFile(slot1.value, checkbox1.checked), loadFile(slot2.value, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
