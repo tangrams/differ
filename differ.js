@@ -775,7 +775,10 @@ function proceed() {
         }).then(function() {
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
-            prepTestImages();
+            // load next test in the lists
+            test1 = slots.slot1.tests.shift();
+            test2 = slots.slot2.tests.shift();
+            prepTestImages(test1, test2);
         });
     });
 }
@@ -901,11 +904,8 @@ function prepLocations(test1, test2) {
 }
 
 // load or create the test images and advance the tests
-function prepTestImages() {
-    // load next test in the lists
-    var test1 = slots.slot1.tests.shift();
-    var test2 = slots.slot2.tests.shift();
-
+function prepTestImages(test1, test2) {
+    // debugger;
     // if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
     //     diffAdd("Missing test in slot ");
     //     if (typeof test1 == "undefined") diffAdd("1");
@@ -927,19 +927,20 @@ function prepTestImages() {
             console.log('doDiff failed:', e.stack);
         }
         if (slots.slot1.tests.length > 0) {
-            prepTestImages();
+            // load next test in the lists
+            test1 = slots.slot1.tests.shift();
+            test2 = slots.slot2.tests.shift();
+            prepTestImages(test1, test2);
         } else {
             stop();
-            // debugger;
             console.log("Done!");
-            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
+            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
             diffSay(msg);
             get('statustext').innerHTML = "";
 
             var doneDiv = document.createElement('div');
             doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
             doneDiv.className = 'test';
-            // debugger;
             if (checkscroll()) {
                 get('tests').appendChild(doneDiv);
                 scrollToY(getHeight());
@@ -1042,8 +1043,14 @@ function doDiff( test1, test2 ) {
     diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
 };
 
-function refresh(test) {
-    queue.push(test);
+function refresh(test1, test2) {
+    // console.log('refresh:', test)
+    slots.slot1.tests.push(test1);
+    slots.slot2.tests.push(test2);
+    numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
+    return Promise.all([viewComplete1, viewComplete2]).then(function() {
+        prepTestImages(test1, test2);
+    });
 }
 
 function getHeight() {
@@ -1082,6 +1089,8 @@ function makeRow(test1, test2, matchScore) {
         }
         testdiv.id = test1.name;
         get('tests').appendChild(testdiv);
+        testdiv.test1 = test1;
+        testdiv.test2 = test2;
     } else {
         // clear it out
         testdiv.innerHTML = "";
@@ -1181,7 +1190,7 @@ function makeRow(test1, test2, matchScore) {
 
     var refreshButton =  document.createElement('button');
     refreshButton.innerHTML = "refresh";
-    refreshButton.onclick = function() {refresh(test1);}
+    refreshButton.onclick = function() {refresh(test1, test2);}
     controls.appendChild(refreshButton);
 
     var exportButton =  document.createElement('button');
