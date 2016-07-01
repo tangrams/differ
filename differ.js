@@ -732,12 +732,12 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
-
+    var slot1Val = slot1.value, slot2Val = slot2.value;
     // if one slot is empty, assume the value of the other
-    if (slot1.value == "" && slot2.value != "") slot1.value = slot2.value;
-    if (slot2.value == "" && slot1.value != "") slot2.value = slot1.value;
+    if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
+    if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
 
-    return Promise.all([loadFile(slot1.value, checkbox1.checked), loadFile(slot2.value, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
+    return Promise.all([loadFile(slot1Val, checkbox1.checked), loadFile(slot2Val, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
         // console.log('ready to go');
         slots.slot1 = result[0];
         slots.slot2 = result[1];
