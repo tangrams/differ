@@ -732,6 +732,11 @@ function goClick() {
     tests.innerHTML = "";
     data = null;
     metadata = null;
+
+    // if one slot is empty, assume the value of the other
+    if (slot1.value == "" && slot2.value != "") {slot1.value = slot2.value;
+    if (slot2.value == "" && slot1.value != "") slot2.value = slot1.value;
+
     return Promise.all([loadFile(slot1.value, checkbox1.checked), loadFile(slot2.value, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
         // console.log('ready to go');
         slots.slot1 = result[0];
@@ -861,13 +866,6 @@ function prepStyles(test1, test2) {
             return;
         } else {
 
-            // if (typeof test1.url == 'undefined') {
-            //     diffSay(test1.name+': no scene found in '+test1.file+' – copying from '+test2.file);
-            // }
-            // if (typeof test2.url == 'undefined') {
-            //     diffSay(test2.name+': no scene found in '+test2.file+' – copying from '+test1.file);
-            // }
-
             test1.url = url[0];
             test2.url = url[1];
             if (!isPathAbsolute(test1.url)) {
@@ -906,15 +904,6 @@ function prepLocations(test1, test2) {
 
 // load or create the test images and advance the tests
 function prepTestImages(test1, test2) {
-    // debugger;
-    // if (typeof test1 == 'undefined' || typeof test2 == 'undefined' ) {
-    //     diffAdd("Missing test in slot ");
-    //     if (typeof test1 == "undefined") diffAdd("1");
-    //     if (typeof test2 == "undefined") diffAdd("2");
-    //     diffSay(" - using test from other slot.")
-    //     stopClick();
-    // }
-
     if (typeof test1 == 'undefined' && typeof test2 == 'undefined' ) {
         diffSay("No tests defined in either file.");
         stopClick();
