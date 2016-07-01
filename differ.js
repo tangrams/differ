@@ -547,6 +547,9 @@ function parseLocation(loc) {
 
 // load an image from a file
 function loadImage (url) {
+    if (typeof url == 'undefined') {
+        return new Promise(function(resolve, reject) {reject()});
+    };
     // console.log('loadImage:', url);
     return new Promise(function(resolve, reject) {
         // if (typeof url == "undefined") {
@@ -567,10 +570,9 @@ function loadImage (url) {
         // try to load the image
         image.src = url;
     }).catch(function(error){
-                // console.log('loadImage error:', error);
-                throw new Error(error);
-                // reject(error);
-            });
+            // console.warn("couldn't load image: "+error);
+            throw new Error(error);
+        });
 }
 
 // get image data object using a canvas
@@ -798,7 +800,6 @@ function prepImage(test, frame, msg) {
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
-            console.warn("couldn't load image '"+test.name+"': "+err);
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             loadView(test, loc, frame).then(function(result){
