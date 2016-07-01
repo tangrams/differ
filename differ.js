@@ -13,7 +13,7 @@
 // initialize variables
 //
 
-var slots = {}, queue, nextView,
+var slots = {},
     diffImg = new Image(), diffData, diffCanvas, diffCtx,
     images = {};
 var testsFile = "";
@@ -28,21 +28,15 @@ var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default3.json";
 
 // shortcuts to elements
-var allTestsDiv = document.getElementById("tests");
-var statusDiv = document.getElementById("statustext");
-var progressBar = document.getElementById("progressbar");
-var progressBarTop = document.getElementById("progressbarTop");
-var alertDiv = document.getElementById("alert");
-var totalScoreDiv = document.getElementById("totalScore");
-var goButton = document.getElementById("goButton");
-var stopButton = document.getElementById("stopButton");
-var saveButton = document.getElementById("saveButton");
-var slot1 = document.getElementById("slot1");
-var slot2 = document.getElementById("slot2");
-var library1 = document.getElementById("library1");
-var library2 = document.getElementById("library2");
-var checkbox1 = document.getElementById("checkbox1");
-var checkbox2 = document.getElementById("checkbox2");
+function get(id) {
+    return document.getElementById(id);
+}
+var slot1 = get("slot1");
+var slot2 = get("slot2");
+var library1 = get("library1");
+var library2 = get("library2");
+var checkbox1 = get("checkbox1");
+var checkbox2 = get("checkbox2");
 
 // browser check
 var ua = navigator.userAgent.toLowerCase();
@@ -58,18 +52,18 @@ if (ua.indexOf('safari') != -1) {
 
 // two iframes to hold maps
 var frame1 = {
-    'iframe': document.getElementById("map1"),
-    'window': document.getElementById("map1").contentWindow,
-    'document': document.getElementById("map1").contentDocument
+    'iframe': get("map1"),
+    'window': get("map1").contentWindow,
+    'document': get("map1").contentDocument
 }
 var frame2 = {
-    'iframe': document.getElementById("map2"),
-    'window': document.getElementById("map2").contentWindow,
-    'document': document.getElementById("map2").contentDocument
+    'iframe': get("map2"),
+    'window': get("map2").contentWindow,
+    'document': get("map2").contentDocument
 }
 
 // can only use saveButton if running on a local node server
-if (window.location.hostname != "localhost" ) saveButton.setAttribute("style", "display:none");
+if (window.location.hostname != "localhost" ) get('saveButton').setAttribute("style", "display:none");
 
 
 //
@@ -128,15 +122,15 @@ function parseQuery() {
     // start immediately
     url = getQueryVariable("go")
     if (url != "") {
-        goButton.click();
+        get('goButton').click();
     }
 }
 
 // add text to the output div
 function diffAdd(txt) {
     setTimeout(function() {
-        alertDiv.innerHTML += txt;
-        alertDiv.scrollTop = alertDiv.scrollHeight;
+        get('alert').innerHTML += txt;
+        get('alert').scrollTop = get('alert').scrollHeight;
     }, 50);
 }
 function diffSay(txt) {
@@ -160,7 +154,7 @@ function catchEnter(e){
     if (!e) e = window.event;
     var keyCode = e.keyCode || e.which;
     if (keyCode == '13') { // Enter pressed
-        goButton.click();
+        get('goButton').click();
         return false;
     }
 }
@@ -228,8 +222,8 @@ function linkFromBlob(blob) {
 // update progress bar, remaining = number of tests left to do
 function updateProgress(remaining) {
     var percent = 100 - (remaining / numTests) * 100;
-    progressBar.setAttribute("style", "width:"+percent + "%");
-    progressBarTop.setAttribute("style", "width:"+percent + "%");
+    get('progressbar').setAttribute("style", "width:"+percent + "%");
+    get('progressbarTop').setAttribute("style", "width:"+percent + "%");
 }
 
 function setEither(var1, var2) {
@@ -512,7 +506,7 @@ function prepPage() {
 
     // set status message
     var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
-    statusDiv.innerHTML = msg;
+    get('statustext').innerHTML = msg;
 
     // make diffing canvas
     if (typeof diffCanvas != 'undefined') return; // if it already exists, skip the rest
@@ -707,10 +701,10 @@ function goClick() {
     // reset progress bar
     updateProgress(numTests);
 
-    alertDiv.innerHTML = '';
+    get('alert').innerHTML = '';
     diffSay("Starting Diff");
     updateURL();
-    goButton.blur();
+    get("goButton").blur();
 
     // reset iframe promises
     frame1Ready = new Promise(function(resolve, reject) {
@@ -721,13 +715,13 @@ function goClick() {
     });
     // reload iframes with specified versions of Tangram
     if (safari) {
-        map1.location = "map.html?url="+document.getElementById("library1").value;
-        map2.location = "map.html?url="+document.getElementById("library2").value;
+        map1.location = "map.html?url="+library1.value;
+        map2.location = "map.html?url="+library2.value;
     } else {
-        map1.src = "map.html?url="+document.getElementById("library1").value;
-        map2.src = "map.html?url="+document.getElementById("library2").value;
+        map1.src = "map.html?url="+library1.value;
+        map2.src = "map.html?url="+library2.value;
     }
-    var buttonloc = document.getElementById("goButton").offsetTop;
+    var buttonloc = get("goButton").offsetTop;
     document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
     // scroll to stop button
     scrollToY(getHeight() - window.innerHeight);
@@ -740,8 +734,8 @@ function goClick() {
         // console.log('ready to go');
         slots.slot1 = result[0];
         slots.slot2 = result[1];
-        goButton.setAttribute("style","display:none");
-        stopButton.setAttribute("style","display:inline");
+        get("goButton").setAttribute("style","display:none");
+        get('stopButton').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
         diffSay("Please enter two URLs above.");
@@ -752,7 +746,7 @@ function goClick() {
 }
 
 function stopClick() {
-    stopButton.blur();
+    get('stopButton').blur();
     diffSay("Stopping Diff.");
     stop();
 }
@@ -761,8 +755,8 @@ function stopClick() {
 function stop() {
     slots.slot1.tests = [];
     slots.slot2.tests = [];
-    stopButton.setAttribute("style","display:none");
-    goButton.setAttribute("style","display:inline");
+    get('stopButton').setAttribute("style","display:none");
+    get("goButton").setAttribute("style","display:inline");
 }
 
 
@@ -940,17 +934,17 @@ function prepTestImages() {
             console.log("Done!");
             var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests: Done!";
             diffSay(msg);
-            statusDiv.innerHTML = "";
+            get('statustext').innerHTML = "";
 
             var doneDiv = document.createElement('div');
             doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
             doneDiv.className = 'test';
             // debugger;
             if (checkscroll()) {
-                allTestsDiv.appendChild(doneDiv);
+                get('tests').appendChild(doneDiv);
                 scrollToY(getHeight());
             } else {
-                allTestsDiv.appendChild(doneDiv);
+                get('tests').appendChild(doneDiv);
                 flashDone();
             }
         }
@@ -1018,7 +1012,7 @@ function doDiff( test1, test2 ) {
     }
     // totalScore = Math.floor(totalSum/(100*count)*100);
     // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    // totalScoreDiv.innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
+    // get('totalScore').innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
     // make an output row
     makeRow(test1, test2, matchScore);
@@ -1050,7 +1044,6 @@ function doDiff( test1, test2 ) {
 
 function refresh(test) {
     queue.push(test);
-    startRender();
 }
 
 function getHeight() {
@@ -1071,7 +1064,7 @@ function checkscroll() {
 function makeRow(test1, test2, matchScore) {
     // console.log('makeRow:', test1, test2);
     // check to see if div already exists (if re-running a test);
-    var testdiv = document.getElementById(test1.name);
+    var testdiv = get(test1.name);
     var scrollTrack = false;
 
     // check if scroll is currently at bottom of page
@@ -1088,7 +1081,7 @@ function makeRow(test1, test2, matchScore) {
             test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
         }
         testdiv.id = test1.name;
-        allTestsDiv.appendChild(testdiv);
+        get('tests').appendChild(testdiv);
     } else {
         // clear it out
         testdiv.innerHTML = "";
@@ -1187,9 +1180,9 @@ function makeRow(test1, test2, matchScore) {
     // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
     var refreshButton =  document.createElement('button');
-    refreshButton.innerHTML = "refresh " + test1.name;
-    // controls.appendChild(refreshButton);
+    refreshButton.innerHTML = "refresh";
     refreshButton.onclick = function() {refresh(test1);}
+    controls.appendChild(refreshButton);
 
     var exportButton =  document.createElement('button');
     exportButton.innerHTML = "make PNG";
@@ -1381,7 +1374,7 @@ window.onload = function() {
 
     var myScrollFunc = function() {
       var y = window.scrollY;
-      if (y >= progressBar.offsetTop) {
+      if (y >= get('progressbar').offsetTop) {
         progressTop.style['visibility'] = "visible";
       } else {
         progressTop.style['visibility'] = "hidden";
