@@ -32,7 +32,7 @@
           <a href="http://github.com/tangrams/differ"><img src="lib/mark-github.svg"></a>
         </div>
         Compare this .json test file or .yaml scene file:<br>
-        <input id="slot1" class="slot" value="" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
+        <input id="slot1" class="slot" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
         Using this Tangram library:<br>
         <input id="library1" class="slot" value="https://mapzen.com/tangram/0.7/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
         <datalist id='libslist'>
@@ -44,9 +44,8 @@
         <input type="checkbox" id="checkbox1"> (ignoring any prerendered images)<br><br>
 
         to this this .json test file or .yaml scene file:<br>
-        <input id="slot2" class="slot" value="" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
+        <input id="slot2" class="slot" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
         <datalist id='testlist'>
-           <option value='tests/default.json'>
            <option value='https://github.com/tangrams/differ-tests/blob/gh-pages/sampler01/sampler01.json'>
            <option value='https://github.com/tangrams/bubble-wrap/blob/gh-pages/bubble-wrap.yaml'>
            <option value='https://github.com/tangrams/refill-style/blob/gh-pages/refill-style.yaml'>
