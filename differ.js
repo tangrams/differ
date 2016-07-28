@@ -654,6 +654,7 @@ function loadView (view, location, frame) {
         var scene = frame.window.scene;
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
+        scene.debug.suppress_fade = true; // disable tile fade-in
         return scene.load(url).then(function(r) {
             // console.log('scene.load result:', r)
             scene.animated = false;
