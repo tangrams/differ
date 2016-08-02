@@ -654,7 +654,9 @@ function loadView (view, location, frame) {
         var scene = frame.window.scene;
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
-        frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true; // prevent screenshots of fading labels
+        if (frame.window.Tangram.debug.debugSettings) {
+            frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true; // prevent screenshots of fading labels
+        }
         return scene.load(url).then(function(r) {
             // console.log('scene.load result:', r)
             scene.animated = false;
