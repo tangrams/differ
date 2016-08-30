@@ -944,12 +944,10 @@ function prepTestImages(test1, test2) {
             var doneDiv = document.createElement('div');
             doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
             doneDiv.className = 'test';
+            get('tests').appendChild(doneDiv);
+            flashDone();
             if (checkscroll()) {
-                get('tests').appendChild(doneDiv);
                 scrollToY(getHeight());
-            } else {
-                get('tests').appendChild(doneDiv);
-                flashDone();
             }
         }
     }
