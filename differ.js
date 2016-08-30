@@ -175,7 +175,7 @@ function parseURL(url) {
     return parser;
 }
 // load a file from a URL
-function readTextFile(file, callback) {
+function readTextFile(file, callback, errorback) {
     var filename = splitURL(file).file;
     var rawFile = new XMLHttpRequest();
     rawFile.overrideMimeType("application/json");
@@ -188,17 +188,22 @@ function readTextFile(file, callback) {
         // readyState 4 = done
         if (rawFile.readyState === 4 && rawFile.status == "200") {
             callback(rawFile.responseText);
-        }
-        else if (rawFile.readyState === 4 && rawFile.status == "404") {
+        } else if (rawFile.readyState === 4 && rawFile.status == "404") {
             console.error("404 – can't load file", file);
-            diffSay("404 - can't load file <a href='"+file+"'>"+filename+"</a>");
+            errorback("404 – can't load file "+ file);
+        } else if (rawFile.readyState === 4 && rawFile.status == "401") {
+            // diffSay("401 - can't load file <a href='"+file+"'>"+filename+"</a>");
+            console.error("401 – can't load file", file);
+            errorback("401 – can't load file "+ file);
+            return false;
         } else if (rawFile.readyState === 4) {
             diffSay("Had trouble loading the file: <a href='"+file+"'>"+filename+"</a>");
             if (parseURL.host == "github.com") {
                 diffSay("I notice you're trying to load a file from github, make sure you're using the \"raw\" file!");
             }
+            errorback("Problem with "+ file);
+            return false;
         }
-
     }
     rawFile.send(null);
 }
@@ -377,42 +382,50 @@ function loadFile(url, ignoreImages) {
             resolve(slot);
         } else if (urlext == "json") {
         // load and parse test json
-            readTextFile(url, function(text){
-                try {
-                    data = JSON.parse(text);
-                } catch(e) {
-                    console.warn('Error parsing json:', e);
-                    // set page title
-                    diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
-                    // return false;
-                }
-
-                // extract test origin metadata
-                try {
-                    metadata = data.origin;
-                } catch (e) {
-                    diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
-                    console.warn('metadata problem, continuing', e);
-                }
-                // convert tests to an array for easier traversal
-                slot.tests = Object.keys(data.tests).map(function (key) {
-                    // add test's name as a property of the test
-                    data.tests[key].name = key;
-                    // if checkbox isn't checked
-                    if (!ignoreImages) {
-                        // add name of pre-rendered image to look for
-                        data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+            try {
+                readTextFile(url, function(text){
+                    try {
+                        data = JSON.parse(text);
+                    } catch(e) {
+                        console.warn('Error parsing json:', e);
+                        // set page title
+                        diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
+                        // return false;
                     }
-                    return data.tests[key];
+
+                    // extract test origin metadata
+                    try {
+                        metadata = data.origin;
+                    } catch (e) {
+                        diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
+                        console.warn('metadata problem, continuing', e);
+                    }
+                    // convert tests to an array for easier traversal
+                    slot.tests = Object.keys(data.tests).map(function (key) {
+                        // add test's name as a property of the test
+                        data.tests[key].name = key;
+                        // if checkbox isn't checked
+                        if (!ignoreImages) {
+                            // add name of pre-rendered image to look for
+                            data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                        }
+                        return data.tests[key];
+                    });
+                    resolve(slot);
+                }, function(error) {
+                    console.log(error)
+                    reject(error);
                 });
-                resolve(slot);
-            });
+            } catch (err) {
+                if (typeof err == 'undefined') err = "File load failed.";
+            };
         } else {
-            diffSay("Don't know how to parse "+urlname+"!");
+            console.log("Unexpected filetype: "+url);
+            diffSay("Unexpected filetype: <a href='"+url+"'>"+urlname+"</a>");
             reject();
         }
     }).catch(function(err) {
-        if (typeof err == 'undefined') err = "Load failed.";
+        if (typeof err == 'undefined') err = "File load failed.";
         throw new Error(err);
     });
 }
@@ -696,7 +709,7 @@ function loadView (view, location, frame) {
                 });
             }
         }).catch(function(error) {
-            console.log('scene.load() error:', error)
+            // console.log('scene.load() error:', error)
             reject(error);
         });
     });
@@ -748,9 +761,11 @@ function goClick() {
         get('stopButton').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        diffSay("Please enter two URLs above.");
-        console.log(err);
-        diffSay(err);
+        if (typeof err != 'undefined') {
+            console.log(err);
+            diffSay(err);
+        }
+        stopClick();
     });
 
 }
@@ -763,8 +778,8 @@ function stopClick() {
 
 
 function stop() {
-    slots.slot1.tests = [];
-    slots.slot2.tests = [];
+    if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
+    if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
     get('stopButton').setAttribute("style","display:none");
     get("goButton").setAttribute("style","display:inline");
 }
@@ -823,8 +838,8 @@ function prepImage(test, frame, msg) {
                         return resolve(test);
                     }).catch(function(error){
                         console.log('imageData error:', error);
-                        // resolve(error);
-                        throw new Error(error);
+                        resolve(error);
+                        // throw new Error(error);
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
@@ -833,16 +848,14 @@ function prepImage(test, frame, msg) {
                     resolve(error)
                 });
             }).catch(function(error){
-                console.log('loadView error:', error);
-                // throw new Error(error);
-                diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error.name);
-                resolve(error);
+                // console.log('loadView error:', error);
+                // diffSay("couldn't load "+test.name+" in "+splitURL(test.url).file+": "+error);
+                reject(error);
             });
         });
     }).catch(function(error){
-        console.log('prepImage error:', error);
-        throw new Error(error);
-        // resolve(error);
+        // console.log('prepImage error:', error);
+        throw error;
     });
 }
 
@@ -934,12 +947,10 @@ function prepTestImages(test1, test2) {
             var doneDiv = document.createElement('div');
             doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
             doneDiv.className = 'test';
+            get('tests').appendChild(doneDiv);
+            flashDone();
             if (checkscroll()) {
-                get('tests').appendChild(doneDiv);
                 scrollToY(getHeight());
-            } else {
-                get('tests').appendChild(doneDiv);
-                flashDone();
             }
         }
     }
@@ -970,6 +981,9 @@ function prepTestImages(test1, test2) {
         return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
             .then(function() {
                 nextDiff();
+            }).catch(function(err) {
+                console.log(err);
+                diffSay(err);
             });
     });
 

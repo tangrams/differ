@@ -35,8 +35,10 @@ body {
     position: relative;}
 
 #alert {
-    height: 100px;
+    margin-top: 6px;
+    height: 128px;
     overflow: scroll;
+    background-color: #f6f6f6;
 }
 
 #content {
