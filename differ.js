@@ -12,10 +12,14 @@
 //
 // initialize variables
 //
-
+var mypromise;
 var slots = {},
     diffImg = new Image(), diffData, diffCanvas, diffCtx,
-    images = {};
+    images = {},
+    slot1depth = {val: 0},
+    slot2depth = {val: 0};
+    slot1tests = {tests: {}},
+    slot2tests = {tests: {}};
 var testsFile = "";
 var queryFile = "";
 var imgType = ".png";
@@ -43,11 +47,11 @@ var ua = navigator.userAgent.toLowerCase();
 var chrome = false;
 var safari = false;
 if (ua.indexOf('safari') != -1) {
-  if (ua.indexOf('chrome') > -1) {
+    if (ua.indexOf('chrome') > -1) {
     chrome = true;
-  } else {
+    } else {
     safari = true;
-  }
+    }
 }
 
 // two iframes to hold maps
@@ -88,7 +92,7 @@ function getQueryVariable(variable) {
 }
 
 function isPathAbsolute(path) {
-  return /^(?:\/|[a-z]+:\/\/)/.test(path);
+    return /^(?:\/|[a-z]+:\/\/)/.test(path);
 }
 
 function parseQuery() {
@@ -275,12 +279,12 @@ function setColorDelay(x) {
 // first add raf shim
 // http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 window.requestAnimFrame = (function(){
-  return  window.requestAnimationFrame       ||
-          window.webkitRequestAnimationFrame ||
-          window.mozRequestAnimationFrame    ||
-          function( callback ){
+    return  window.requestAnimationFrame       ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame    ||
+            function( callback ){
             window.setTimeout(callback, 1000 / 60);
-          };
+            };
 })();
 
 // main function
@@ -359,10 +363,17 @@ function prepMap(which) {
 }
 
 // parse url and load the appropriate file, then create tests
-function loadFile(url, ignoreImages) {
+function loadFile(url, ignoreImages, depth, tests) {
+    // debugger;
+    console.log('\n> LOADFILE:', url, 'depth:', depth.val, 'tests:', JSON.stringify(tests.tests))
+    // console.log('slot1tests:', JSON.stringify(slot1tests));
+    // console.log('slot2tests:', JSON.stringify(slot2tests));
+
+    // increment depth value
+    depth.val++;
     return new Promise(function(resolve, reject) {
         if (url == "") {
-            throw new Error("Empty slot");
+            throw new Error("Empty slot.");
             reject();
         }
         // diffSay("Loading "+url);
@@ -376,21 +387,29 @@ function loadFile(url, ignoreImages) {
         slot.url = url;
         slot.dir = splitURL(url).dir;
         slot.file = urlname;
+        // console.log('loadFile: typeof tests?', typeof tests);
+        if (typeof tests.tests === 'undefined') tests.tests = [];
 
         if (urlext == "yaml") {
             slot.defaultScene = url;
-            resolve(slot);
+            // decrement depth value
+            depth.val--;
+            if (depth.val == 0) {
+                console.log('resolving with a yaml')
+                resolve(slot);
+            }
         } else if (urlext == "json") {
         // load and parse test json
             try {
                 readTextFile(url, function(text){
+                    console.log(' readTextFile success', url)
                     try {
                         data = JSON.parse(text);
                     } catch(e) {
                         console.warn('Error parsing json:', e);
                         // set page title
                         diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
-                        // return false;
+                        return false;
                     }
 
                     // extract test origin metadata
@@ -400,33 +419,85 @@ function loadFile(url, ignoreImages) {
                         diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
                         console.warn('metadata problem, continuing', e);
                     }
+                    if (typeof tests.tests != 'undefined') {
+                        console.log(' readTextFile: tests?', tests.tests.length);
+                    }
+
                     // convert tests to an array for easier traversal
-                    slot.tests = Object.keys(data.tests).map(function (key) {
-                        // add test's name as a property of the test
-                        data.tests[key].name = key;
-                        // if checkbox isn't checked
-                        if (!ignoreImages) {
-                            // add name of pre-rendered image to look for
-                            data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                    var newTests = Object.keys(data.tests).map(function (key) {
+
+                        // console.log('  newTests map: data.tests['+key+']:', data.tests[key]);
+
+                        // if the test url is a json, load it recursively
+                        if (data.tests[key].url.split('.').pop() == "json"){
+                            // console.log('json');
+
+                            if (typeof tests != 'undefined') {
+                                // console.log('  newTests map: tests:', tests.length);
+                            }
+                            console.log('  newtests map: loading recursively')
+                            loadFile(data.tests[key].url, ignoreImages, depth, tests).then(function(result) {
+                                // console.log('loadFile', urlname, 'result:', result);
+                                // console.log('  result tests:', result.tests);
+
+                                // return result.tests;
+                                // return;
+                            });
+                        } else {
+                            // add test's name as a property of the test
+                            data.tests[key].name = key;
+                            // if checkbox isn't checked
+                            if (!ignoreImages) {
+                                // add name of pre-rendered image to look for
+                                data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                            }
+                            // console.log('data.tests['+key+']: ', data.tests[key])
+                            return data.tests[key];
                         }
-                        return data.tests[key];
                     });
+
+                    // merge tests
+                    // console.log('newTests: typeof tests:', typeof tests)
+                    // console.log('newTests: typeof newTests:', typeof newTests)
+                    // console.log('> merging:', urlname)
+                    // console.log('newTests: tests:', tests.tests, urlname)
+                    // console.log('newTests: newTests:', newTests, urlname)
+                    // tests += newTests;
+                    for (var test in newTests) { tests.tests[test] = newTests[test]; }
+                    // console.log('newTests: typeof merged tests:', typeof tests.tests)
+                    depth.val--;
+                    console.log('depth?', depth);
+                    if (depth.val == 0) {
+                        console.log('\n< RESOLVING', urlname, 'slot:', slot);
+                        console.log('slot1tests:', JSON.stringify(slot1tests));
+                        console.log('slot2tests:', JSON.stringify(slot2tests));
+                        console.log('DONE slot:', slot)
+                        slot.tests = tests.tests;
+                        // resolve(slot);
+                    } else {
+                        console.log('-- still going, no resolution', urlname)
+                    }
                     resolve(slot);
+
                 }, function(error) {
-                    console.log(error)
+                    console.log('promise plorbem:', error)
                     reject(error);
                 });
             } catch (err) {
-                if (typeof err == 'undefined') err = "File load failed.";
+                if (typeof err == 'undefined') {
+                    err = "File load failed.";
+                } else {
+                    console.log('whups', err);
+                }
             };
         } else {
             console.log("Unexpected filetype: "+url);
             diffSay("Unexpected filetype: <a href='"+url+"'>"+urlname+"</a>");
             reject();
         }
-    }).catch(function(err) {
-        if (typeof err == 'undefined') err = "File load failed.";
-        throw new Error(err);
+    }).catch(function(error) {
+        if (typeof error == 'undefined') error = "File load failed.";
+        throw error;
     });
 }
 
@@ -443,7 +514,9 @@ function copyTestsFrom(tests) {
 
 function loadDefaults() {
     return new Promise(function(resolve, reject) {
+        console.log('loadDefaults:', defaultFile)
         loadFile(defaultFile).then(function(result){
+            console.log('loadDefaults', result)
             resolve(result.tests);
         });
     });
@@ -453,14 +526,20 @@ function loadDefaults() {
 function prepTests() {
     // clear stored images
     images = {};
+    console.log('preptests, slots:', slots)
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
         if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length == 0)
          && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
-                loadDefaults().then(function(val){slots.slot1.tests = val;}),
-                loadDefaults().then(function(val){slots.slot2.tests = val;})
+                loadDefaults().then(function(val){
+                    console.log('val?', val)
+                    slots.slot1.tests = val;
+                }),
+                loadDefaults().then(function(val){
+                    slots.slot2.tests = val;
+                })
             ]).then(function(){
                 resolve();
             });
@@ -584,7 +663,7 @@ function loadImage (url) {
         image.src = url;
     }).catch(function(error){
             // console.warn("couldn't load image: "+error);
-            throw new Error(error);
+            throw error;
         });
 }
 
@@ -594,8 +673,8 @@ function imageData (img, canvas) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
         context.drawImage(img,
-                          0, 0, img.width, img.height,
-                          0, 0, canvas.width, canvas.height);
+                            0, 0, img.width, img.height,
+                            0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
         var data = context.getImageData(0, 0, size, size);
         resolve(data);
@@ -713,6 +792,7 @@ function loadView (view, location, frame) {
 }
 
 function goClick() {
+    console.clear();
     // reset progress bar
     updateProgress(numTests);
 
@@ -750,10 +830,24 @@ function goClick() {
     if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
     if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
 
-    return Promise.all([loadFile(slot1Val, checkbox1.checked), loadFile(slot2Val, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
-        // console.log('ready to go');
+    // mypromise = Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), frame1Ready, frame2Ready]);
+
+    // var promises = [loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), frame1Ready, frame2Ready];
+    // filepromise = promises[0];
+    // mypromise = Promise.all(promises);
+
+    mypromise = Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]);
+
+    return mypromise.then(function(result){
+        console.log('\nREADY', result);
+        // slots.slot1 = result[0];
+        // slots.slot2 = result[1];
+        console.log('slot1tests', slot1tests)
+        console.log('slot2tests', slot2tests)
         slots.slot1 = result[0];
         slots.slot2 = result[1];
+        slots.slot1.tests = slot1tests.tests;
+        slots.slot2.tests = slot2tests.tests;
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
         proceed();
@@ -764,6 +858,21 @@ function goClick() {
         }
         stopClick();
     });
+
+    // return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
+    //   console.log('\nREADY');
+    //   slots.slot1 = result[0];
+    //   slots.slot2 = result[1];
+    //   get("goButton").setAttribute("style","display:none");
+    //   get('stopButton').setAttribute("style","display:inline");
+    //   proceed();
+    // }).catch(function(err){
+    //   if (typeof err != 'undefined') {
+    //     console.log(err);
+    //     diffSay(err);
+    //   }
+    //   stopClick();
+    // });
 
 }
 
@@ -791,16 +900,24 @@ function stop() {
 //
 
 function proceed() {
+    console.log('proceed')
+            console.log('slots:',slots)
     return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
             return prepPage();
         }).then(function() {
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
+            console.log('proceed: typeof slot1.tests:', typeof slots.slot1.tests)
+            console.log('proceed: slot1.tests.length:', slots.slot1.tests.length)
+            console.log('proceed: slot2.tests.length:', slots.slot2.tests.length)
+            console.log('proceed slot1.tests:', toString(slots.slot1.tests));
             // load next test in the lists
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
             prepTestImages(test1, test2);
+        }).catch(function(err) {
+            console.log('proceed ?', err);
         });
     });
 }
@@ -1065,7 +1182,7 @@ function getHeight() {
 }
 
 function checkscroll() {
-   if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
+     if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
         return getHeight();
     } else {
         return false;
@@ -1279,10 +1396,10 @@ function makeStrip(images, size) {
 
 function makeGif(images, name) {
     var gif = new GIF({
-      workers: 1,
-      quality: 10,
-      width: lsize,
-      height: lsize,
+        workers: 1,
+        quality: 10,
+        width: lsize,
+        height: lsize,
     });
 
     for (var y = 0; y < images.length; y++) {
@@ -1360,8 +1477,8 @@ function makeInfoJSON() {
                 }
             }
         }
-    } catch(e) {
-        throw new Error(e);
+    } catch(error) {
+        throw error;
         return false;
     }
     saveData(j, 'differ-' + (+new Date()) + '.json');
@@ -1386,12 +1503,12 @@ window.onload = function() {
     parseQuery();
 
     var myScrollFunc = function() {
-      var y = window.scrollY;
-      if (y >= get('progressbar').offsetTop) {
+        var y = window.scrollY;
+        if (y >= get('progressbar').offsetTop) {
         progressTop.style['visibility'] = "visible";
-      } else {
+        } else {
         progressTop.style['visibility'] = "hidden";
-      }
+        }
     };
 
     window.addEventListener("scroll", myScrollFunc);
