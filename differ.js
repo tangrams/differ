@@ -18,8 +18,8 @@ var slots = {},
     images = {},
     slot1depth = {val: 0},
     slot2depth = {val: 0};
-    slot1tests = {tests: {}},
-    slot2tests = {tests: {}};
+    slot1tests = {tests: []},
+    slot2tests = {tests: []};
 var testsFile = "";
 var queryFile = "";
 var imgType = ".png";
@@ -387,7 +387,9 @@ function loadFile(url, ignoreImages, depth, tests) {
         slot.url = url;
         slot.dir = splitURL(url).dir;
         slot.file = urlname;
+
         // console.log('loadFile: typeof tests?', typeof tests);
+        if (typeof slot.tests === 'undefined') slot.tests = [];
         if (typeof tests.tests === 'undefined') tests.tests = [];
 
         if (urlext == "yaml") {
@@ -419,14 +421,11 @@ function loadFile(url, ignoreImages, depth, tests) {
                         diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
                         console.warn('metadata problem, continuing', e);
                     }
-                    if (typeof tests.tests != 'undefined') {
-                        console.log(' readTextFile: tests?', tests.tests.length);
-                    }
 
                     // convert tests to an array for easier traversal
                     var newTests = Object.keys(data.tests).map(function (key) {
 
-                        // console.log('  newTests map: data.tests['+key+']:', data.tests[key]);
+                        // console.log('  MAP: data.tests['+key+']:', data.tests[key]);
 
                         // if the test url is a json, load it recursively
                         if (data.tests[key].url.split('.').pop() == "json"){
@@ -435,13 +434,8 @@ function loadFile(url, ignoreImages, depth, tests) {
                             if (typeof tests != 'undefined') {
                                 // console.log('  newTests map: tests:', tests.length);
                             }
-                            console.log('  newtests map: loading recursively')
+                            console.log('  >> RECURSING <<', JSON.stringify(tests))
                             loadFile(data.tests[key].url, ignoreImages, depth, tests).then(function(result) {
-                                // console.log('loadFile', urlname, 'result:', result);
-                                // console.log('  result tests:', result.tests);
-
-                                // return result.tests;
-                                // return;
                             });
                         } else {
                             // add test's name as a property of the test
@@ -451,7 +445,6 @@ function loadFile(url, ignoreImages, depth, tests) {
                                 // add name of pre-rendered image to look for
                                 data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
                             }
-                            // console.log('data.tests['+key+']: ', data.tests[key])
                             return data.tests[key];
                         }
                     });
@@ -459,25 +452,21 @@ function loadFile(url, ignoreImages, depth, tests) {
                     // merge tests
                     // console.log('newTests: typeof tests:', typeof tests)
                     // console.log('newTests: typeof newTests:', typeof newTests)
-                    // console.log('> merging:', urlname)
-                    // console.log('newTests: tests:', tests.tests, urlname)
-                    // console.log('newTests: newTests:', newTests, urlname)
-                    // tests += newTests;
-                    for (var test in newTests) { tests.tests[test] = newTests[test]; }
-                    // console.log('newTests: typeof merged tests:', typeof tests.tests)
+
+                    // if (typeof newTests != 'undefined') {
+                    tests.tests = tests.tests.concat(newTests);
+                    // }
+
                     depth.val--;
-                    console.log('depth?', depth);
                     if (depth.val == 0) {
                         console.log('\n< RESOLVING', urlname, 'slot:', slot);
-                        console.log('slot1tests:', JSON.stringify(slot1tests));
-                        console.log('slot2tests:', JSON.stringify(slot2tests));
+                        console.log('tests.tests:', JSON.stringify(tests.tests));
+                        slot.tests = slot.tests.concat(tests.tests);
                         console.log('DONE slot:', slot)
-                        slot.tests = tests.tests;
-                        // resolve(slot);
                     } else {
-                        console.log('-- still going, no resolution', urlname)
+                        // resolve();
                     }
-                    resolve(slot);
+                        resolve(slot);
 
                 }, function(error) {
                     console.log('promise plorbem:', error)
@@ -830,49 +819,32 @@ function goClick() {
     if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
     if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
 
-    // mypromise = Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), frame1Ready, frame2Ready]);
-
-    // var promises = [loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), frame1Ready, frame2Ready];
-    // filepromise = promises[0];
-    // mypromise = Promise.all(promises);
-
-    mypromise = Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]);
-
-    return mypromise.then(function(result){
-        console.log('\nREADY', result);
-        // slots.slot1 = result[0];
-        // slots.slot2 = result[1];
-        console.log('slot1tests', slot1tests)
-        console.log('slot2tests', slot2tests)
+    return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
-        slots.slot1.tests = slot1tests.tests;
-        slots.slot2.tests = slot2tests.tests;
+
+        function cleanArray(actual) {
+          var newArray = new Array();
+          for (var i = 0; i < actual.length; i++) {
+            if (actual[i]) {
+              newArray.push(actual[i]);
+            }
+          }
+          return newArray;
+        }
+
+        slots.slot1.tests = cleanArray(slot1tests.tests)
+        slots.slot2.tests = cleanArray(slot2tests.tests);
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        if (typeof err != 'undefined') {
-            console.log(err);
-            diffSay(err);
-        }
-        stopClick();
+      if (typeof err != 'undefined') {
+        console.log(err);
+        diffSay(err);
+      }
+      stopClick();
     });
-
-    // return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
-    //   console.log('\nREADY');
-    //   slots.slot1 = result[0];
-    //   slots.slot2 = result[1];
-    //   get("goButton").setAttribute("style","display:none");
-    //   get('stopButton').setAttribute("style","display:inline");
-    //   proceed();
-    // }).catch(function(err){
-    //   if (typeof err != 'undefined') {
-    //     console.log(err);
-    //     diffSay(err);
-    //   }
-    //   stopClick();
-    // });
 
 }
 
@@ -900,18 +872,14 @@ function stop() {
 //
 
 function proceed() {
-    console.log('proceed')
-            console.log('slots:',slots)
+    console.log('PROCEED: slots:',slots)
     return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
             return prepPage();
         }).then(function() {
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
-            console.log('proceed: typeof slot1.tests:', typeof slots.slot1.tests)
-            console.log('proceed: slot1.tests.length:', slots.slot1.tests.length)
-            console.log('proceed: slot2.tests.length:', slots.slot2.tests.length)
-            console.log('proceed slot1.tests:', toString(slots.slot1.tests));
+            // console.log('PROCEED: slot1.tests:\n', JSON.stringify(slots.slot1.tests));
             // load next test in the lists
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
@@ -1034,6 +1002,7 @@ function prepLocations(test1, test2) {
 
 // load or create the test images and advance the tests
 function prepTestImages(test1, test2) {
+    console.log('prepTestImages:', test1, test2)
     if (typeof test1 == 'undefined' && typeof test2 == 'undefined' ) {
         diffSay("No tests defined in either file.");
         stopClick();
