@@ -440,6 +440,8 @@ function loadFile(url, ignoreImages, depth, tests) {
                         } else {
                             // add test's name as a property of the test
                             data.tests[key].name = key;
+
+                            data.tests[key].url = slot.dir + data.tests[key].url;
                             // if checkbox isn't checked
                             if (!ignoreImages) {
                                 // add name of pre-rendered image to look for
@@ -449,24 +451,19 @@ function loadFile(url, ignoreImages, depth, tests) {
                         }
                     });
 
-                    // merge tests
-                    // console.log('newTests: typeof tests:', typeof tests)
-                    // console.log('newTests: typeof newTests:', typeof newTests)
-
-                    // if (typeof newTests != 'undefined') {
+                    // add new tests to slot test list
                     tests.tests = tests.tests.concat(newTests);
-                    // }
 
                     depth.val--;
                     if (depth.val == 0) {
+                        slot.tests = slot.tests.concat(tests.tests);
                         console.log('\n< RESOLVING', urlname, 'slot:', slot);
                         console.log('tests.tests:', JSON.stringify(tests.tests));
-                        slot.tests = slot.tests.concat(tests.tests);
                         console.log('DONE slot:', slot)
-                    } else {
+                    // } else {
                         // resolve();
                     }
-                        resolve(slot);
+                    resolve(slot);
 
                 }, function(error) {
                     console.log('promise plorbem:', error)
