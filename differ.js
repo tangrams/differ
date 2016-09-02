@@ -544,6 +544,7 @@ function prepTests() {
         // count tests
         if (slots.slot1.tests.length != slots.slot2.tests.length) {
             numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
+
             diffSay("Note: The two tests have a different number of views.")
         } else {
             numTests = slots.slot1.tests.length;
@@ -812,6 +813,8 @@ function goClick() {
     data = null;
     metadata = null;
     var slot1Val = slot1.value, slot2Val = slot2.value;
+    slot1tests = {tests: []};
+    slot2tests = {tests: []};
     // if one slot is empty, assume the value of the other
     if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
     if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
@@ -1135,6 +1138,7 @@ function refresh(test1, test2) {
     slots.slot1.tests.push(test1);
     slots.slot2.tests.push(test2);
     numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
+
     return Promise.all([viewComplete1, viewComplete2]).then(function() {
         prepTestImages(test1, test2);
     });
