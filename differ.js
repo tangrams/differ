@@ -1013,10 +1013,14 @@ function prepTestImages(test1, test2) {
             get('statustext').innerHTML = "";
 
             // add a "done" notice at the bottom of the page as a parting gift
-            var doneDiv = document.createElement('div');
-            doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
-            doneDiv.className = 'test';
-            get('tests').appendChild(doneDiv);
+            // (if it doesn't already exist)
+            if (document.getElementById('donediv') === null) {
+                var doneDiv = document.createElement('div');
+                doneDiv.id = 'donediv';
+                doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
+                doneDiv.className = 'test';
+                get('tests').appendChild(doneDiv);
+            }
             flashDone();
             if (checkscroll()) {
                 scrollToY(getHeight());
