@@ -423,9 +423,23 @@ function loadFile(url, ignoreImages, depth, tests) {
                         // if the test url is a json, load it recursively
                         if (data.tests[key].url.split('.').pop() == "json"){
 
+                            testUrl = data.tests[key].url;
                             if (typeof tests != 'undefined') {
                             }
-                            loadFile(data.tests[key].url, ignoreImages, depth, tests).then(function(result) {
+
+                            // if the test url is relative, prepend the parent's root directory
+                            // test for relative urls
+                            var r = new RegExp('^(?:[a-z]+:)?//', 'i');
+                            if (r.test(data.tests[key].url) === false ) {
+                                // make sure there's only one slash at the join:
+                                // remove any trailing slash from parent url
+                                var slotUrl = slot.dir.replace(/\/$/, "");
+                                // remove any leading slash from test url
+                                testUrl = testUrl.replace(/^\/|\/$/g, '');
+                                // prepend slot.dir to path
+                                testUrl = slotUrl + '/' + testUrl;
+                            }
+                            loadFile(testUrl, ignoreImages, depth, tests).then(function(result) {
                             });
                         } else {
                             // add test's name as a property of the test
