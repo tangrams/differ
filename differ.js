@@ -1,4 +1,4 @@
-// A utility to draw two Tangram maps and compare them.
+// A utility to draw and compare Tangram maps.
 // Uses Vladimir Agafonkin's pixelmatch: https://github.com/mapbox/pixelmatch
 // (c) 2016 Peter Richardson, MIT license
 
@@ -13,11 +13,14 @@
 // initialize variables
 //
 
+var mypromise;
 var slots = {},
     diffImg = new Image(), diffData, diffCanvas, diffCtx,
-    images = {};
-var testsFile = "";
-var queryFile = "";
+    images = {},
+    slot1depth = {val: 0},
+    slot2depth = {val: 0};
+    slot1tests = {tests: []},
+    slot2tests = {tests: []};
 var imgType = ".png";
 var size = 250; // physical pixels
 var lsize = size * window.devicePixelRatio; // logical pixels
@@ -43,11 +46,11 @@ var ua = navigator.userAgent.toLowerCase();
 var chrome = false;
 var safari = false;
 if (ua.indexOf('safari') != -1) {
-  if (ua.indexOf('chrome') > -1) {
+    if (ua.indexOf('chrome') > -1) {
     chrome = true;
-  } else {
+    } else {
     safari = true;
-  }
+    }
 }
 
 // two iframes to hold maps
@@ -88,9 +91,10 @@ function getQueryVariable(variable) {
 }
 
 function isPathAbsolute(path) {
-  return /^(?:\/|[a-z]+:\/\/)/.test(path);
+    return /^(?:\/|[a-z]+:\/\/)/.test(path);
 }
 
+// find query terms in the URL
 function parseQuery() {
     // test or yaml file
     var url = getQueryVariable("1")
@@ -141,7 +145,6 @@ function diffSay(txt) {
 function convertGithub(url) {
     var a = document.createElement('a');
     a.href = url;
-    queryFile = url;
     if (a.hostname == "github.com") {
         a.hostname = "raw.githubusercontent.com";
         a.pathname = a.pathname.replace("/blob", "");
@@ -168,12 +171,14 @@ function splitURL(url) {
     return {"dir" : dir, "file": file, "ext": ext};
 }
 
+// parse a URL
 function parseURL(url) {
     var parser = document.createElement('a');
     parser.href = url;
     console.log('parser:', parser);
     return parser;
 }
+
 // load a file from a URL
 function readTextFile(file, callback, errorback) {
     var filename = splitURL(file).file;
@@ -208,6 +213,7 @@ function readTextFile(file, callback, errorback) {
     rawFile.send(null);
 }
 
+// set URL in location bar
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
@@ -253,7 +259,7 @@ function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-// flash background color {
+// flash background color
 function flashDone () {
     for (var x = 1; x < 11; x++) {
         setColorDelay(x);
@@ -275,15 +281,15 @@ function setColorDelay(x) {
 // first add raf shim
 // http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
 window.requestAnimFrame = (function(){
-  return  window.requestAnimationFrame       ||
-          window.webkitRequestAnimationFrame ||
-          window.mozRequestAnimationFrame    ||
-          function( callback ){
+    return  window.requestAnimationFrame       ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame    ||
+            function( callback ){
             window.setTimeout(callback, 1000 / 60);
-          };
+            };
 })();
 
-// main function
+// keep scroll at the bottom if already at the bottom
 function scrollToY(scrollTargetY, speed, easing) {
     // scrollTargetY: the target scrollY property of the window
     // speed: time in pixels per second
@@ -359,10 +365,12 @@ function prepMap(which) {
 }
 
 // parse url and load the appropriate file, then create tests
-function loadFile(url, ignoreImages) {
+function loadFile(url, ignoreImages, depth, tests) {
+    // increment depth value
+    depth.val++;
     return new Promise(function(resolve, reject) {
         if (url == "") {
-            throw new Error("Empty slot");
+            throw new Error("Empty slot.");
             reject();
         }
         // diffSay("Loading "+url);
@@ -377,9 +385,17 @@ function loadFile(url, ignoreImages) {
         slot.dir = splitURL(url).dir;
         slot.file = urlname;
 
+        if (typeof slot.tests === 'undefined') slot.tests = [];
+        if (typeof tests.tests === 'undefined') tests.tests = [];
+
         if (urlext == "yaml") {
             slot.defaultScene = url;
-            resolve(slot);
+            // decrement depth value
+            depth.val--;
+            if (depth.val == 0) {
+                console.log('resolving with a yaml')
+                resolve(slot);
+            }
         } else if (urlext == "json") {
         // load and parse test json
             try {
@@ -390,7 +406,7 @@ function loadFile(url, ignoreImages) {
                         console.warn('Error parsing json:', e);
                         // set page title
                         diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
-                        // return false;
+                        return false;
                     }
 
                     // extract test origin metadata
@@ -400,33 +416,59 @@ function loadFile(url, ignoreImages) {
                         diffSay("Can't parse JSON metadata: <a href='"+url+"'>"+urlname+"</a>");
                         console.warn('metadata problem, continuing', e);
                     }
+
                     // convert tests to an array for easier traversal
-                    slot.tests = Object.keys(data.tests).map(function (key) {
-                        // add test's name as a property of the test
-                        data.tests[key].name = key;
-                        // if checkbox isn't checked
-                        if (!ignoreImages) {
-                            // add name of pre-rendered image to look for
-                            data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                    var newTests = Object.keys(data.tests).map(function (key) {
+
+                        // if the test url is a json, load it recursively
+                        if (data.tests[key].url.split('.').pop() == "json"){
+
+                            if (typeof tests != 'undefined') {
+                            }
+                            loadFile(data.tests[key].url, ignoreImages, depth, tests).then(function(result) {
+                            });
+                        } else {
+                            // add test's name as a property of the test
+                            data.tests[key].name = key;
+                            // set full path of scene file
+                            data.tests[key].url = slot.dir + data.tests[key].url;
+                            // if checkbox isn't checked
+                            if (!ignoreImages) {
+                                // add path of pre-rendered image to look for
+                                data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
+                            }
+                            return data.tests[key];
                         }
-                        return data.tests[key];
                     });
+
+                    // add new tests to slot test list
+                    tests.tests = tests.tests.concat(newTests);
+
+                    depth.val--;
+                    if (depth.val == 0) {
+                        slot.tests = slot.tests.concat(tests.tests);
+                    }
                     resolve(slot);
+
                 }, function(error) {
-                    console.log(error)
+                    console.log('plobrem:', error)
                     reject(error);
                 });
             } catch (err) {
-                if (typeof err == 'undefined') err = "File load failed.";
+                if (typeof err == 'undefined') {
+                    err = "File load failed.";
+                } else {
+                    console.log('whups', err);
+                }
             };
         } else {
             console.log("Unexpected filetype: "+url);
             diffSay("Unexpected filetype: <a href='"+url+"'>"+urlname+"</a>");
             reject();
         }
-    }).catch(function(err) {
-        if (typeof err == 'undefined') err = "File load failed.";
-        throw new Error(err);
+    }).catch(function(error) {
+        if (typeof error == 'undefined') error = "File load failed.";
+        throw error;
     });
 }
 
@@ -441,9 +483,12 @@ function copyTestsFrom(tests) {
     return copy;
 }
 
+// load some default tests if none are provided
 function loadDefaults() {
     return new Promise(function(resolve, reject) {
+        console.log('loadDefaults:', defaultFile)
         loadFile(defaultFile).then(function(result){
+            console.log('loadDefaults', result)
             resolve(result.tests);
         });
     });
@@ -459,8 +504,13 @@ function prepTests() {
          && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
-                loadDefaults().then(function(val){slots.slot1.tests = val;}),
-                loadDefaults().then(function(val){slots.slot2.tests = val;})
+                loadDefaults().then(function(val){
+                    console.log('val?', val)
+                    slots.slot1.tests = val;
+                }),
+                loadDefaults().then(function(val){
+                    slots.slot2.tests = val;
+                })
             ]).then(function(){
                 resolve();
             });
@@ -479,6 +529,7 @@ function prepTests() {
         // count tests
         if (slots.slot1.tests.length != slots.slot2.tests.length) {
             numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
+
             diffSay("Note: The two tests have a different number of views.")
         } else {
             numTests = slots.slot1.tests.length;
@@ -487,13 +538,14 @@ function prepTests() {
     });
 }
 
-// setup output divs and canvases
+// setup output divs and canvases, and wire up connections to differ code
 function prepPage() {
     // subscribe to Tangram's published view_complete event
     frame1.window.scene.subscribe({
         // trigger promise resolution
         view_complete: function () {
                 // console.log('frame1 view_complete triggered');
+                // call a function which resolves a promise
                 viewComplete1Resolve();
             },
         warning: function(e) {
@@ -501,9 +553,9 @@ function prepPage() {
             }
     });
     frame2.window.scene.subscribe({
-        // trigger promise resolution
         view_complete: function () {
                 // console.log('frame2 view_complete triggered');
+                // call a function which resolves a promise
                 viewComplete2Resolve();
             },
         warning: function(e) {
@@ -584,7 +636,7 @@ function loadImage (url) {
         image.src = url;
     }).catch(function(error){
             // console.warn("couldn't load image: "+error);
-            throw new Error(error);
+            throw error;
         });
 }
 
@@ -594,8 +646,8 @@ function imageData (img, canvas) {
         // draw image to the canvas
         var context = canvas.getContext("2d");
         context.drawImage(img,
-                          0, 0, img.width, img.height,
-                          0, 0, canvas.width, canvas.height);
+                            0, 0, img.width, img.height,
+                            0, 0, canvas.width, canvas.height);
         // make the data available to pixelmatch
         var data = context.getImageData(0, 0, size, size);
         resolve(data);
@@ -627,11 +679,11 @@ var viewComplete1;
 var viewComplete2Resolve, viewComplete2Reject;
 var viewComplete2;
 
+// reset the triggers on the viewComplete events to wait for the next ones
 function resetViewComplete(frame) {
     if (frame.iframe.id == "map1") {
         viewComplete1 = new Promise(function(resolve, reject){
             viewComplete1Resolve = function(){
-                // console.log('viewComplete1Resolve()');
                 resolve();
             };
             viewComplete1Reject = function(e){
@@ -641,7 +693,6 @@ function resetViewComplete(frame) {
     } else if (frame.iframe.id == "map2") {
         viewComplete2 = new Promise(function(resolve, reject){
             viewComplete2Resolve = function(){
-                // console.log('viewComplete2Resolve()');
                 resolve();
             };
             viewComplete2Reject = function(e){
@@ -653,7 +704,6 @@ function resetViewComplete(frame) {
 
 // load a map position and zoom
 function loadView (view, location, frame) {
-    // console.log('loadView');
     var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
@@ -662,7 +712,7 @@ function loadView (view, location, frame) {
         // load and draw scene
         var url = convertGithub(view.url);
         var name = splitURL(url).file;
-        // if it's drawing, wait for it to finish
+        // reset the view_complete triggers
         resetViewComplete(frame);
         var scene = frame.window.scene;
         var map = frame.window.map;
@@ -671,7 +721,6 @@ function loadView (view, location, frame) {
             frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true; // prevent screenshots of fading labels
         }
         return scene.load(url).then(function(r) {
-            // console.log('scene.load result:', r)
             scene.animated = false;
             map.setView([location[0], location[1]], location[2], { animate: false});
             // scene.requestRedraw(); // necessary? guess not
@@ -684,12 +733,10 @@ function loadView (view, location, frame) {
             }, 6000);
 
             // wait for map to finish drawing, then return
-            // todo: make this less fugly
             if (frame.iframe.id == "map1") {
                 return viewComplete1.then(function(){
+                    // reset timeout
                     clearTimeout(timeout);
-                    // console.log('map1 complete')
-                    // resolve("loadview resolve");
                     resolve();
                 }).catch(function(error) {
                     clearTimeout(timeout);
@@ -698,9 +745,8 @@ function loadView (view, location, frame) {
                 });
             } else if (frame.iframe.id == "map2") {
                 return viewComplete2.then(function(){
+                    // reset timeout
                     clearTimeout(timeout);
-                    // console.log('map2 complete')
-                    // resolve("loadview resolve");
                     resolve();
                 }).catch(function(error) {
                     clearTimeout(timeout);
@@ -715,7 +761,9 @@ function loadView (view, location, frame) {
     });
 }
 
+// go time
 function goClick() {
+    // console.clear();
     // reset progress bar
     updateProgress(numTests);
 
@@ -749,34 +797,50 @@ function goClick() {
     data = null;
     metadata = null;
     var slot1Val = slot1.value, slot2Val = slot2.value;
+    slot1tests = {tests: []};
+    slot2tests = {tests: []};
     // if one slot is empty, assume the value of the other
     if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
     if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
 
-    return Promise.all([loadFile(slot1Val, checkbox1.checked), loadFile(slot2Val, checkbox2.checked), frame1Ready, frame2Ready]).then(function(result){
-        // console.log('ready to go');
+    // load any files in the file inputs and parse their contents
+    return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
+
+        function cleanArray(actual) {
+          var newArray = new Array();
+          for (var i = 0; i < actual.length; i++) {
+            if (actual[i]) {
+              newArray.push(actual[i]);
+            }
+          }
+          return newArray;
+        }
+
+        slots.slot1.tests = cleanArray(slot1tests.tests)
+        slots.slot2.tests = cleanArray(slot2tests.tests);
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        if (typeof err != 'undefined') {
-            console.log(err);
-            diffSay(err);
-        }
-        stopClick();
+      if (typeof err != 'undefined') {
+        console.log(err);
+        diffSay(err);
+      }
+      stopClick();
     });
 
 }
 
+// stop button
 function stopClick() {
     get('stopButton').blur();
     diffSay("Stopping Diff.");
     stop();
 }
 
-
+// all stop
 function stop() {
     if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
     if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
@@ -794,21 +858,25 @@ function stop() {
 //
 
 function proceed() {
+    // load the map iframes
     return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
             return prepPage();
         }).then(function() {
+            //  wait for the maps to finish drawing
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
-            // load next test in the lists
+            // load next test in each list
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
             prepTestImages(test1, test2);
+        }).catch(function(err) {
+            console.log('proceed ?', err);
         });
     });
 }
 
-// prep an image to send to the diff
+// prep an image to send to the differ
 function prepImage(test, frame, msg) {
     return new Promise(function(resolve, reject) {
         // if there's an image for the test, load it
@@ -895,6 +963,7 @@ function prepStyles(test1, test2) {
     });
 }
 
+// pick a location for each map to load
 function prepLocations(test1, test2) {
     return new Promise(function(resolve, reject) {
         var location = setEither(test1.location, test2.location);
@@ -932,22 +1001,29 @@ function prepTestImages(test1, test2) {
         } catch(e) {
             console.log('doDiff failed:', e.stack);
         }
+        // if there are more tests to run
         if (slots.slot1.tests.length > 0) {
             // load next test in the lists
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
             prepTestImages(test1, test2);
         } else {
+            // all done
             stop();
             console.log("Done!");
             var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
             diffSay(msg);
             get('statustext').innerHTML = "";
 
-            var doneDiv = document.createElement('div');
-            doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
-            doneDiv.className = 'test';
-            get('tests').appendChild(doneDiv);
+            // add a "done" notice at the bottom of the page as a parting gift
+            // (if it doesn't already exist)
+            if (document.getElementById('donediv') === null) {
+                var doneDiv = document.createElement('div');
+                doneDiv.id = 'donediv';
+                doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
+                doneDiv.className = 'test';
+                get('tests').appendChild(doneDiv);
+            }
             flashDone();
             if (checkscroll()) {
                 scrollToY(getHeight());
@@ -976,10 +1052,13 @@ function prepTestImages(test1, test2) {
         test2.location = locations.loc2;
     });
 
+    // wait until the styles and locations have been chosen,
     Promise.all([p1, p2])
     .then(function() {
+        // then load the maps and extract screengrabs from both
         return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
             .then(function() {
+                // then advance to the next test
                 nextDiff();
             }).catch(function(err) {
                 console.log(err);
@@ -1050,11 +1129,13 @@ function doDiff( test1, test2 ) {
     diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
 };
 
+// re-run a single test
 function refresh(test1, test2) {
     // console.log('refresh:', test)
     slots.slot1.tests.push(test1);
     slots.slot2.tests.push(test2);
     numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
+
     return Promise.all([viewComplete1, viewComplete2]).then(function() {
         prepTestImages(test1, test2);
     });
@@ -1068,15 +1149,15 @@ function getHeight() {
 }
 
 function checkscroll() {
-   if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
+     if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
         return getHeight();
     } else {
         return false;
     }
 }
 
+// create an output row in html from the map images
 function makeRow(test1, test2, matchScore) {
-    // console.log('makeRow:', test1, test2);
     // check to see if div already exists (if re-running a test);
     var testdiv = get(test1.name);
     var scrollTrack = false;
@@ -1123,6 +1204,7 @@ function makeRow(test1, test2, matchScore) {
     column1.id = "column1";
     column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
 
+    // add an emoji overlay if the test times out
     if (test1.timeout) {
         var timer = document.createElement('div');
         timer.className = 'timeout';
@@ -1136,6 +1218,7 @@ function makeRow(test1, test2, matchScore) {
     column2.id = "column2";
     column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
 
+    // add an emoji overlay if the test times out
     if (test2.timeout) {
         var timer = document.createElement('div');
         timer.className = 'timeout';
@@ -1255,7 +1338,7 @@ function blobFromLink(url, name) {
     });
 }
 
-// save all new images
+// save all new images to disk
 function saveImages() {
     diffSay("Saving "+Object.keys(images).length+" images…")
     for (var name in images) {
@@ -1268,6 +1351,7 @@ function saveImages() {
     diffSay(" Done.<br>")
 }
 
+// make a png strip out of the two maps and their diff
 function makeStrip(images, size) {
     // console.log('makeStrip images:', images);
     var c = document.createElement('canvas');
@@ -1280,12 +1364,13 @@ function makeStrip(images, size) {
     return c.toDataURL("image/png");
 }
 
+// assemble a gif from the two maps using gif.js https://github.com/jnordberg/gif.js
 function makeGif(images, name) {
     var gif = new GIF({
-      workers: 1,
-      quality: 10,
-      width: lsize,
-      height: lsize,
+        workers: 1,
+        quality: 10,
+        width: lsize,
+        height: lsize,
     });
 
     for (var y = 0; y < images.length; y++) {
@@ -1304,6 +1389,7 @@ function popup(img, width, height) {
     var myWindow = window.open("data:text/html," + encodeURIComponent(data));
 }
 
+// assemble all png strips into one big file, for saving, sharing, reference, etc
 function makeContactSheet() {
 
     // count available strips
@@ -1345,13 +1431,13 @@ function makeContactSheet() {
     }
 }
 
+// create a json file with information about the current test
 function makeInfoJSON() {
     var j = {};
     j.origin = {
         "useragent": navigator.userAgent,
         "devicePixelRatio": window.devicePixelRatio,
-        "time": loadTime,
-        "testFile": testsFile
+        "time": loadTime
     };
     try {
         j.tests = {};
@@ -1363,13 +1449,14 @@ function makeInfoJSON() {
                 }
             }
         }
-    } catch(e) {
-        throw new Error(e);
+    } catch(error) {
+        throw error;
         return false;
     }
     saveData(j, 'differ-' + (+new Date()) + '.json');
 }
 
+// create and 'download' a new file
 var saveData = (function () {
     var a = document.createElement("a");
     document.body.appendChild(a);
@@ -1385,18 +1472,24 @@ var saveData = (function () {
     };
 }());
 
+// wen the page first loads:
 window.onload = function() {
+    // check the url for interesting facts
     parseQuery();
 
+    // show the top progress bar if not scrolled to the top
     var myScrollFunc = function() {
-      var y = window.scrollY;
-      if (y >= get('progressbar').offsetTop) {
+        var y = window.scrollY;
+        if (y >= get('progressbar').offsetTop) {
         progressTop.style['visibility'] = "visible";
-      } else {
+        } else {
         progressTop.style['visibility'] = "hidden";
-      }
+        }
     };
 
     window.addEventListener("scroll", myScrollFunc);
-
 }
+
+//
+// whew
+//
