@@ -29,6 +29,7 @@ var data, metadata;
 var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default3.json";
+var defaultScene;
 
 // shortcuts to elements
 function get(id) {
@@ -96,7 +97,7 @@ function isPathAbsolute(path) {
 
 // find query terms in the URL
 function parseQuery() {
-    // test or yaml file
+    // test or yaml file?
     var url = getQueryVariable("1")
     if (url != "") {
         slot1.value = url;
@@ -366,6 +367,7 @@ function prepMap(which) {
 
 // parse url and load the appropriate file, then create tests
 function loadFile(url, ignoreImages, depth, tests) {
+    if (typeof depth == 'undefined') depth = {val: 0};
     // increment depth value
     depth.val++;
     return new Promise(function(resolve, reject) {
@@ -386,6 +388,7 @@ function loadFile(url, ignoreImages, depth, tests) {
         slot.file = urlname;
 
         if (typeof slot.tests === 'undefined') slot.tests = [];
+        if (typeof tests === 'undefined') tests = {};
         if (typeof tests.tests === 'undefined') tests.tests = [];
 
         if (urlext == "yaml") {
@@ -393,7 +396,8 @@ function loadFile(url, ignoreImages, depth, tests) {
             // decrement depth value
             depth.val--;
             if (depth.val == 0) {
-                console.log('resolving with a yaml')
+                defaultScene = url;
+                // console.log('resolving with a yaml')
                 resolve(slot);
             }
         } else if (urlext == "json") {
@@ -419,6 +423,9 @@ function loadFile(url, ignoreImages, depth, tests) {
 
                     // convert tests to an array for easier traversal
                     var newTests = Object.keys(data.tests).map(function (key) {
+                        if (typeof data.tests[key].url === 'undefined') data.tests[key].url = defaultScene;
+
+                        var r = new RegExp('^(?:[a-z]+:)?//', 'i');
 
                         // if the test url is a json, load it recursively
                         if (data.tests[key].url.split('.').pop() == "json"){
@@ -429,7 +436,6 @@ function loadFile(url, ignoreImages, depth, tests) {
 
                             // if the test url is relative, prepend the parent's root directory
                             // test for relative urls
-                            var r = new RegExp('^(?:[a-z]+:)?//', 'i');
                             if (r.test(data.tests[key].url) === false ) {
                                 // make sure there's only one slash at the join:
                                 // remove any trailing slash from parent url
@@ -444,8 +450,16 @@ function loadFile(url, ignoreImages, depth, tests) {
                         } else {
                             // add test's name as a property of the test
                             data.tests[key].name = key;
+                            testUrl = data.tests[key].url;
+                            // if the test url is relative, prepend the parent's root directory
                             // set full path of scene file
-                            data.tests[key].url = slot.dir + data.tests[key].url;
+                            if (r.test(data.tests[key].url) === false ) {
+                                var slotUrl = slot.dir.replace(/\/$/, "");
+                                // remove any leading slash from test url
+                                testUrl = testUrl.replace(/^\/|\/$/g, '');
+                                // prepend slot.dir to path
+                                data.tests[key].url = slot.dir + data.tests[key].url;
+                            }
                             // if checkbox isn't checked
                             if (!ignoreImages) {
                                 // add path of pre-rendered image to look for
@@ -454,7 +468,6 @@ function loadFile(url, ignoreImages, depth, tests) {
                             return data.tests[key];
                         }
                     });
-
                     // add new tests to slot test list
                     tests.tests = tests.tests.concat(newTests);
 
@@ -519,7 +532,6 @@ function prepTests() {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults().then(function(val){
-                    console.log('val?', val)
                     slots.slot1.tests = val;
                 }),
                 loadDefaults().then(function(val){
