@@ -1157,7 +1157,6 @@ function doDiff( test1, test2 ) {
 
 // re-run a single test
 function refresh(test1, test2) {
-    // console.log('refresh:', test)
     slots.slot1.tests.push(test1);
     slots.slot2.tests.push(test2);
     numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
@@ -1236,6 +1235,7 @@ function makeRow(test1, test2, matchScore) {
         timer.className = 'timeout';
         timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
         column1.appendChild(timer);
+        test1.timeout = false;
     }
     testdiv.appendChild(column1);
 
@@ -1250,6 +1250,7 @@ function makeRow(test1, test2, matchScore) {
         timer.className = 'timeout';
         timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
         column2.appendChild(timer);
+        test2.timeout = false;
     }
     testdiv.appendChild(column2);
 
