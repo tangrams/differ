@@ -30,6 +30,7 @@ var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default3.json";
 var defaultScene;
+var running = false;
 
 // shortcuts to elements
 function get(id) {
@@ -868,6 +869,7 @@ function stopClick() {
 
 // all stop
 function stop() {
+    running = false;
     if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
     if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
     get('stopButton').setAttribute("style","display:none");
@@ -895,6 +897,7 @@ function proceed() {
             // load next test in each list
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
+            running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
             console.log('proceed ?', err);
@@ -1157,13 +1160,15 @@ function doDiff( test1, test2 ) {
 
 // re-run a single test
 function refresh(test1, test2) {
-    slots.slot1.tests.push(test1);
-    slots.slot2.tests.push(test2);
-    numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
-
-    return Promise.all([viewComplete1, viewComplete2]).then(function() {
-        prepTestImages(test1, test2);
-    });
+    slots.slot1.tests.unshift(test1);
+    slots.slot2.tests.unshift(test2);
+    if (!running) {
+        return Promise.all([viewComplete1, viewComplete2]).then(function() {
+            test1 = slots.slot1.tests.shift();
+            test2 = slots.slot2.tests.shift();
+            prepTestImages(test1, test2);
+        });
+    }
 }
 
 function getHeight() {
