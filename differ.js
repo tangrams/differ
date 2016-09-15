@@ -30,6 +30,7 @@ var loadTime = Date();
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/default3.json";
 var defaultScene;
+var running = false;
 
 // shortcuts to elements
 function get(id) {
@@ -787,6 +788,14 @@ function loadView (view, location, frame) {
     });
 }
 
+// if library url is a schemeless alphanumeric string, make sure it has a schema
+function ensureSchema(url) {
+    if ( /[a-z]+/.test(url)) {
+        if (url.substring(0,4) != "http") url = "http://" + url;
+    }
+    return url;
+}
+
 // go time
 function goClick() {
     // console.clear();
@@ -805,6 +814,13 @@ function goClick() {
     frame2Ready = new Promise(function(resolve, reject) {
         frame2Loaded = resolve;
     });
+
+    // check for schemas
+    library1.value = ensureSchema(library1.value);
+    library2.value = ensureSchema(library2.value);
+    slot1.value = ensureSchema(slot1.value);
+    slot2.value = ensureSchema(slot2.value);
+
     // reload iframes with specified versions of Tangram
     if (safari) {
         map1.location = "map.html?url="+library1.value;
@@ -823,6 +839,7 @@ function goClick() {
     data = null;
     metadata = null;
     var slot1Val = slot1.value, slot2Val = slot2.value;
+    //  make master list of tests for each slot, to be used in case of recursive jsons
     slot1tests = {tests: []};
     slot2tests = {tests: []};
     // if one slot is empty, assume the value of the other
@@ -834,6 +851,7 @@ function goClick() {
         slots.slot1 = result[0];
         slots.slot2 = result[1];
 
+        // removes nulls
         function cleanArray(actual) {
           var newArray = new Array();
           for (var i = 0; i < actual.length; i++) {
@@ -844,8 +862,20 @@ function goClick() {
           return newArray;
         }
 
-        slots.slot1.tests = cleanArray(slot1tests.tests)
-        slots.slot2.tests = cleanArray(slot2tests.tests);
+        function sortByKey(array, key) {
+            return array.sort(function(a, b) {
+                var x = a[key]; var y = b[key];
+                return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+            });
+        }
+
+        // copy tests from the master lists and clean up
+        slots.slot1.tests = JSON.parse(JSON.stringify(cleanArray(slot1tests.tests)));
+        slots.slot2.tests = JSON.parse(JSON.stringify(cleanArray(slot2tests.tests)));
+        // sort to ensure test order matches between slots
+        slots.slot1.tests = sortByKey(slots.slot1.tests, "name");
+        slots.slot2.tests = sortByKey(slots.slot2.tests, "name");
+
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
         proceed();
@@ -868,6 +898,7 @@ function stopClick() {
 
 // all stop
 function stop() {
+    running = false;
     if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
     if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
     get('stopButton').setAttribute("style","display:none");
@@ -895,6 +926,7 @@ function proceed() {
             // load next test in each list
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
+            running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
             console.log('proceed ?', err);
@@ -1015,11 +1047,48 @@ function prepLocations(test1, test2) {
 
 // load or create the test images and advance the tests
 function prepTestImages(test1, test2) {
+
+    // TODO: determine whether these if blocks are necessary
     if (typeof test1 == 'undefined' && typeof test2 == 'undefined' ) {
         diffSay("No tests defined in either file.");
         stopClick();
         return false;
     }
+    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+        // stop();
+        diffSay("Missing test, stopping.");
+        return stop();
+    }
+
+    test1.file = slots.slot1.file;
+    test2.file = slots.slot2.file;
+    test1.dir = slots.slot1.dir;
+    test2.dir = slots.slot2.dir;
+
+    // prep scene file urls
+    var p1 = prepStyles(test1, test2).then(function(styles) {
+        test1.url = styles.url1;
+        test2.url = styles.url2;
+    });
+    // prep locations
+    var p2 = prepLocations(test1, test2).then(function(locations) {
+        test1.location = locations.loc1;
+        test2.location = locations.loc2;
+    });
+
+    // wait until the styles and locations have been chosen,
+    Promise.all([p1, p2])
+    .then(function() {
+        // then load the maps and extract screengrabs from both
+        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
+            .then(function() {
+                // then advance to the next test
+                nextDiff();
+            }).catch(function(err) {
+                console.log(err);
+                diffSay(err);
+            });
+    });
 
     function nextDiff() {
         try {
@@ -1052,118 +1121,88 @@ function prepTestImages(test1, test2) {
             }
             flashDone();
             if (checkscroll()) {
+                // scroll to bottom
                 scrollToY(getHeight());
             }
         }
     }
 
-    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
-        // stop();
-        diffSay("Missing test, stopping.");
-        return stop();
-    }
-    test1.file = slots.slot1.file;
-    test2.file = slots.slot2.file;
-    test1.dir = slots.slot1.dir;
-    test2.dir = slots.slot2.dir;
-
-    // prep scene file urls
-    var p1 = prepStyles(test1, test2).then(function(styles) {
-        test1.url = styles.url1;
-        test2.url = styles.url2;
-    });
-    // prep locations
-    var p2 = prepLocations(test1, test2).then(function(locations) {
-        test1.location = locations.loc1;
-        test2.location = locations.loc2;
-    });
-
-    // wait until the styles and locations have been chosen,
-    Promise.all([p1, p2])
-    .then(function() {
-        // then load the maps and extract screengrabs from both
-        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
-            .then(function() {
-                // then advance to the next test
-                nextDiff();
-            }).catch(function(err) {
-                console.log(err);
-                diffSay(err);
-            });
-    });
-
 }
 
 // perform the image comparison and update the html
 function doDiff( test1, test2 ) {
-    if (test1.data && test2.data) {
-        // run the diff
-        try {
-            var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
-        } catch(e) {
-            throw new Error("> diff error:", e);
+    return new Promise(function(resolve, reject) {
+        if (test1.data && test2.data) {
+            // run the diff
+            try {
+                var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
+            } catch(e) {
+                throw new Error("> diff error:", e);
+            }
+            // calculate match percentage
+            var match = 100-(difference/(lsize*lsize)*100*100)/100;
+            var matchScore = Math.floor(match);
+            // put the diff in its canvas
+            diffCtx.putImageData(diffData, 0, 0);
+        } else {
+            // generating new image
+            match = 100;
+            matchScore = "";
         }
-        // calculate match percentage
-        var match = 100-(difference/(lsize*lsize)*100*100)/100;
-        var matchScore = Math.floor(match);
-        // put the diff in its canvas
-        diffCtx.putImageData(diffData, 0, 0);
-    } else {
-        // generating new image
-        match = 100;
-        matchScore = "";
-    }
 
-    // update progressbar
-    updateProgress(slots.slot1.tests.length);
+        // update progressbar
+        updateProgress(slots.slot1.tests.length);
 
-    // update master percentage
-    scores[test1.name] = match;
-    var totalSum = 0;
-    for (var v in scores) {
-        totalSum += scores[v];
-    }
-    // totalScore = Math.floor(totalSum/(100*count)*100);
-    // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    // get('totalScore').innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
+        // update master percentage
+        scores[test1.name] = match;
+        var totalSum = 0;
+        for (var v in scores) {
+            totalSum += scores[v];
+        }
+        // totalScore = Math.floor(totalSum/(100*count)*100);
+        // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
+        // get('totalScore').innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
-    // make an output row
-    makeRow(test1, test2, matchScore);
-    // store the images
-    images[test1.name] = {};
-    images[test1.name].img1 = test1.img;
-    images[test1.name].img2 = test2.img;
+        // make an output row
+        makeRow(test1, test2, matchScore).then(function() {
 
-    // console.log('diffImg?', diffImg);
-    // save diff to new image and save a strip
-    var data = atob(diffImg.src.slice(22));
-    var buffer = new Uint8Array(data.length);
-    for (var j = 0; j < data.length; ++j) {
-        buffer[j] = data.charCodeAt(j);
-    }
-    var blob = new Blob([buffer], { type: 'image/png' });
-    var diff2 = new Image();
-    diff2.height=size;
-    diff2.width=size;
-    diff2.onload = function() {
-        images[test1.name].diffImg = diff2;
-        images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
-    }
-    diff2.src = linkFromBlob( blob );
+            // store the images
+            images[test1.name] = {};
+            images[test1.name].img1 = test1.img;
+            images[test1.name].img2 = test2.img;
 
-    // clear the diff canvas
-    diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+            // save diff to new image and save a strip
+            var data = atob(diffImg.src.slice(22));
+            var buffer = new Uint8Array(data.length);
+            for (var j = 0; j < data.length; ++j) {
+                buffer[j] = data.charCodeAt(j);
+            }
+            var blob = new Blob([buffer], { type: 'image/png' });
+            var diff2 = new Image();
+            diff2.height=size;
+            diff2.width=size;
+            diff2.onload = function() {
+                images[test1.name].diffImg = diff2;
+                images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
+                resolve();
+            }
+            diff2.src = linkFromBlob( blob );
+        });
+    });
 };
 
 // re-run a single test
 function refresh(test1, test2) {
-    slots.slot1.tests.push(test1);
-    slots.slot2.tests.push(test2);
-    numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
-
-    return Promise.all([viewComplete1, viewComplete2]).then(function() {
-        prepTestImages(test1, test2);
-    });
+    slots.slot1.tests.unshift(test1);
+    slots.slot2.tests.unshift(test2);
+    if (!running) {
+        numTests = 1;
+        return Promise.all([viewComplete1, viewComplete2]).then(function() {
+            test1 = slots.slot1.tests.shift();
+            test2 = slots.slot2.tests.shift();
+            prepTestImages(test1, test2);
+        });
+    }
 }
 
 function getHeight() {
@@ -1183,147 +1222,157 @@ function checkscroll() {
 
 // create an output row in html from the map images
 function makeRow(test1, test2, matchScore) {
-    // check to see if div already exists (if re-running a test);
-    var testdiv = get(test1.name);
-    var scrollTrack = false;
+    return new Promise(function(resolve, reject) {
+        // check to see if div already exists (if re-running a test);
+        var testdiv = get(test1.name);
+        var scrollTrack = false;
 
-    // check if scroll is currently at bottom of page
-    if( checkscroll() ) {
-        scrollTrack = true;
-    }
-
-    // if a row for this test doesn't already exist:
-    if (testdiv === null) {
-        // generate one
-        var testdiv = document.createElement('div');
-        testdiv.className = 'test';
-        if (typeof test1.name == 'undefined') {
-            test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
+        // check if scroll is currently at bottom of page
+        if( checkscroll() ) {
+            scrollTrack = true;
         }
-        testdiv.id = test1.name;
-        get('tests').appendChild(testdiv);
-        testdiv.test1 = test1;
-        testdiv.test2 = test2;
-    } else {
-        // clear it out
-        testdiv.innerHTML = "";
-    }
-    var title = document.createElement('div');
-    title.className = 'testname';
-    // make test title a link to a live version of the test
 
-    // parse locations
-    var loc = parseLocation(test1.location);
-    // make links
-    var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
-        +"&lib="+library1.value
-        +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
-        +"&lib="+library2.value
-        +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-    title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
-    testdiv.appendChild(title);
+        // if a row for this test doesn't already exist:
+        if (testdiv === null) {
+            // generate one
+            var testdiv = document.createElement('div');
+            testdiv.className = 'test';
+            if (typeof test1.name == 'undefined') {
+                test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
+            }
+            testdiv.id = test1.name;
+            get('tests').appendChild(testdiv);
+            testdiv.test1 = test1;
+            testdiv.test2 = test2;
+            fillDiv();
+        } else {
+            // clear it out
+            testdiv.innerHTML = "<span class='titletext'></span><br><small></small><br><span style='height:"+size+"px; display:block'></span>";
+            // wait a fraction of a second before filling, to show an update
+            setTimeout(fillDiv, 50);
+        }
+        function fillDiv() {
+            testdiv.innerHTML = "";
+            var title = document.createElement('div');
+            title.className = 'testname';
+            // make test title a link to a live version of the test
 
-    var column1 = document.createElement('span');
-    column1.className = 'column';
-    column1.id = "column1";
-    column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
+            // parse locations
+            var loc = parseLocation(test1.location);
+            // make links
+            var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
+                +"&lib="+library1.value
+                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
+                +"&lib="+library2.value
+                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
+            testdiv.appendChild(title);
 
-    // add an emoji overlay if the test times out
-    if (test1.timeout) {
-        var timer = document.createElement('div');
-        timer.className = 'timeout';
-        timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
-        column1.appendChild(timer);
-        test1.timeout = false;
-    }
-    testdiv.appendChild(column1);
+            var column1 = document.createElement('span');
+            column1.className = 'column';
+            column1.id = "column1";
+            column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
 
-    var column2 = document.createElement('span');
-    column2.className = 'column';
-    column2.id = "column2";
-    column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
+            // add an emoji overlay if the test times out
+            if (test1.timeout) {
+                var timer = document.createElement('div');
+                timer.className = 'timeout';
+                timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
+                column1.appendChild(timer);
+                test1.timeout = false;
+            }
+            testdiv.appendChild(column1);
 
-    // add an emoji overlay if the test times out
-    if (test2.timeout) {
-        var timer = document.createElement('div');
-        timer.className = 'timeout';
-        timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
-        column2.appendChild(timer);
-        test2.timeout = false;
-    }
-    testdiv.appendChild(column2);
+            var column2 = document.createElement('span');
+            column2.className = 'column';
+            column2.id = "column2";
+            column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
 
-    var diffcolumn = document.createElement('span');
-    diffcolumn.className = 'column';
-    diffcolumn.id = "diff";
-    diffcolumn.innerHTML = "diff<br>";
-    testdiv.appendChild(diffcolumn);
+            // add an emoji overlay if the test times out
+            if (test2.timeout) {
+                var timer = document.createElement('div');
+                timer.className = 'timeout';
+                timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
+                column2.appendChild(timer);
+                test2.timeout = false;
+            }
+            testdiv.appendChild(column2);
 
-    // insert images
-    try {
-        test1.img.width = size;
-        test1.img.height = size;
-        var a = document.createElement('a');
-        a.href = test1link;
-        a.target = "_blank";
-        column1.appendChild( a );
-        a.appendChild( test1.img );
-    } catch(e) {}
-    
-    try {
-        test2.img.width = size;
-        test2.img.height = size;
-        var a = document.createElement('a');
-        a.href = test2link;
-        a.target = "_blank";
-        column2.appendChild( a );
-        a.appendChild( test2.img );
-    } catch(e) {}
+            var diffcolumn = document.createElement('span');
+            diffcolumn.className = 'column';
+            diffcolumn.id = "diff";
+            diffcolumn.innerHTML = "diff<br>";
+            testdiv.appendChild(diffcolumn);
 
-    if (scrollTrack) {
-        scrollToY(getHeight() - window.innerHeight, 3000);
-    }
+            // insert images
+            try {
+                test1.img.width = size;
+                test1.img.height = size;
+                var a = document.createElement('a');
+                a.href = test1link;
+                a.target = "_blank";
+                column1.appendChild( a );
+                a.appendChild( test1.img );
+            } catch(e) {}
 
-    // CONTROLS //
+            try {
+                test2.img.width = size;
+                test2.img.height = size;
+                var a = document.createElement('a');
+                a.href = test2link;
+                a.target = "_blank";
+                column2.appendChild( a );
+                a.appendChild( test2.img );
+            } catch(e) {}
 
-    var controls = document.createElement('span');
-    controls.className = 'controls';
-    testdiv.appendChild(controls);
+            if (scrollTrack) {
+                scrollToY(getHeight() - window.innerHeight, 3000);
+            }
 
-    var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
+            // CONTROLS //
 
-    // console.log('matchScore?', matchScore);
-    if (matchScore != "") {
-        matchScore += "% match";
-        diffImg = document.createElement('img');
-        diffImg.src = diffCanvas.toDataURL("image/png");
-        diffImg.width = size;
-        diffImg.height = size;
-        diffcolumn.appendChild( diffImg );
-    }
+            var controls = document.createElement('span');
+            controls.className = 'controls';
+            testdiv.appendChild(controls);
 
-    // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
+            var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
 
-    var refreshButton =  document.createElement('button');
-    refreshButton.innerHTML = "refresh";
-    refreshButton.onclick = function() {refresh(test1, test2);}
-    controls.appendChild(refreshButton);
+            // console.log('matchScore?', matchScore);
+            if (matchScore != "") {
+                matchScore += "% match";
+                diffImg = document.createElement('img');
+                diffImg.src = diffCanvas.toDataURL("image/png");
+                diffImg.width = size;
+                diffImg.height = size;
+                diffcolumn.appendChild( diffImg );
+                // clear the diff canvas
+                diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+            }
 
-    var exportButton =  document.createElement('button');
-    exportButton.innerHTML = "make PNG";
-    // store current value of these global variables
-    exportButton.onclick = function() {
-        popup(images[test1.name].strip, size * 3, size);
-    };
-    controls.appendChild(exportButton);
+            // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
 
-    var exportGifButton =  document.createElement('button');
-    exportGifButton.innerHTML = "make GIF";
-    exportGifButton.onclick = function() {
-        makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
-    };
-    controls.appendChild(exportGifButton);
+            var refreshButton =  document.createElement('button');
+            refreshButton.innerHTML = "refresh";
+            refreshButton.onclick = function() {refresh(test1, test2);}
+            controls.appendChild(refreshButton);
+
+            var exportButton =  document.createElement('button');
+            exportButton.innerHTML = "make PNG";
+            // store current value of these global variables
+            exportButton.onclick = function() {
+                popup(images[test1.name].strip, size * 3, size);
+            };
+            controls.appendChild(exportButton);
+
+            var exportGifButton =  document.createElement('button');
+            exportGifButton.innerHTML = "make GIF";
+            exportGifButton.onclick = function() {
+                makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
+            };
+            controls.appendChild(exportGifButton);
+        }
+    });
 
 }
 
