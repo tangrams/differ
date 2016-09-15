@@ -788,6 +788,14 @@ function loadView (view, location, frame) {
     });
 }
 
+// if library url is a schemeless alphanumeric string, make sure it has a schema
+function ensureSchema(url) {
+    if ( /[a-z]+/.test(url)) {
+        if (url.substring(0,4) != "http") url = "http://" + url;
+    }
+    return url;
+}
+
 // go time
 function goClick() {
     // console.clear();
@@ -806,6 +814,13 @@ function goClick() {
     frame2Ready = new Promise(function(resolve, reject) {
         frame2Loaded = resolve;
     });
+
+    // check for schemas
+    library1.value = ensureSchema(library1.value);
+    library2.value = ensureSchema(library2.value);
+    slot1.value = ensureSchema(slot1.value);
+    slot2.value = ensureSchema(slot2.value);
+
     // reload iframes with specified versions of Tangram
     if (safari) {
         map1.location = "map.html?url="+library1.value;
