@@ -824,6 +824,7 @@ function goClick() {
     data = null;
     metadata = null;
     var slot1Val = slot1.value, slot2Val = slot2.value;
+    //  make master list of tests for each slot, to be used in case of recursive jsons
     slot1tests = {tests: []};
     slot2tests = {tests: []};
     // if one slot is empty, assume the value of the other
@@ -835,6 +836,7 @@ function goClick() {
         slots.slot1 = result[0];
         slots.slot2 = result[1];
 
+        // removes nulls
         function cleanArray(actual) {
           var newArray = new Array();
           for (var i = 0; i < actual.length; i++) {
@@ -1104,6 +1106,7 @@ function prepTestImages(test1, test2) {
             }
             flashDone();
             if (checkscroll()) {
+                // scroll to bottom
                 scrollToY(getHeight());
             }
         }
