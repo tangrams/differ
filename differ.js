@@ -1018,11 +1018,48 @@ function prepLocations(test1, test2) {
 
 // load or create the test images and advance the tests
 function prepTestImages(test1, test2) {
+
+    // TODO: determine whether these if blocks are necessary
     if (typeof test1 == 'undefined' && typeof test2 == 'undefined' ) {
         diffSay("No tests defined in either file.");
         stopClick();
         return false;
     }
+    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
+        // stop();
+        diffSay("Missing test, stopping.");
+        return stop();
+    }
+
+    test1.file = slots.slot1.file;
+    test2.file = slots.slot2.file;
+    test1.dir = slots.slot1.dir;
+    test2.dir = slots.slot2.dir;
+
+    // prep scene file urls
+    var p1 = prepStyles(test1, test2).then(function(styles) {
+        test1.url = styles.url1;
+        test2.url = styles.url2;
+    });
+    // prep locations
+    var p2 = prepLocations(test1, test2).then(function(locations) {
+        test1.location = locations.loc1;
+        test2.location = locations.loc2;
+    });
+
+    // wait until the styles and locations have been chosen,
+    Promise.all([p1, p2])
+    .then(function() {
+        // then load the maps and extract screengrabs from both
+        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
+            .then(function() {
+                // then advance to the next test
+                nextDiff();
+            }).catch(function(err) {
+                console.log(err);
+                diffSay(err);
+            });
+    });
 
     function nextDiff() {
         try {
@@ -1059,41 +1096,6 @@ function prepTestImages(test1, test2) {
             }
         }
     }
-
-    if (typeof test1 == "undefined" || typeof test2 == "undefined" ) {
-        // stop();
-        diffSay("Missing test, stopping.");
-        return stop();
-    }
-    test1.file = slots.slot1.file;
-    test2.file = slots.slot2.file;
-    test1.dir = slots.slot1.dir;
-    test2.dir = slots.slot2.dir;
-
-    // prep scene file urls
-    var p1 = prepStyles(test1, test2).then(function(styles) {
-        test1.url = styles.url1;
-        test2.url = styles.url2;
-    });
-    // prep locations
-    var p2 = prepLocations(test1, test2).then(function(locations) {
-        test1.location = locations.loc1;
-        test2.location = locations.loc2;
-    });
-
-    // wait until the styles and locations have been chosen,
-    Promise.all([p1, p2])
-    .then(function() {
-        // then load the maps and extract screengrabs from both
-        return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
-            .then(function() {
-                // then advance to the next test
-                nextDiff();
-            }).catch(function(err) {
-                console.log(err);
-                diffSay(err);
-            });
-    });
 
 }
 
