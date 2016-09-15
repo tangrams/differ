@@ -845,8 +845,19 @@ function goClick() {
           return newArray;
         }
 
-        slots.slot1.tests = cleanArray(slot1tests.tests)
-        slots.slot2.tests = cleanArray(slot2tests.tests);
+        function sortByKey(array, key) {
+            return array.sort(function(a, b) {
+                var x = a[key]; var y = b[key];
+                return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+            });
+        }
+
+        // copy tests from the master lists and clean up
+        slots.slot1.tests = JSON.parse(JSON.stringify(cleanArray(slot1tests.tests)));
+        slots.slot2.tests = JSON.parse(JSON.stringify(cleanArray(slot2tests.tests)));
+        // sort to ensure test order matches between slots
+        slots.slot1.tests = sortByKey(slots.slot1.tests, "name");
+        slots.slot2.tests = sortByKey(slots.slot2.tests, "name");
 
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
