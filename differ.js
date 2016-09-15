@@ -847,6 +847,7 @@ function goClick() {
 
         slots.slot1.tests = cleanArray(slot1tests.tests)
         slots.slot2.tests = cleanArray(slot2tests.tests);
+
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
         proceed();
@@ -1101,62 +1102,64 @@ function prepTestImages(test1, test2) {
 
 // perform the image comparison and update the html
 function doDiff( test1, test2 ) {
-    if (test1.data && test2.data) {
-        // run the diff
-        try {
-            var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
-        } catch(e) {
-            throw new Error("> diff error:", e);
+    return new Promise(function(resolve, reject) {
+        if (test1.data && test2.data) {
+            // run the diff
+            try {
+                var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
+            } catch(e) {
+                throw new Error("> diff error:", e);
+            }
+            // calculate match percentage
+            var match = 100-(difference/(lsize*lsize)*100*100)/100;
+            var matchScore = Math.floor(match);
+            // put the diff in its canvas
+            diffCtx.putImageData(diffData, 0, 0);
+        } else {
+            // generating new image
+            match = 100;
+            matchScore = "";
         }
-        // calculate match percentage
-        var match = 100-(difference/(lsize*lsize)*100*100)/100;
-        var matchScore = Math.floor(match);
-        // put the diff in its canvas
-        diffCtx.putImageData(diffData, 0, 0);
-    } else {
-        // generating new image
-        match = 100;
-        matchScore = "";
-    }
 
-    // update progressbar
-    updateProgress(slots.slot1.tests.length);
+        // update progressbar
+        updateProgress(slots.slot1.tests.length);
 
-    // update master percentage
-    scores[test1.name] = match;
-    var totalSum = 0;
-    for (var v in scores) {
-        totalSum += scores[v];
-    }
-    // totalScore = Math.floor(totalSum/(100*count)*100);
-    // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
-    // get('totalScore').innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
+        // update master percentage
+        scores[test1.name] = match;
+        var totalSum = 0;
+        for (var v in scores) {
+            totalSum += scores[v];
+        }
+        // totalScore = Math.floor(totalSum/(100*count)*100);
+        // var threatLevel = totalScore > 99 ? "green" : totalScore > 98 ? "orange" : "red";
+        // get('totalScore').innerHTML = "<span class='matchScore' style='color:"+threatLevel+"'>"+totalScore+"% match</span>";
 
-    // make an output row
-    makeRow(test1, test2, matchScore);
-    // store the images
-    images[test1.name] = {};
-    images[test1.name].img1 = test1.img;
-    images[test1.name].img2 = test2.img;
+        // make an output row
+        makeRow(test1, test2, matchScore).then(function() {
 
-    // save diff to new image and save a strip
-    var data = atob(diffImg.src.slice(22));
-    var buffer = new Uint8Array(data.length);
-    for (var j = 0; j < data.length; ++j) {
-        buffer[j] = data.charCodeAt(j);
-    }
-    var blob = new Blob([buffer], { type: 'image/png' });
-    var diff2 = new Image();
-    diff2.height=size;
-    diff2.width=size;
-    diff2.onload = function() {
-        images[test1.name].diffImg = diff2;
-        images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
-    }
-    diff2.src = linkFromBlob( blob );
+            // store the images
+            images[test1.name] = {};
+            images[test1.name].img1 = test1.img;
+            images[test1.name].img2 = test2.img;
 
-    // clear the diff canvas
-    // diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+            // save diff to new image and save a strip
+            var data = atob(diffImg.src.slice(22));
+            var buffer = new Uint8Array(data.length);
+            for (var j = 0; j < data.length; ++j) {
+                buffer[j] = data.charCodeAt(j);
+            }
+            var blob = new Blob([buffer], { type: 'image/png' });
+            var diff2 = new Image();
+            diff2.height=size;
+            diff2.width=size;
+            diff2.onload = function() {
+                images[test1.name].diffImg = diff2;
+                images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
+                resolve();
+            }
+            diff2.src = linkFromBlob( blob );
+        });
+    });
 };
 
 // re-run a single test
@@ -1164,6 +1167,7 @@ function refresh(test1, test2) {
     slots.slot1.tests.unshift(test1);
     slots.slot2.tests.unshift(test2);
     if (!running) {
+        numTests = 1;
         return Promise.all([viewComplete1, viewComplete2]).then(function() {
             test1 = slots.slot1.tests.shift();
             test2 = slots.slot2.tests.shift();
@@ -1189,153 +1193,157 @@ function checkscroll() {
 
 // create an output row in html from the map images
 function makeRow(test1, test2, matchScore) {
-    // check to see if div already exists (if re-running a test);
-    var testdiv = get(test1.name);
-    var scrollTrack = false;
+    return new Promise(function(resolve, reject) {
+        // check to see if div already exists (if re-running a test);
+        var testdiv = get(test1.name);
+        var scrollTrack = false;
 
-    // check if scroll is currently at bottom of page
-    if( checkscroll() ) {
-        scrollTrack = true;
-    }
-
-    // if a row for this test doesn't already exist:
-    if (testdiv === null) {
-        // generate one
-        var testdiv = document.createElement('div');
-        testdiv.className = 'test';
-        if (typeof test1.name == 'undefined') {
-            test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
-        }
-        testdiv.id = test1.name;
-        get('tests').appendChild(testdiv);
-        testdiv.test1 = test1;
-        testdiv.test2 = test2;
-        fillDiv();
-    } else {
-        // clear it out
-        testdiv.innerHTML = "<span class='titletext'></span><br><small></small><br><span style='height:"+size+"px; display:block'></span>";
-        // wait a fraction of a second before filling, to show an update
-        setTimeout(fillDiv, 50);
-    }
-    function fillDiv() {
-        testdiv.innerHTML = "";
-        var title = document.createElement('div');
-        title.className = 'testname';
-        // make test title a link to a live version of the test
-
-        // parse locations
-        var loc = parseLocation(test1.location);
-        // make links
-        var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
-            +"&lib="+library1.value
-            +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-        var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
-            +"&lib="+library2.value
-            +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-        title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
-        testdiv.appendChild(title);
-
-        var column1 = document.createElement('span');
-        column1.className = 'column';
-        column1.id = "column1";
-        column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
-
-        // add an emoji overlay if the test times out
-        if (test1.timeout) {
-            var timer = document.createElement('div');
-            timer.className = 'timeout';
-            timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
-            column1.appendChild(timer);
-            test1.timeout = false;
-        }
-        testdiv.appendChild(column1);
-
-        var column2 = document.createElement('span');
-        column2.className = 'column';
-        column2.id = "column2";
-        column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
-
-        // add an emoji overlay if the test times out
-        if (test2.timeout) {
-            var timer = document.createElement('div');
-            timer.className = 'timeout';
-            timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
-            column2.appendChild(timer);
-            test2.timeout = false;
-        }
-        testdiv.appendChild(column2);
-
-        var diffcolumn = document.createElement('span');
-        diffcolumn.className = 'column';
-        diffcolumn.id = "diff";
-        diffcolumn.innerHTML = "diff<br>";
-        testdiv.appendChild(diffcolumn);
-
-        // insert images
-        try {
-            test1.img.width = size;
-            test1.img.height = size;
-            var a = document.createElement('a');
-            a.href = test1link;
-            a.target = "_blank";
-            column1.appendChild( a );
-            a.appendChild( test1.img );
-        } catch(e) {}
-
-        try {
-            test2.img.width = size;
-            test2.img.height = size;
-            var a = document.createElement('a');
-            a.href = test2link;
-            a.target = "_blank";
-            column2.appendChild( a );
-            a.appendChild( test2.img );
-        } catch(e) {}
-
-        if (scrollTrack) {
-            scrollToY(getHeight() - window.innerHeight, 3000);
+        // check if scroll is currently at bottom of page
+        if( checkscroll() ) {
+            scrollTrack = true;
         }
 
-        // CONTROLS //
-
-        var controls = document.createElement('span');
-        controls.className = 'controls';
-        testdiv.appendChild(controls);
-
-        var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
-
-        // console.log('matchScore?', matchScore);
-        if (matchScore != "") {
-            matchScore += "% match";
-            diffImg = document.createElement('img');
-            diffImg.src = diffCanvas.toDataURL("image/png");
-            diffImg.width = size;
-            diffImg.height = size;
-            diffcolumn.appendChild( diffImg );
+        // if a row for this test doesn't already exist:
+        if (testdiv === null) {
+            // generate one
+            var testdiv = document.createElement('div');
+            testdiv.className = 'test';
+            if (typeof test1.name == 'undefined') {
+                test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
+            }
+            testdiv.id = test1.name;
+            get('tests').appendChild(testdiv);
+            testdiv.test1 = test1;
+            testdiv.test2 = test2;
+            fillDiv();
+        } else {
+            // clear it out
+            testdiv.innerHTML = "<span class='titletext'></span><br><small></small><br><span style='height:"+size+"px; display:block'></span>";
+            // wait a fraction of a second before filling, to show an update
+            setTimeout(fillDiv, 50);
         }
+        function fillDiv() {
+            testdiv.innerHTML = "";
+            var title = document.createElement('div');
+            title.className = 'testname';
+            // make test title a link to a live version of the test
 
-        // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
+            // parse locations
+            var loc = parseLocation(test1.location);
+            // make links
+            var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
+                +"&lib="+library1.value
+                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
+                +"&lib="+library2.value
+                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
+            testdiv.appendChild(title);
 
-        var refreshButton =  document.createElement('button');
-        refreshButton.innerHTML = "refresh";
-        refreshButton.onclick = function() {refresh(test1, test2);}
-        controls.appendChild(refreshButton);
+            var column1 = document.createElement('span');
+            column1.className = 'column';
+            column1.id = "column1";
+            column1.innerHTML = "<a target='_blank' href='"+test1.url+"'>"+splitURL(test1.url).file+"</a><br>";
 
-        var exportButton =  document.createElement('button');
-        exportButton.innerHTML = "make PNG";
-        // store current value of these global variables
-        exportButton.onclick = function() {
-            popup(images[test1.name].strip, size * 3, size);
-        };
-        controls.appendChild(exportButton);
+            // add an emoji overlay if the test times out
+            if (test1.timeout) {
+                var timer = document.createElement('div');
+                timer.className = 'timeout';
+                timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
+                column1.appendChild(timer);
+                test1.timeout = false;
+            }
+            testdiv.appendChild(column1);
 
-        var exportGifButton =  document.createElement('button');
-        exportGifButton.innerHTML = "make GIF";
-        exportGifButton.onclick = function() {
-            makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
-        };
-        controls.appendChild(exportGifButton);
-    }
+            var column2 = document.createElement('span');
+            column2.className = 'column';
+            column2.id = "column2";
+            column2.innerHTML = "<a target='_blank' href='"+test2.url+"'>"+splitURL(test2.url).file+"</a><br>";
+
+            // add an emoji overlay if the test times out
+            if (test2.timeout) {
+                var timer = document.createElement('div');
+                timer.className = 'timeout';
+                timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
+                column2.appendChild(timer);
+                test2.timeout = false;
+            }
+            testdiv.appendChild(column2);
+
+            var diffcolumn = document.createElement('span');
+            diffcolumn.className = 'column';
+            diffcolumn.id = "diff";
+            diffcolumn.innerHTML = "diff<br>";
+            testdiv.appendChild(diffcolumn);
+
+            // insert images
+            try {
+                test1.img.width = size;
+                test1.img.height = size;
+                var a = document.createElement('a');
+                a.href = test1link;
+                a.target = "_blank";
+                column1.appendChild( a );
+                a.appendChild( test1.img );
+            } catch(e) {}
+
+            try {
+                test2.img.width = size;
+                test2.img.height = size;
+                var a = document.createElement('a');
+                a.href = test2link;
+                a.target = "_blank";
+                column2.appendChild( a );
+                a.appendChild( test2.img );
+            } catch(e) {}
+
+            if (scrollTrack) {
+                scrollToY(getHeight() - window.innerHeight, 3000);
+            }
+
+            // CONTROLS //
+
+            var controls = document.createElement('span');
+            controls.className = 'controls';
+            testdiv.appendChild(controls);
+
+            var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
+
+            // console.log('matchScore?', matchScore);
+            if (matchScore != "") {
+                matchScore += "% match";
+                diffImg = document.createElement('img');
+                diffImg.src = diffCanvas.toDataURL("image/png");
+                diffImg.width = size;
+                diffImg.height = size;
+                diffcolumn.appendChild( diffImg );
+                // clear the diff canvas
+                diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+            }
+
+            // controls.innerHTML = "<div class='matchScore' style='color:"+threatLevel+"'>"+matchScore+"</div><br>";
+
+            var refreshButton =  document.createElement('button');
+            refreshButton.innerHTML = "refresh";
+            refreshButton.onclick = function() {refresh(test1, test2);}
+            controls.appendChild(refreshButton);
+
+            var exportButton =  document.createElement('button');
+            exportButton.innerHTML = "make PNG";
+            // store current value of these global variables
+            exportButton.onclick = function() {
+                popup(images[test1.name].strip, size * 3, size);
+            };
+            controls.appendChild(exportButton);
+
+            var exportGifButton =  document.createElement('button');
+            exportGifButton.innerHTML = "make GIF";
+            exportGifButton.onclick = function() {
+                makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
+            };
+            controls.appendChild(exportGifButton);
+        }
+    });
 
 }
 
