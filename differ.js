@@ -1139,7 +1139,6 @@ function doDiff( test1, test2 ) {
     images[test1.name].img1 = test1.img;
     images[test1.name].img2 = test2.img;
 
-    // console.log('diffImg?', diffImg);
     // save diff to new image and save a strip
     var data = atob(diffImg.src.slice(22));
     var buffer = new Uint8Array(data.length);
@@ -1157,7 +1156,7 @@ function doDiff( test1, test2 ) {
     diff2.src = linkFromBlob( blob );
 
     // clear the diff canvas
-    diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
+    // diffCtx.clearRect(0, 0, diffCanvas.width, diffCanvas.height);
 };
 
 // re-run a single test
