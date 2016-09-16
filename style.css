@@ -208,6 +208,9 @@ canvas {
 .controls {
     width: 25%;
     float: right;
+    position: absolute;
+    bottom: 45%;
+    right: 0px;
 }
 
 .matchScore {
