@@ -4,7 +4,8 @@
 
 // "use strict";
 /*jslint browser: true*/
-/*global Tangram, gui */
+/*global Tangram */
+
 
 
 
@@ -13,22 +14,23 @@
 // initialize variables
 //
 
-var mypromise;
-var slots = {},
-    diffImg = new Image(), diffData, diffCanvas, diffCtx,
-    images = {},
-    slot1depth = {val: 0},
-    slot2depth = {val: 0};
-    slot1tests = {tests: []},
-    slot2tests = {tests: []};
+// set preferences
 var imgType = ".png";
 var size = 250; // physical pixels
+var writeScreenshots = false; // write new map images to disk?
+var defaultFile = "tests/default3.json"; // default view locations
+
+// other internal variables
+var slots = {}, images = {},
+    diffImg = new Image(), diffData, diffCanvas, diffCtx,
+    slot1depth = {val: 0},
+    slot2depth = {val: 0};
+var slot1tests = {tests: []},
+    slot2tests = {tests: []};
 var lsize = size * window.devicePixelRatio; // logical pixels
 var numTests, scores = [], totalScore = 0;
 var data, metadata;
 var loadTime = Date();
-var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default3.json";
 var defaultScene;
 var running = false;
 
@@ -42,6 +44,19 @@ var library1 = get("library1");
 var library2 = get("library2");
 var checkbox1 = get("checkbox1");
 var checkbox2 = get("checkbox2");
+var tests = get("tests");
+
+// two iframes to hold maps
+var frame1 = {
+    'iframe': get("map1"),
+    'window': get("map1").contentWindow,
+    'document': get("map1").contentDocument
+};
+var frame2 = {
+    'iframe': get("map2"),
+    'window': get("map2").contentWindow,
+    'document': get("map2").contentDocument
+};
 
 // browser check
 var ua = navigator.userAgent.toLowerCase();
@@ -55,20 +70,11 @@ if (ua.indexOf('safari') != -1) {
     }
 }
 
-// two iframes to hold maps
-var frame1 = {
-    'iframe': get("map1"),
-    'window': get("map1").contentWindow,
-    'document': get("map1").contentDocument
-}
-var frame2 = {
-    'iframe': get("map2"),
-    'window': get("map2").contentWindow,
-    'document': get("map2").contentDocument
-}
-
 // can only use saveButton if running on a local node server
 if (window.location.hostname != "localhost" ) get('saveButton').setAttribute("style", "display:none");
+
+
+
 
 
 //
@@ -99,35 +105,35 @@ function isPathAbsolute(path) {
 // find query terms in the URL
 function parseQuery() {
     // test or yaml file?
-    var url = getQueryVariable("1")
-    if (url != "") {
+    var url = getQueryVariable("1");
+    if (url !== "") {
         slot1.value = url;
     }
-    url = getQueryVariable("2")
-    if (url != "") {
+    url = getQueryVariable("2");
+    if (url !== "") {
         slot2.value = url;
     }
     // tangram version
-    var lib = getQueryVariable("lib1")
-    if (lib != "") {
+    var lib = getQueryVariable("lib1");
+    if (lib !== "") {
         library1.value = lib;
     }
-    lib = getQueryVariable("lib2")
-    if (lib != "") {
+    lib = getQueryVariable("lib2");
+    if (lib !== "") {
         library2.value = lib;
     }
     // ignore prerendered images checkbox
-    var check = getQueryVariable("ignore1")
+    var check = getQueryVariable("ignore1");
     if (check) {
         checkbox1.checked = true;
     }
-    check = getQueryVariable("ignore2")
+    check = getQueryVariable("ignore2");
     if (check) {
         checkbox2.checked = true;
     }
     // start immediately
-    url = getQueryVariable("go")
-    if (url != "") {
+    url = getQueryVariable("go");
+    if (url !== "") {
         get('goButton').click();
     }
 }
@@ -140,7 +146,7 @@ function diffAdd(txt) {
     }, 50);
 }
 function diffSay(txt) {
-    diffAdd(txt+"<br>")
+    diffAdd(txt+"<br>");
 }
 
 // convert github links to raw github files
@@ -211,7 +217,7 @@ function readTextFile(file, callback, errorback) {
             errorback("Problem with "+ file);
             return false;
         }
-    }
+    };
     rawFile.send(null);
 }
 
@@ -272,9 +278,9 @@ function setColorDelay(x) {
     var stepms = 40;
     setTimeout(function() {
         var c = 255 - 255 / x;
-        var color = rgbToHex(parseInt(c), 255, parseInt(c))
+        var color = rgbToHex(parseInt(c), 255, parseInt(c));
         document.body.style.background = color;
-    }, x * stepms)
+    }, x * stepms);
     setTimeout(function() {
         document.body.style.background = 'white';
     }, stepms * 11);
@@ -304,11 +310,10 @@ function scrollToY(scrollTargetY, speed, easing) {
         currentTime = 0;
 
     // min time .1, max time .8 seconds
-    var time = Math.max(.1, Math.min(Math.abs(scrollY - scrollTargetY) / speed, .8));
+    var time = Math.max(0.1, Math.min(Math.abs(scrollY - scrollTargetY) / speed, 0.8));
 
     // easing equations from https://github.com/danro/easing-js/blob/master/easing.js
-    var PI_D2 = Math.PI / 2,
-        easingEquations = {
+    var easingEquations = {
             easeOutSine: function (pos) {
                 return Math.sin(pos * (Math.PI / 2));
             },
@@ -344,6 +349,8 @@ function scrollToY(scrollTargetY, speed, easing) {
 
 
 
+
+
 //
 // prep scene
 //
@@ -372,7 +379,7 @@ function loadFile(url, ignoreImages, depth, tests) {
     // increment depth value
     depth.val++;
     return new Promise(function(resolve, reject) {
-        if (url == "") {
+        if (url === "") {
             throw new Error("Empty slot.");
             reject();
         }
@@ -396,7 +403,7 @@ function loadFile(url, ignoreImages, depth, tests) {
             slot.defaultScene = url;
             // decrement depth value
             depth.val--;
-            if (depth.val == 0) {
+            if (depth.val === 0) {
                 defaultScene = url;
                 // console.log('resolving with a yaml')
                 resolve(slot);
@@ -427,7 +434,7 @@ function loadFile(url, ignoreImages, depth, tests) {
                         if (typeof data.tests[key].url === 'undefined') data.tests[key].url = defaultScene;
 
                         var r = new RegExp('^(?:[a-z]+:)?//', 'i');
-
+                        var testUrl;
                         // if the test url is a json, load it recursively
                         if (data.tests[key].url.split('.').pop() == "json"){
 
@@ -473,13 +480,13 @@ function loadFile(url, ignoreImages, depth, tests) {
                     tests.tests = tests.tests.concat(newTests);
 
                     depth.val--;
-                    if (depth.val == 0) {
+                    if (depth.val === 0) {
                         slot.tests = slot.tests.concat(tests.tests);
                     }
                     resolve(slot);
 
                 }, function(error) {
-                    console.log('plobrem:', error)
+                    console.log('plobrem:', error);
                     reject(error);
                 });
             } catch (err) {
@@ -488,7 +495,7 @@ function loadFile(url, ignoreImages, depth, tests) {
                 } else {
                     console.log('whups', err);
                 }
-            };
+            }
         } else {
             console.log("Unexpected filetype: "+url);
             diffSay("Unexpected filetype: <a href='"+url+"'>"+urlname+"</a>");
@@ -514,9 +521,9 @@ function copyTestsFrom(tests) {
 // load some default tests if none are provided
 function loadDefaults() {
     return new Promise(function(resolve, reject) {
-        console.log('loadDefaults:', defaultFile)
+        console.log('loadDefaults:', defaultFile);
         loadFile(defaultFile).then(function(result){
-            console.log('loadDefaults', result)
+            console.log('loadDefaults', result);
             resolve(result.tests);
         });
     });
@@ -528,8 +535,7 @@ function prepTests() {
     images = {};
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
-        if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length == 0)
-         && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0)) {
+        if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length === 0) && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length === 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults().then(function(val){
@@ -541,11 +547,11 @@ function prepTests() {
             ]).then(function(){
                 resolve();
             });
-        } else if (typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length == 0) {
+        } else if (typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length === 0) {
             diffSay('Using views in '+slots.slot2.file+'.');
             slots.slot1.tests = copyTestsFrom(slots.slot2.tests);
             resolve();
-        } else if (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length == 0) {
+        } else if (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length === 0) {
             diffSay('Using views in '+slots.slot1.file+'.');
             slots.slot2.tests = copyTestsFrom(slots.slot1.tests);
             resolve();
@@ -557,7 +563,7 @@ function prepTests() {
         if (slots.slot1.tests.length != slots.slot2.tests.length) {
             numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
 
-            diffSay("Note: The two tests have a different number of views.")
+            diffSay("Note: The two tests have a different number of views.");
         } else {
             numTests = slots.slot1.tests.length;
         }
@@ -591,7 +597,7 @@ function prepPage() {
     });
 
     // reset view_complete triggers if the frames are still loading
-    if (frame1.window.scene.initialized != true) {
+    if (frame1.window.scene.initialized !== true) {
         resetViewComplete(frame1);
         resetViewComplete(frame2);
     }
@@ -612,6 +618,8 @@ function prepPage() {
 
 
 
+
+
 //
 // test functions
 //
@@ -623,8 +631,9 @@ function parseLocation(loc) {
         return loc; // no parsing needed
     } else if (typeof(loc) === "string") {
         // parse string location as array of floats
+      var location;
         if (loc.indexOf(',') > 0 ) { // comma-delimited
-            var location = loc.split(/[ ,]+/);
+            location = loc.split(/[ ,]+/);
         } else if (loc.indexOf('/') > 0 ) { // slash-delimited
             location = loc.split(/[\/]+/);
             location = [location[1], location[2], location[0]]; // re-order
@@ -640,8 +649,8 @@ function parseLocation(loc) {
 // load an image from a file
 function loadImage (url) {
     if (typeof url == 'undefined') {
-        return new Promise(function(resolve, reject) {reject()});
-    };
+        return new Promise(function(resolve, reject) {reject();});
+    }
     // console.log('loadImage:', url);
     return new Promise(function(resolve, reject) {
         // if (typeof url == "undefined") {
@@ -683,7 +692,7 @@ function imageData (img, canvas) {
         data = null;
         reject(data);
     });
-};
+}
 
 // capture the current tangram map
 function screenshot (save, name, frame) {
@@ -698,7 +707,7 @@ function screenshot (save, name, frame) {
         // console.warn('screenshot fail:', err);
         return Promise.reject();
     });
-};
+}
 
 // use Tangram's view_complete event to resolve a promise
 var viewComplete1Resolve, viewComplete1Reject;
@@ -731,14 +740,12 @@ function resetViewComplete(frame) {
 
 // load a map position and zoom
 function loadView (view, location, frame) {
-    var t = 0;
     return new Promise(function(resolve, reject) {
         if (!view) reject('no view');
         // if (!view.url) reject('no view url');
         // if (!view.location) reject('no view location');
         // load and draw scene
         var url = convertGithub(view.url);
-        var name = splitURL(url).file;
         // reset the view_complete triggers
         resetViewComplete(frame);
         var scene = frame.window.scene;
@@ -767,7 +774,7 @@ function loadView (view, location, frame) {
                     resolve();
                 }).catch(function(error) {
                     clearTimeout(timeout);
-                    console.log('map1 scene load error')
+                    console.log('map1 scene load error');
                     reject(error);
                 });
             } else if (frame.iframe.id == "map2") {
@@ -777,7 +784,7 @@ function loadView (view, location, frame) {
                     resolve();
                 }).catch(function(error) {
                     clearTimeout(timeout);
-                    console.log('map2 scene load error')
+                    console.log('map2 scene load error');
                     reject(error);
                 });
             }
@@ -788,8 +795,8 @@ function loadView (view, location, frame) {
     });
 }
 
-// if library url is a schemeless alphanumeric string, make sure it has a schema
-function ensureSchema(url) {
+// if url is a schemeless alphanumeric string, add a scheme
+function ensureScheme(url) {
     if ( /[a-z]+/.test(url)) {
         if (url.substring(0,4) != "http") url = "http://" + url;
     }
@@ -814,22 +821,18 @@ function goClick() {
         frame2Loaded = resolve;
     });
 
-    // check for schemas
-    library1.value = ensureSchema(library1.value);
-    library2.value = ensureSchema(library2.value);
-    slot1.value = ensureSchema(slot1.value);
-    slot2.value = ensureSchema(slot2.value);
+    // check for schemes
+    library1.value = ensureScheme(library1.value);
+    library2.value = ensureScheme(library2.value);
+    slot1.value = ensureScheme(slot1.value);
+    slot2.value = ensureScheme(slot2.value);
 
     updateURL();
 
     // reload iframes with specified versions of Tangram
-    if (safari) {
-        map1.location = "map.html?url="+library1.value;
-        map2.location = "map.html?url="+library2.value;
-    } else {
-        map1.src = "map.html?url="+library1.value;
-        map2.src = "map.html?url="+library2.value;
-    }
+    frame1.iframe.src = "map.html?url="+library1.value;
+    frame2.iframe.src = "map.html?url="+library2.value;
+
     var buttonloc = get("goButton").offsetTop;
     document.body.style.height = window.innerHeight + buttonloc - 50 + "px";
     // scroll to stop button
@@ -844,8 +847,8 @@ function goClick() {
     slot1tests = {tests: []};
     slot2tests = {tests: []};
     // if one slot is empty, assume the value of the other
-    if (slot1.value == "" && slot2.value != "") slot1Val = slot2.value;
-    if (slot2.value == "" && slot1.value != "") slot2Val = slot1.value;
+    if (slot1.value === "" && slot2.value !== "") slot1Val = slot2.value;
+    if (slot2.value === "" && slot1.value !== "") slot2Val = slot1.value;
 
     // load any files in the file inputs and parse their contents
     return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
@@ -854,7 +857,7 @@ function goClick() {
 
         // removes nulls
         function cleanArray(actual) {
-          var newArray = new Array();
+          var newArray = [];
           for (var i = 0; i < actual.length; i++) {
             if (actual[i]) {
               newArray.push(actual[i]);
@@ -910,7 +913,6 @@ function stop() {
 
 
 
-
 //
 // perform the test
 //
@@ -925,8 +927,8 @@ function proceed() {
             return Promise.all([viewComplete1, viewComplete2]);
         }).then(function() {
             // load next test in each list
-            test1 = slots.slot1.tests.shift();
-            test2 = slots.slot2.tests.shift();
+            var test1 = slots.slot1.tests.shift();
+            var test2 = slots.slot2.tests.shift();
             running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
@@ -940,9 +942,10 @@ function proceed() {
 // prep an image to send to the differ
 function prepImage(test, frame, msg) {
     return new Promise(function(resolve, reject) {
+
         // if there's an image for the test, load it
         loadImage(test.imageURL).then(function(result){
-            diffSay(test.name+imgType+" found for "+test.file)
+            diffSay(test.name+imgType+" found for "+test.file);
             // store it
             test.img = result;
             imageData(result, diffCanvas).then(function(result){
@@ -952,6 +955,7 @@ function prepImage(test, frame, msg) {
                 console.log("> imageData err:", err);
             });
         }).catch(function(err) {
+
             // no image? load the test view in the map and make a new image
             var loc = parseLocation(test.location);
             loadView(test, loc, frame).then(function(result){
@@ -968,13 +972,11 @@ function prepImage(test, frame, msg) {
                     }).catch(function(error){
                         console.log('imageData error:', error);
                         resolve(error);
-                        // throw new Error(error);
                     });
                 }).catch(function(error){
                     console.log('screenshot error:', error);
-                    diffSay(test.name+': screenshot failed')
-                    // throw new Error(error);
-                    resolve(error)
+                    diffSay(test.name+': screenshot failed');
+                    resolve(error);
                 });
             }).catch(function(error){
                 // console.log('loadView error:', error);
@@ -1002,10 +1004,10 @@ function prepStyles(test1, test2) {
             }
         }
         var url = setEither(test1.url, test2.url);
-        if (url == null) {
+        if (url === null) {
             url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
         }
-        if (url == null) {
+        if (url === null) {
             diffSay("No scenefile URLs found for either test!");
             stopClick();
             return;
@@ -1028,20 +1030,12 @@ function prepStyles(test1, test2) {
 function prepLocations(test1, test2) {
     return new Promise(function(resolve, reject) {
         var location = setEither(test1.location, test2.location);
-        if (location != null) {
+        if (location !== null) {
             test1.location = location[0];
             test2.location = location[1];
             return resolve({'loc1': test1.location, 'loc2': test2.location});
         } else {
             diffSay("No locations set for either test - using default location.");
-            // todo - use a series of default locations?
-            // loadFile("tests/locations.json").then(function(result) {
-            //     console.log('result:', result);            
-            //     location = result;
-            //     test1.location = location[0];
-            //     test2.location = location[1];
-            //     return resolve({'loc1': test1.location, 'loc2': test2.location});
-            // });
             location = [40.70532700869127,-74.00976419448854,16];
             return resolve({'loc1': location, 'loc2': location});
         }
@@ -1135,16 +1129,18 @@ function prepTestImages(test1, test2) {
 // perform the image comparison and update the html
 function doDiff( test1, test2 ) {
     return new Promise(function(resolve, reject) {
+        var match, matchScore;
         if (test1.data && test2.data) {
             // run the diff
+            var difference;
             try {
-                var difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
+                difference = pixelmatch(test1.data, test2.data, diffData.data, size, size, {threshold: 0.05});
             } catch(e) {
                 throw new Error("> diff error:", e);
             }
             // calculate match percentage
-            var match = 100-(difference/(lsize*lsize)*100*100)/100;
-            var matchScore = Math.floor(match);
+            match = 100-(difference/(lsize*lsize)*100*100)/100;
+            matchScore = Math.floor(match);
             // put the diff in its canvas
             diffCtx.putImageData(diffData, 0, 0);
         } else {
@@ -1188,11 +1184,11 @@ function doDiff( test1, test2 ) {
                 images[test1.name].diffImg = diff2;
                 images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
                 resolve();
-            }
+            };
             diff2.src = linkFromBlob( blob );
         });
     });
-};
+}
 
 // re-run a single test
 function refresh(test1, test2) {
@@ -1216,7 +1212,7 @@ function getHeight() {
 }
 
 function checkscroll() {
-     if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
+    if ((window.innerHeight + window.scrollY) >= getHeight() - 200) {
         return getHeight();
     } else {
         return false;
@@ -1238,7 +1234,7 @@ function makeRow(test1, test2, matchScore) {
         // if a row for this test doesn't already exist:
         if (testdiv === null) {
             // generate one
-            var testdiv = document.createElement('div');
+            testdiv = document.createElement('div');
             testdiv.className = 'test';
             if (typeof test1.name == 'undefined') {
                 test1.name = 'undefined'+(numTests-slots.slot1.tests.length);
@@ -1279,10 +1275,10 @@ function makeRow(test1, test2, matchScore) {
 
             // add an emoji overlay if the test times out
             if (test1.timeout) {
-                var timer = document.createElement('div');
-                timer.className = 'timeout';
-                timer.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
-                column1.appendChild(timer);
+                var timer1 = document.createElement('div');
+                timer1.className = 'timeout';
+                timer1.innerHTML = "<a target='_blank' href='"+test1.url+"'>🚫</a>";
+                column1.appendChild(timer1);
                 test1.timeout = false;
             }
             testdiv.appendChild(column1);
@@ -1294,10 +1290,10 @@ function makeRow(test1, test2, matchScore) {
 
             // add an emoji overlay if the test times out
             if (test2.timeout) {
-                var timer = document.createElement('div');
-                timer.className = 'timeout';
-                timer.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
-                column2.appendChild(timer);
+                var timer2 = document.createElement('div');
+                timer2.className = 'timeout';
+                timer2.innerHTML = "<a target='_blank' href='"+test2.url+"'>🚫</a>";
+                column2.appendChild(timer2);
                 test2.timeout = false;
             }
             testdiv.appendChild(column2);
@@ -1312,21 +1308,21 @@ function makeRow(test1, test2, matchScore) {
             try {
                 test1.img.width = size;
                 test1.img.height = size;
-                var a = document.createElement('a');
-                a.href = test1link;
-                a.target = "_blank";
-                column1.appendChild( a );
-                a.appendChild( test1.img );
+                var a1 = document.createElement('a');
+                a1.href = test1link;
+                a1.target = "_blank";
+                column1.appendChild( a1 );
+                a1.appendChild( test1.img );
             } catch(e) {}
 
             try {
                 test2.img.width = size;
                 test2.img.height = size;
-                var a = document.createElement('a');
-                a.href = test2link;
-                a.target = "_blank";
-                column2.appendChild( a );
-                a.appendChild( test2.img );
+                var a2 = document.createElement('a');
+                a2.href = test2link;
+                a2.target = "_blank";
+                column2.appendChild( a2 );
+                a2.appendChild( test2.img );
             } catch(e) {}
 
             if (scrollTrack) {
@@ -1342,7 +1338,7 @@ function makeRow(test1, test2, matchScore) {
             var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";
 
             // console.log('matchScore?', matchScore);
-            if (matchScore != "") {
+            if (matchScore !== "") {
                 matchScore += "% match";
                 diffImg = document.createElement('img');
                 diffImg.src = diffCanvas.toDataURL("image/png");
@@ -1357,7 +1353,7 @@ function makeRow(test1, test2, matchScore) {
 
             var refreshButton =  document.createElement('button');
             refreshButton.innerHTML = "refresh";
-            refreshButton.onclick = function() {refresh(test1, test2);}
+            refreshButton.onclick = function() {refresh(test1, test2);};
             controls.appendChild(refreshButton);
 
             var exportButton =  document.createElement('button');
@@ -1376,9 +1372,7 @@ function makeRow(test1, test2, matchScore) {
             controls.appendChild(exportGifButton);
         }
     });
-
 }
-
 
 
 
@@ -1419,7 +1413,7 @@ function blobFromLink(url, name) {
 
 // save all new images to disk
 function saveImages() {
-    diffSay("Saving "+Object.keys(images).length+" images…")
+    diffSay("Saving "+Object.keys(images).length+" images…");
     for (var name in images) {
         console.log('saving', name);
         var link = images[name].img2.src;
@@ -1504,7 +1498,7 @@ function makeContactSheet() {
                 saveAs(blob, 'differ-' + (+new Date()) + '.png');
             }
             loaded++;
-        }
+        };
         img.src = images[x].strip;
         i++;
     }
@@ -1520,9 +1514,9 @@ function makeInfoJSON() {
     };
     try {
         j.tests = {};
-        for (test in data.tests) {
+        for (var test in data.tests) {
             j.tests[test] = {};
-            for (key in data.tests[test]) {
+            for (var key in data.tests[test]) {
                 if (key != "data") {
                     j.tests[test][key] = data.tests[test][key];
                 }
@@ -1551,23 +1545,22 @@ var saveData = (function () {
     };
 }());
 
-// wen the page first loads:
+// when the page first loads:
 window.onload = function() {
     // check the url for interesting facts
     parseQuery();
-
     // show the top progress bar if not scrolled to the top
     var myScrollFunc = function() {
         var y = window.scrollY;
         if (y >= get('progressbar').offsetTop) {
-        progressTop.style['visibility'] = "visible";
+            progressTop.style.visibility = "visible";
         } else {
-        progressTop.style['visibility'] = "hidden";
+            progressTop.style.visibility = "hidden";
         }
     };
-
     window.addEventListener("scroll", myScrollFunc);
-}
+};
+
 
 //
 // whew
