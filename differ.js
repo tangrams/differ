@@ -58,6 +58,11 @@ var frame2 = {
     'document': get("map2").contentDocument
 };
 
+frame1.iframe.style.height = size+"px";
+frame1.iframe.style.width = size+"px";
+frame2.iframe.style.height = size+"px";
+frame2.iframe.style.width = size+"px";
+
 // browser check
 var ua = navigator.userAgent.toLowerCase();
 var chrome = false;
@@ -359,8 +364,6 @@ function prepMap(which) {
     return new Promise(function(resolve, reject) {
         var frame = which.iframe;
         var mapWindow = which.window;
-        frame.style.height = size+"px";
-        frame.style.width = size+"px";
 
         // not sure why the others hit a race condition but this doesn't ಠ_ಠ
         var map = frame.contentDocument.getElementById("map");
