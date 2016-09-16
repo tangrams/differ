@@ -1,9 +1,8 @@
 # differ
-A map-render-testing tool for [Tangram](http://github.com/tangrams/tangram)
+A testing tool for [Tangram](http://github.com/tangrams/tangram) – https://tangrams.github.io/differ
 
-Live at: https://tangrams.github.io/differ
+### 🏁 [Run unit tests against last build](https://tangrams.github.io/differ/?1=https%3A//tangrams.github.io/differ-tests/unit-tests/unittests01.json&2=&lib1=https%3A//mapzen.com/tangram/0.9/tangram.debug.js&lib2=https%3A//tangrams.github.io/tangram/dist/tangram.debug.js&go) 🏁
 
-<img width="585" alt="screen shot 2016-05-20 at 11 13 11 am" src="https://cloud.githubusercontent.com/assets/459970/15432366/eb52b83c-1e7b-11e6-87fa-4bf1c7e0091d.png">
 
 ## to generate new pre-rendered reference images
 
