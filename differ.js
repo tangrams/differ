@@ -225,7 +225,7 @@ function readTextFile(file, callback, errorback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+escape(slot1.value)+"&2="+escape(slot2.value)+"&lib1="+escape(library1.value)+"&lib2="+escape(library2.value)+(checkbox1.checked ? "&ignore1" : "")+(checkbox2.checked ? "&ignore2" : "")+"&go";
+    var url = parser.pathname+"?1="+encodeURI(slot1.value)+"&2="+encodeURI(slot2.value)+"&lib1="+encodeURI(library1.value)+"&lib2="+encodeURI(library2.value)+(checkbox1.checked ? "&ignore1" : "")+(checkbox2.checked ? "&ignore2" : "")+"&go";
     if (parser.origin+url+"&go" != window.location) {
         var currentstate = history.state;
         window.history.pushState(currentstate, "", url);
@@ -434,7 +434,7 @@ function loadFile(url, ignoreImages, depth, tests) {
                         if (typeof data.tests[key].url === 'undefined') data.tests[key].url = defaultScene;
 
                         var r = new RegExp('^(?:[a-z]+:)?//', 'i');
-                        var testUrl;
+                        var testUrl, slotUrl;
                         // if the test url is a json, load it recursively
                         if (data.tests[key].url.split('.').pop() == "json"){
 
@@ -447,7 +447,7 @@ function loadFile(url, ignoreImages, depth, tests) {
                             if (r.test(data.tests[key].url) === false ) {
                                 // make sure there's only one slash at the join:
                                 // remove any trailing slash from parent url
-                                var slotUrl = slot.dir.replace(/\/$/, "");
+                                slotUrl = slot.dir.replace(/\/$/, "");
                                 // remove any leading slash from test url
                                 testUrl = testUrl.replace(/^\/|\/$/g, '');
                                 // prepend slot.dir to path
@@ -462,7 +462,9 @@ function loadFile(url, ignoreImages, depth, tests) {
                             // if the test url is relative, prepend the parent's root directory
                             // set full path of scene file
                             if (r.test(data.tests[key].url) === false ) {
-                                var slotUrl = slot.dir.replace(/\/$/, "");
+                                // make sure there's only one slash at the join:
+                                // remove any trailing slash from parent url
+                                slotUrl = slot.dir.replace(/\/$/, "");
                                 // remove any leading slash from test url
                                 testUrl = testUrl.replace(/^\/|\/$/g, '');
                                 // prepend slot.dir to path
@@ -1421,7 +1423,7 @@ function saveImages() {
             saveImage(response.blob, response.name);
         });
     }
-    diffSay(" Done.<br>")
+    diffSay(" Done.<br>");
 }
 
 // make a png strip out of the two maps and their diff
