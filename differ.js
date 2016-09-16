@@ -681,8 +681,10 @@ function loadImage (url) {
 // get image data object using a canvas
 function imageData (img, canvas) {
     return new Promise(function(resolve, reject) {
-        // draw image to the canvas
         var context = canvas.getContext("2d");
+        // prep the canvas - prevent pixelmatch alpha bug
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        // draw image to the canvas
         context.drawImage(img,
                             0, 0, img.width, img.height,
                             0, 0, canvas.width, canvas.height);
