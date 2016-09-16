@@ -804,7 +804,6 @@ function goClick() {
 
     get('alert').innerHTML = '';
     diffSay("Starting Diff");
-    updateURL();
     get("goButton").blur();
 
     // reset iframe promises
@@ -820,6 +819,8 @@ function goClick() {
     library2.value = ensureSchema(library2.value);
     slot1.value = ensureSchema(slot1.value);
     slot2.value = ensureSchema(slot2.value);
+
+    updateURL();
 
     // reload iframes with specified versions of Tangram
     if (safari) {
@@ -930,6 +931,8 @@ function proceed() {
             prepTestImages(test1, test2);
         }).catch(function(err) {
             console.log('proceed ?', err);
+            diffSay('Problem loading map: "'+err+'"');
+            stopClick();
         });
     });
 }
