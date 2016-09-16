@@ -931,6 +931,8 @@ function proceed() {
             prepTestImages(test1, test2);
         }).catch(function(err) {
             console.log('proceed ?', err);
+            diffSay('Problem loading map: "'+err+'"');
+            stopClick();
         });
     });
 }
