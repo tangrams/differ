@@ -177,7 +177,9 @@ canvas {
     margin: .5em auto;
     position: relative;
 }
-
+.test img {
+    border: 1px solid #ddd;
+}
 .header {
     clear: both;
 }
@@ -193,10 +195,14 @@ canvas {
     float: left;
     position: relative;
 }
+#diff {
+    position: absolute;
+    bottom: 0;
+}
 
 .controls {
     width: 25%;
-    float: left;
+    float: right;
 }
 
 .matchScore {
