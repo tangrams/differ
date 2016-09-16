@@ -886,6 +886,7 @@ function goClick() {
 
         get("goButton").setAttribute("style","display:none");
         get('stopButton').setAttribute("style","display:inline");
+        get('stopButtonTop').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
       if (typeof err != 'undefined') {
@@ -910,6 +911,7 @@ function stop() {
     if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
     if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
     get('stopButton').setAttribute("style","display:none");
+    get('stopButtonTop').setAttribute("style","display:none");
     get("goButton").setAttribute("style","display:inline");
 }
 

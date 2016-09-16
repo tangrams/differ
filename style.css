@@ -110,6 +110,11 @@ button {
     background-color: #ffcccc;
     display: none;
 }
+#stopButtonTop {
+    background: none;
+    background-color: #ffcccc;
+    float: right;
+}
 
 button.chooser {
     float: none;
