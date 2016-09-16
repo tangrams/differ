@@ -374,7 +374,11 @@ function prepMap(which) {
 }
 
 // parse url and load the appropriate file, then create tests
-function loadFile(url, ignoreImages, depth, tests) {
+function loadFile(url, args) {
+    var ignoreImages = args.ignoreImages;
+    var depth = args.depth;
+    var tests = args.tests;
+    var scene = args.scene;
     if (typeof depth == 'undefined') depth = {val: 0};
     // increment depth value
     depth.val++;
@@ -431,8 +435,10 @@ function loadFile(url, ignoreImages, depth, tests) {
 
                     // convert tests to an array for easier traversal
                     var newTests = Object.keys(data.tests).map(function (key) {
-                        if (typeof data.tests[key].url === 'undefined') data.tests[key].url = defaultScene;
-
+                        if (typeof data.tests[key].url === 'undefined') {
+                            if (typeof scene !== 'undefined') data.tests[key].url = scene;
+                            else data.tests[key].url = defaultScene;
+                        }
                         var r = new RegExp('^(?:[a-z]+:)?//', 'i');
                         var testUrl, slotUrl;
                         // if the test url is a json, load it recursively
@@ -453,7 +459,7 @@ function loadFile(url, ignoreImages, depth, tests) {
                                 // prepend slot.dir to path
                                 testUrl = slotUrl + '/' + testUrl;
                             }
-                            loadFile(testUrl, ignoreImages, depth, tests).then(function(result) {
+                            loadFile(testUrl, {ignoreImages: true, depth: depth, tests: tests}).then(function(result) {
                             });
                         } else {
                             // add test's name as a property of the test
@@ -521,11 +527,9 @@ function copyTestsFrom(tests) {
 }
 
 // load some default tests if none are provided
-function loadDefaults() {
+function loadDefaults(scene) {
     return new Promise(function(resolve, reject) {
-        console.log('loadDefaults:', defaultFile);
-        loadFile(defaultFile).then(function(result){
-            console.log('loadDefaults', result);
+        loadFile(defaultFile, {scene: scene}).then(function(result){
             resolve(result.tests);
         });
     });
@@ -540,10 +544,10 @@ function prepTests() {
         if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length === 0) && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length === 0)) {
             diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
-                loadDefaults().then(function(val){
+                loadDefaults(slots.slot1.url).then(function(val){
                     slots.slot1.tests = val;
                 }),
-                loadDefaults().then(function(val){
+                loadDefaults(slots.slot2.url).then(function(val){
                     slots.slot2.tests = val;
                 })
             ]).then(function(){
@@ -853,9 +857,8 @@ function goClick() {
     // if one slot is empty, assume the value of the other
     if (slot1.value === "" && slot2.value !== "") slot1Val = slot2.value;
     if (slot2.value === "" && slot1.value !== "") slot2Val = slot1.value;
-
     // load any files in the file inputs and parse their contents
-    return Promise.all([loadFile(slot1Val, checkbox1.checked, slot1depth, slot1tests), loadFile(slot2Val, checkbox2.checked, slot2depth, slot2tests), frame1Ready, frame2Ready]).then(function(result){
+    return Promise.all([loadFile(slot1Val, {ignoreImages: checkbox1.checked, depth: slot1depth, tests: slot1tests}), loadFile(slot2Val, {ignoreImages: checkbox2.checked, depth: slot2depth, tests: slot2tests}), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
 
@@ -935,6 +938,7 @@ function proceed() {
             // load next test in each list
             var test1 = slots.slot1.tests.shift();
             var test2 = slots.slot2.tests.shift();
+
             running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
@@ -1067,7 +1071,6 @@ function prepTestImages(test1, test2) {
     test2.file = slots.slot2.file;
     test1.dir = slots.slot1.dir;
     test2.dir = slots.slot2.dir;
-
     // prep scene file urls
     var p1 = prepStyles(test1, test2).then(function(styles) {
         test1.url = styles.url1;
