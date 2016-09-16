@@ -1164,12 +1164,10 @@ function doDiff( test1, test2 ) {
 
         // make an output row
         makeRow(test1, test2, matchScore).then(function() {
-
             // store the images
             images[test1.name] = {};
             images[test1.name].img1 = test1.img;
             images[test1.name].img2 = test2.img;
-
             // save diff to new image and save a strip
             var data = atob(diffImg.src.slice(22));
             var buffer = new Uint8Array(data.length);
@@ -1370,6 +1368,8 @@ function makeRow(test1, test2, matchScore) {
                 makeGif([images[test1.name].img1, images[test1.name].img2], test1.name);
             };
             controls.appendChild(exportGifButton);
+
+            resolve();
         }
     });
 }
@@ -1426,7 +1426,6 @@ function saveImages() {
 
 // make a png strip out of the two maps and their diff
 function makeStrip(images, size) {
-    // console.log('makeStrip images:', images);
     var c = document.createElement('canvas');
     c.width = size*images.length;
     c.height = size;
