@@ -19,7 +19,7 @@ var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
 var defaultFile = "tests/labels.json"; // default view locations
-document.getElementById("content").style.maxWidth = size*4.25+'px';
+document.getElementById("content").style.maxWidth = size*4+'px';
 
 // other internal variables
 var slots = {}, images = {},
@@ -1142,7 +1142,6 @@ function prepTestImages(test1, test2) {
                 get('tests').appendChild(doneDiv);
             }
             flashDone();
-            console.log('scrollTrack?', scrollTrack)
             if (scrollTrack) {
                 // scroll to bottom
                 scrollToY(getHeight());

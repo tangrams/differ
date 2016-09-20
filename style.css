@@ -199,18 +199,18 @@ canvas {
     width: 25%;
     float: left;
     position: relative;
+    margin-right: 10px;
 }
 #diff {
+/*
     position: absolute;
     bottom: 0;
+*/
 }
 
 .controls {
-    width: 25%;
-    float: right;
-    position: absolute;
-    bottom: 45%;
-    right: 0px;
+    float: left;
+    margin-top: 1.25em;
 }
 
 .matchScore {
