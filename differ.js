@@ -18,7 +18,7 @@
 var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default3.json"; // default view locations
+var defaultFile = "tests/labels.json"; // default view locations
 
 // other internal variables
 var slots = {}, images = {},
