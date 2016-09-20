@@ -235,7 +235,7 @@ input[type="checkbox"] {
 
 .done h2 {
     text-align: center;
-    background-color: white;
+    /*background-color: white;*/
     padding-bottom: 50px;
     width: 100%;
 }

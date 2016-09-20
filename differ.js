@@ -1129,6 +1129,8 @@ function prepTestImages(test1, test2) {
             diffSay(msg);
             get('statustext').innerHTML = "";
 
+            var scrollTrack = checkscroll();
+
             // add a "done" notice at the bottom of the page as a parting gift
             // (if it doesn't already exist)
             if (document.getElementById('donediv') === null) {
@@ -1139,7 +1141,8 @@ function prepTestImages(test1, test2) {
                 get('tests').appendChild(doneDiv);
             }
             flashDone();
-            if (checkscroll()) {
+            console.log('scrollTrack?', scrollTrack)
+            if (scrollTrack) {
                 // scroll to bottom
                 scrollToY(getHeight());
             }
