@@ -650,13 +650,13 @@ function parseLocation(loc) {
         try {
             location = location.map(parseFloat);
         } catch(e) {
-            console.warn("Can't parse location:", loc);
-            return false;
+            // console.warn("Can't parse location:", loc);
+            throw new Error("Can't parse location:", ''+loc);
         }
         // return updated location
         return location;
     } else {
-        console.warn("Can't parse location:", loc);
+        console.warn("Can't parse location:", ''+loc);
     }
 }
 
@@ -975,7 +975,11 @@ function prepImage(test, frame, msg) {
         }).catch(function(err) {
 
             // no image? load the test view in the map and make a new image
-            var loc = parseLocation(test.location);
+            try {
+                var loc = parseLocation(test.location);
+            } catch(e) {
+                reject(e);
+            }
             loadView(test, loc, frame).then(function(result){
                 if (result == "timeout") {
                     test.timeout = true;
@@ -1096,20 +1100,21 @@ function prepTestImages(test1, test2) {
         // then load the maps and extract screengrabs from both
         return Promise.all([prepImage(test1, frame1, 1), prepImage(test2, frame2, 2)])
             .then(function() {
-                // then advance to the next test
-                nextDiff();
+                // then do the diff and advance to the next test
+                doDiff(test1, test2).then(nextDiff);
             }).catch(function(err) {
                 console.log(err);
                 diffSay(err);
-            });
+                diffSay('Skipping '+test1.name+"…")
+                // skip to the next test
+                nextDiff();
+            })
     });
 
     function nextDiff() {
-        try {
-            doDiff(test1, test2);
-        } catch(e) {
-            console.log('doDiff failed:', e.stack);
-        }
+        // update progressbar
+        updateProgress(slots.slot1.tests.length);
+
         // if there are more tests to run
         if (slots.slot1.tests.length > 0) {
             // load next test in the lists
@@ -1165,9 +1170,6 @@ function doDiff( test1, test2 ) {
             match = 100;
             matchScore = "";
         }
-
-        // update progressbar
-        updateProgress(slots.slot1.tests.length);
 
         // update master percentage
         scores[test1.name] = match;
