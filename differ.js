@@ -425,7 +425,7 @@ function loadFile(url, args) {
                         console.warn('Error parsing json:', e);
                         // set page title
                         diffSay("Can't parse JSON: <a href='"+url+"'>"+urlname+"</a><br>"+e);
-                        return false;
+                        return stopClick();
                     }
 
                     // extract test origin metadata
@@ -647,7 +647,12 @@ function parseLocation(loc) {
             location = loc.split(/[\/]+/);
             location = [location[1], location[2], location[0]]; // re-order
         }
-        location = location.map(parseFloat);
+        try {
+            location = location.map(parseFloat);
+        } catch(e) {
+            console.warn("Can't parse location:", loc);
+            return false;
+        }
         // return updated location
         return location;
     } else {
