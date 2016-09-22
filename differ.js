@@ -1352,7 +1352,8 @@ function makeRow(test1, test2, matchScore) {
             // CONTROLS //
 
             var controls = document.createElement('span');
-            controls.className = 'controls';
+            controls.className = 'column';
+            controls.id = 'controls';
             testdiv.appendChild(controls);
 
             var threatLevel = matchScore > 99 ? "green" : matchScore > 95 ? "orange" : "red";

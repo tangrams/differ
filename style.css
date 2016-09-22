@@ -188,7 +188,14 @@ canvas {
 .header {
     clear: both;
 }
-
+.topbuttons {
+    width: 20%;
+    height: 128px;
+    float: right;
+    margin: 6px 10px;
+    padding: 0;
+    vertical-align: bottom;
+}
 .testname {
     clear: both;
     font-size: 1.25em;
@@ -198,19 +205,19 @@ canvas {
 .column {
     width: 25%;
     float: left;
-    position: relative;
     margin-right: 10px;
 }
 #diff {
-/*
     position: absolute;
     bottom: 0;
-*/
 }
 
-.controls {
-    float: left;
-    margin-top: 1.25em;
+#controls {
+    float: right;
+    width: 20%;
+    position: absolute;
+    right: 0;
+    margin-top: 2%;
 }
 
 .matchScore {
