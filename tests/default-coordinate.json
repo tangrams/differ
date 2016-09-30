@@ -6,6 +6,9 @@
     },
 
     "tests": {
+        "world0": {
+            "coordinate": "0,0,0"
+        },
         "nyc1": {
             "coordinate": "13/2410/3001"
         },

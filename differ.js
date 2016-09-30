@@ -697,7 +697,7 @@ function parseCoordinate(coord) {
     }
     try {
         coordinate = coordinate.map(parseFloat);
-        location = [tile2lat(coordinate[1], coordinate[0]), tile2lat(coordinate[2], coordinate[0]), coordinate[0]]
+        location = [tile2lat(coordinate[2], coordinate[0]), tile2long(coordinate[1], coordinate[0]), coordinate[0]]
         location = location.map(parseFloat);
     } catch(e) {
         throw new Error("Can't parse coordinate:", ''+coord, e);
