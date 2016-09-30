@@ -18,8 +18,8 @@
 var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
-// var defaultFile = "tests/default-coordinate.json"; // default view locations
-var defaultFile = "tests/default.json"; // default view locations
+var defaultFile = "tests/default-coordinate.json"; // default view locations
+// var defaultFile = "tests/default.json"; // default view locations
 document.getElementById("content").style.maxWidth = size*4+'px';
 
 // other internal variables
@@ -570,6 +570,18 @@ function prepTests() {
             resolve();
         }
     }).then(function(){
+        // convert any coordinates to locations
+        for (var s in slots) {
+            for (var t in slots[s].tests) {
+                var test = slots[s].tests[t];
+                if (typeof test.coordinate != 'undefined') {
+                    test.location = parseCoordinate(test.coordinate)
+                    delete test.coordinate;
+                }
+            }
+        }
+        return;
+    }).then(function(){
         // count tests
         if (slots.slot1.tests.length != slots.slot2.tests.length) {
             numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
@@ -636,7 +648,7 @@ function prepPage() {
 //
 
 
-// parse view object and adjust map
+// parse a location in a varity of formats and return a standardized [lon, lat, z]
 function parseLocation(loc) {
     if (Object.prototype.toString.call(loc) === '[object Array]') {
         return loc; // no parsing needed
@@ -644,8 +656,10 @@ function parseLocation(loc) {
         // parse string location as array of floats
       var location;
         if (loc.indexOf(',') > 0 ) { // comma-delimited
+            // expect format: "lon,lat,z"
             location = loc.split(/[ ,]+/);
         } else if (loc.indexOf('/') > 0 ) { // slash-delimited
+            // expect format: "z/lon/lat"
             location = loc.split(/[\/]+/);
             location = [location[1], location[2], location[0]]; // re-order
         }
@@ -662,14 +676,11 @@ function parseLocation(loc) {
     }
 }
 
-// convert tile coordinates to a latlon location
+// parse a tile coordinate and return a standardized [lon, lat, z]
 // tile coordinates: [z, x, y]
-// latlons locations: [lon, lat, z]
 function parseCoordinate(coord) {
     var location, coordinate;
-    // if it's an array, carry on
-    // if (Object.prototype.toString.call(loc) === '[object Array]') {
-    // } else 
+    // expect format: "z/lon/lat" or "z,lon,lat"
     if (typeof(coord) === "string") {
         if (coord.indexOf(',') > 0 ) { // comma-delimited
             coordinate = coord.split(/[ ,]+/);
@@ -681,14 +692,12 @@ function parseCoordinate(coord) {
     }
     try {
         coordinate = coordinate.map(parseFloat);
-        location = [coordinate[0], tile2lat(coordinate[1], coordinate[0]), tile2lat(coordinate[2], coordinate[0])]
+        location = [tile2lat(coordinate[1], coordinate[0]), tile2lat(coordinate[2], coordinate[0]), coordinate[0]]
         location = location.map(parseFloat);
     } catch(e) {
-        // console.warn("Can't parse coordinate:", coord);
         throw new Error("Can't parse coordinate:", ''+coord, e);
     }
-    // debugger
-
+    console.log('Coordinate:', coord, '=', location)
     // return updated location
     return location;
 }
@@ -820,8 +829,7 @@ function loadView (view, location, frame) {
                 diffSay(view.name+": timed out.");
                 console.log(view.name+": timed out");
                 resolve("timeout");
-            // }, 6000);
-            }, 1000);
+            }, 6000);
 
             // wait for map to finish drawing, then return
             if (frame.iframe.id == "map1") {
@@ -1017,7 +1025,7 @@ function prepImage(test, frame, msg) {
 
             // no image? load the test view in the map and make a new image
             try {
-                if (typeof test.location != 'undefined') var loc = parseLocation(test.location);
+                var loc = parseLocation(test.location);
             } catch(e) {
                 reject(e);
             }
@@ -1092,27 +1100,7 @@ function prepStyles(test1, test2) {
 // pick a location for each map to load
 function prepLocations(test1, test2) {
     return new Promise(function(resolve, reject) {
-        var location;
-        if (typeof test1.location !== 'undefined' || typeof test2.location !== 'undefined') {
-            try {
-                var location = setEither(test1.location, test2.location);
-            } catch(e) {
-            }
-        } else if (typeof test1.coordinate !== 'undefined' || typeof test2.coordinate !== 'undefined') {
-            try {
-                var coordinate = setEither(test1.coordinate, test2.coordinate)[0];
-            } catch(e2) {
-                diffSay("No locations or coordinates set for either test - using default location.");
-                location = [40.70532700869127,-74.00976419448854,16];
-                return resolve({'loc1': location, 'loc2': location});
-            }
-        }
-        // debugger
-        if (typeof coordinate !== 'undefined') {
-            location = parseCoordinate(coordinate);
-            if (test1.coordinate !== null) test1.coordinate = null;
-            if (test2.coordinate !== null) test2.coordinate = null;
-        }
+        var location = setEither(test1.location, test2.location);
         if (location !== null) {
             test1.location = location[0];
             test2.location = location[1];
