@@ -708,9 +708,9 @@ function parseCoordinate(coord) {
 }
 
 // convert tile coordinates to latlon
-function tile2long(x,z) { return (x/Math.pow(2,z)*360-180); }
+function tile2long(x,z) { return ((x+.5)/Math.pow(2,z)*360-180); }
 function tile2lat(y,z) {
-   var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+   var n=Math.PI-2*Math.PI*(y+.5)/Math.pow(2,z);
    return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
