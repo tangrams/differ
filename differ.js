@@ -33,7 +33,8 @@ var lsize = size * window.devicePixelRatio; // logical pixels
 var numTests, scores = [], totalScore = 0;
 var data, metadata;
 var loadTime = Date();
-var defaultScene;
+var defaultScene = "simple.yaml";
+var defaultWarning = false;
 var running = false;
 
 // shortcuts to elements
@@ -410,6 +411,8 @@ function loadFile(url, args) {
 
         if (urlext == "yaml") {
             slot.defaultScene = url;
+            // set a global default scene
+            defaultScene = url;
             // decrement depth value
             depth.val--;
             if (depth.val === 0) {
@@ -442,7 +445,13 @@ function loadFile(url, args) {
                     var newTests = Object.keys(data.tests).map(function (key) {
                         if (typeof data.tests[key].url === 'undefined') {
                             if (typeof scene !== 'undefined') data.tests[key].url = scene;
-                            else data.tests[key].url = defaultScene;
+                            else {
+                                if (!defaultWarning) {
+                                    diffSay("No scene specified, using "+defaultScene);
+                                    defaultWarning = true;
+                                }
+                                data.tests[key].url = defaultScene;
+                            }
                         }
                         var r = new RegExp('^(?:[a-z]+:)?//', 'i');
                         var testUrl, slotUrl;
@@ -1069,6 +1078,7 @@ function prepImage(test, frame, msg) {
 // prep scene file urls
 function prepStyles(test1, test2) {
     return new Promise(function(resolve, reject) {
+        // if there's no test scene, check for a default scene
         if (typeof test1.url == 'undefined') {
             if (typeof slots.slot1.defaultScene != 'undefined') {
                 test1.url = slots.slot1.defaultScene;
@@ -1079,16 +1089,17 @@ function prepStyles(test1, test2) {
                 test2.url = slots.slot2.defaultScene;
             }
         }
+        // if there's still no test scene for either test, check the other one
         var url = setEither(test1.url, test2.url);
         if (url === null) {
             url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
         }
+        // if there's still no test scene, bail
         if (url === null) {
             diffSay("No scenefile URLs found for either test!");
             stopClick();
             return;
         } else {
-
             test1.url = url[0];
             test2.url = url[1];
             if (!isPathAbsolute(test1.url)) {
