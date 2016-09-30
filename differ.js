@@ -18,7 +18,8 @@
 var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/labels.json"; // default view locations
+// var defaultFile = "tests/default-coordinate.json"; // default view locations
+var defaultFile = "tests/default.json"; // default view locations
 document.getElementById("content").style.maxWidth = size*4+'px';
 
 // other internal variables
@@ -661,6 +662,44 @@ function parseLocation(loc) {
     }
 }
 
+// convert tile coordinates to a latlon location
+// tile coordinates: [z, x, y]
+// latlons locations: [lon, lat, z]
+function parseCoordinate(coord) {
+    var location, coordinate;
+    // if it's an array, carry on
+    // if (Object.prototype.toString.call(loc) === '[object Array]') {
+    // } else 
+    if (typeof(coord) === "string") {
+        if (coord.indexOf(',') > 0 ) { // comma-delimited
+            coordinate = coord.split(/[ ,]+/);
+        } else if (coord.indexOf('/') > 0 ) { // slash-delimited
+            coordinate = coord.split(/[\/]+/);
+        }
+    } else {
+        coordinate = coord.slice();
+    }
+    try {
+        coordinate = coordinate.map(parseFloat);
+        location = [coordinate[0], tile2lat(coordinate[1], coordinate[0]), tile2lat(coordinate[2], coordinate[0])]
+        location = location.map(parseFloat);
+    } catch(e) {
+        // console.warn("Can't parse coordinate:", coord);
+        throw new Error("Can't parse coordinate:", ''+coord, e);
+    }
+    // debugger
+
+    // return updated location
+    return location;
+}
+
+// convert tile coordinates to latlon
+function tile2long(x,z) { return (x/Math.pow(2,z)*360-180); }
+function tile2lat(y,z) {
+   var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
+}
+
 // load an image from a file
 function loadImage (url) {
     if (typeof url == 'undefined') {
@@ -781,7 +820,8 @@ function loadView (view, location, frame) {
                 diffSay(view.name+": timed out.");
                 console.log(view.name+": timed out");
                 resolve("timeout");
-            }, 6000);
+            // }, 6000);
+            }, 1000);
 
             // wait for map to finish drawing, then return
             if (frame.iframe.id == "map1") {
@@ -977,7 +1017,7 @@ function prepImage(test, frame, msg) {
 
             // no image? load the test view in the map and make a new image
             try {
-                var loc = parseLocation(test.location);
+                if (typeof test.location != 'undefined') var loc = parseLocation(test.location);
             } catch(e) {
                 reject(e);
             }
@@ -1052,7 +1092,27 @@ function prepStyles(test1, test2) {
 // pick a location for each map to load
 function prepLocations(test1, test2) {
     return new Promise(function(resolve, reject) {
-        var location = setEither(test1.location, test2.location);
+        var location;
+        if (typeof test1.location !== 'undefined' || typeof test2.location !== 'undefined') {
+            try {
+                var location = setEither(test1.location, test2.location);
+            } catch(e) {
+            }
+        } else if (typeof test1.coordinate !== 'undefined' || typeof test2.coordinate !== 'undefined') {
+            try {
+                var coordinate = setEither(test1.coordinate, test2.coordinate)[0];
+            } catch(e2) {
+                diffSay("No locations or coordinates set for either test - using default location.");
+                location = [40.70532700869127,-74.00976419448854,16];
+                return resolve({'loc1': location, 'loc2': location});
+            }
+        }
+        // debugger
+        if (typeof coordinate !== 'undefined') {
+            location = parseCoordinate(coordinate);
+            if (test1.coordinate !== null) test1.coordinate = null;
+            if (test2.coordinate !== null) test2.coordinate = null;
+        }
         if (location !== null) {
             test1.location = location[0];
             test2.location = location[1];

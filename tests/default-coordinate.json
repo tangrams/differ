@@ -1,0 +1,22 @@
+{
+    "origin": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.54 Safari/537.36",
+        "devicepixelratio": 2,
+        "time": "Wed Feb 24 2016 13:37:28 GMT-0500 (EST)"
+    },
+
+    "tests": {
+        "nyc10": {
+            "coordinate": "13/2410/3001"
+        },
+        "nyc11": {
+            "coordinate": "13,2313,3142"
+        },
+        "nyc12": {
+            "coordinate": [13,4014,2512]
+        },
+        "nyc13": {
+            "coordinate": [13,4054,2728]
+        }
+    }
+}
