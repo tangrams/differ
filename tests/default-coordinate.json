@@ -6,8 +6,14 @@
     },
 
     "tests": {
-        "nyc10": {
+        "nyc1": {
             "coordinate": "13/2410/3001"
+        },
+        "nyc2": {
+            "coordinate": "13,2410,3001"
+        },
+        "nyc3": {
+            "coordinate": [13,2410,3001]
         },
         "nyc11": {
             "coordinate": "13,2313,3142"
