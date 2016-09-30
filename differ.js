@@ -596,6 +596,12 @@ function prepTests() {
 
 // setup output divs and canvases, and wire up connections to differ code
 function prepPage() {
+    if (typeof frame1.window.scene == 'undefined') {
+        throw new Error("Frame 1 failed to load, check library url: \""+library1.value+"\"");
+    }
+    if (typeof frame2.window.scene == 'undefined') {
+        throw new Error("Frame 2 failed to load, check library url: \""+library2.value+"\"");
+    }
     // subscribe to Tangram's published view_complete event
     frame1.window.scene.subscribe({
         // trigger promise resolution
@@ -605,7 +611,7 @@ function prepPage() {
                 viewComplete1Resolve();
             },
         warning: function(e) {
-            // console.log('frame1 scene warning:', e);
+            console.log('frame1 scene warning:', e);
             }
     });
     frame2.window.scene.subscribe({
@@ -615,10 +621,9 @@ function prepPage() {
                 viewComplete2Resolve();
             },
         warning: function(e) {
-            // console.log('frame2 scene warning:', e);
+            console.log('frame2 scene warning:', e);
             }
     });
-
     // reset view_complete triggers if the frames are still loading
     if (frame1.window.scene.initialized !== true) {
         resetViewComplete(frame1);
@@ -949,11 +954,11 @@ function goClick() {
         get('stopButtonTop').setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-      if (typeof err != 'undefined') {
-        console.log(err);
-        diffSay(err);
-      }
-      stopClick();
+        if (typeof err != 'undefined') {
+          console.log(err);
+          diffSay(err);
+        }
+        stopClick();
     });
 
 }
@@ -999,8 +1004,8 @@ function proceed() {
             running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
-            console.log('proceed ?', err);
-            diffSay('Problem loading map: "'+err+'"');
+            console.log('proceed()', err);
+            diffSay(err);
             stopClick();
         });
     });
