@@ -18,8 +18,8 @@
 var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/default-coordinate.json"; // default view locations
-// var defaultFile = "tests/default.json"; // default view locations
+var defaultFile = "tests/default.json"; // default view locations
+// var defaultFile = "tests/default-coordinate.json"; // default view locations
 document.getElementById("content").style.maxWidth = size*4+'px';
 
 // other internal variables
