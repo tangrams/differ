@@ -556,7 +556,7 @@ function prepTests() {
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
         if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length === 0) && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length === 0)) {
-            diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
+            diffSay('No views defined in either test file, using default views in <a href="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults(slots.slot1.url).then(function(val){
                     slots.slot1.tests = val;
