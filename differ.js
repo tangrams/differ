@@ -640,7 +640,7 @@ function prepPage() {
     }
 
     // set status message
-    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
+    var msg = "Now diffing: <a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
     get('statustext').innerHTML = msg;
 
     // make diffing canvas
@@ -1190,7 +1190,7 @@ function prepTestImages(test1, test2) {
             // all done
             stop();
             console.log("Done!");
-            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
+            var msg = "<a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
             diffSay(msg);
             get('statustext').innerHTML = "";
 
