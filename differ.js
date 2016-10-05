@@ -393,14 +393,15 @@ function loadFile(url, args) {
             throw new Error("Empty slot.");
             reject();
         }
-        // diffSay("Loading "+url);
+        var originalurl = url.slice();
+        // if it's a github url, get the raw file
         url = convertGithub(url);
         var urlname = splitURL(url).file;
         var urlext = splitURL(url).ext;
-        var slot;
 
         // populate slots array
-        slot = {};
+        var slot = {};
+        slot.originalurl = originalurl;
         slot.url = url;
         slot.dir = splitURL(url).dir;
         slot.file = urlname;
@@ -959,11 +960,11 @@ function goClick() {
         slots.slot2.tests = sortByKey(slots.slot2.tests, "name");
 
         get("goButton").setAttribute("style","display:none");
-        get('stopButton').setAttribute("style","display:inline");
-        get('stopButtonTop').setAttribute("style","display:inline");
+        get("stopButton").setAttribute("style","display:inline");
+        get("stopButtonTop").setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-        if (typeof err != 'undefined') {
+        if (typeof err != "undefined") {
           console.log(err);
           diffSay(err);
         }
@@ -974,7 +975,7 @@ function goClick() {
 
 // stop button
 function stopClick() {
-    get('stopButton').blur();
+    get("stopButton").blur();
     diffSay("Stopping Diff.");
     stop();
 }
@@ -982,10 +983,10 @@ function stopClick() {
 // all stop
 function stop() {
     running = false;
-    if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
-    if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
-    get('stopButton').setAttribute("style","display:none");
-    get('stopButtonTop').setAttribute("style","display:none");
+    if (typeof slots.slot1 != "undefined") slots.slot1.tests = [];
+    if (typeof slots.slot2 != "undefined") slots.slot2.tests = [];
+    get("stopButton").setAttribute("style","display:none");
+    get("stopButtonTop").setAttribute("style","display:none");
     get("goButton").setAttribute("style","display:inline");
 }
 
@@ -1339,16 +1340,11 @@ function makeRow(test1, test2, matchScore) {
             var title = document.createElement('div');
             title.className = 'testname';
             // make test title a link to a live version of the test
-
             // parse locations
             var loc = parseLocation(test1.location);
             // make links
-            var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
-                +"&lib="+library1.value
-                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-            var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
-                +"&lib="+library2.value
-                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            var test1link = "http://tangrams.github.io/tangram-frame/?url=" + test1.url + "&lib=" + library1.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
+            var test2link = "http://tangrams.github.io/tangram-frame/?url=" + test2.url + "&lib=" + library2.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
             title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
             testdiv.appendChild(title);
 
