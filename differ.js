@@ -18,7 +18,8 @@
 var imgType = ".png";
 var size = 250; // physical pixels
 var writeScreenshots = false; // write new map images to disk?
-var defaultFile = "tests/labels.json"; // default view locations
+var defaultFile = "tests/default.json"; // default view locations
+// var defaultFile = "tests/default-coordinate.json"; // default view locations
 document.getElementById("content").style.maxWidth = size*4+'px';
 
 // other internal variables
@@ -32,7 +33,8 @@ var lsize = size * window.devicePixelRatio; // logical pixels
 var numTests, scores = [], totalScore = 0;
 var data, metadata;
 var loadTime = Date();
-var defaultScene;
+var defaultScene = "simple.yaml";
+var defaultWarning = false;
 var running = false;
 
 // shortcuts to elements
@@ -391,14 +393,15 @@ function loadFile(url, args) {
             throw new Error("Empty slot.");
             reject();
         }
-        // diffSay("Loading "+url);
+        var originalurl = url.slice();
+        // if it's a github url, get the raw file
         url = convertGithub(url);
         var urlname = splitURL(url).file;
         var urlext = splitURL(url).ext;
-        var slot;
 
         // populate slots array
-        slot = {};
+        var slot = {};
+        slot.originalurl = originalurl;
         slot.url = url;
         slot.dir = splitURL(url).dir;
         slot.file = urlname;
@@ -409,6 +412,8 @@ function loadFile(url, args) {
 
         if (urlext == "yaml") {
             slot.defaultScene = url;
+            // set a global default scene
+            defaultScene = url;
             // decrement depth value
             depth.val--;
             if (depth.val === 0) {
@@ -441,7 +446,13 @@ function loadFile(url, args) {
                     var newTests = Object.keys(data.tests).map(function (key) {
                         if (typeof data.tests[key].url === 'undefined') {
                             if (typeof scene !== 'undefined') data.tests[key].url = scene;
-                            else data.tests[key].url = defaultScene;
+                            else {
+                                if (!defaultWarning) {
+                                    diffSay("No scene specified, using "+defaultScene);
+                                    defaultWarning = true;
+                                }
+                                data.tests[key].url = defaultScene;
+                            }
                         }
                         var r = new RegExp('^(?:[a-z]+:)?//', 'i');
                         var testUrl, slotUrl;
@@ -546,7 +557,7 @@ function prepTests() {
     // copy required properties from one test if undefined in the other
     return new Promise(function(resolve, reject) {
         if ((typeof slots.slot1.tests == 'undefined' || slots.slot1.tests.length === 0) && (typeof slots.slot2.tests == 'undefined' || slots.slot2.tests.length === 0)) {
-            diffSay('No views defined in either test file, using default views in <a href src="'+defaultFile+'">'+defaultFile+'</a>');
+            diffSay('No views defined in either test file, using default views in <a href="'+defaultFile+'">'+defaultFile+'</a>');
             Promise.all([
                 loadDefaults(slots.slot1.url).then(function(val){
                     slots.slot1.tests = val;
@@ -569,6 +580,18 @@ function prepTests() {
             resolve();
         }
     }).then(function(){
+        // convert any coordinates to locations
+        for (var s in slots) {
+            for (var t in slots[s].tests) {
+                var test = slots[s].tests[t];
+                if (typeof test.coordinate != 'undefined') {
+                    test.location = parseCoordinate(test.coordinate)
+                    delete test.coordinate;
+                }
+            }
+        }
+        return;
+    }).then(function(){
         // count tests
         if (slots.slot1.tests.length != slots.slot2.tests.length) {
             numTests = Math.min(slots.slot1.tests.length, slots.slot2.tests.length);
@@ -583,6 +606,12 @@ function prepTests() {
 
 // setup output divs and canvases, and wire up connections to differ code
 function prepPage() {
+    if (typeof frame1.window.scene == 'undefined') {
+        throw new Error("Frame 1 failed to load, check library url: \""+library1.value+"\"");
+    }
+    if (typeof frame2.window.scene == 'undefined') {
+        throw new Error("Frame 2 failed to load, check library url: \""+library2.value+"\"");
+    }
     // subscribe to Tangram's published view_complete event
     frame1.window.scene.subscribe({
         // trigger promise resolution
@@ -592,7 +621,7 @@ function prepPage() {
                 viewComplete1Resolve();
             },
         warning: function(e) {
-            // console.log('frame1 scene warning:', e);
+            console.log('frame1 scene warning:', e);
             }
     });
     frame2.window.scene.subscribe({
@@ -602,10 +631,9 @@ function prepPage() {
                 viewComplete2Resolve();
             },
         warning: function(e) {
-            // console.log('frame2 scene warning:', e);
+            console.log('frame2 scene warning:', e);
             }
     });
-
     // reset view_complete triggers if the frames are still loading
     if (frame1.window.scene.initialized !== true) {
         resetViewComplete(frame1);
@@ -613,7 +641,7 @@ function prepPage() {
     }
 
     // set status message
-    var msg = "Now diffing: <a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
+    var msg = "Now diffing: <a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " tests:<br>";
     get('statustext').innerHTML = msg;
 
     // make diffing canvas
@@ -635,7 +663,7 @@ function prepPage() {
 //
 
 
-// parse view object and adjust map
+// parse a location in a varity of formats and return a standardized [lon, lat, z]
 function parseLocation(loc) {
     if (Object.prototype.toString.call(loc) === '[object Array]') {
         return loc; // no parsing needed
@@ -643,8 +671,10 @@ function parseLocation(loc) {
         // parse string location as array of floats
       var location;
         if (loc.indexOf(',') > 0 ) { // comma-delimited
+            // expect format: "lon,lat,z"
             location = loc.split(/[ ,]+/);
         } else if (loc.indexOf('/') > 0 ) { // slash-delimited
+            // expect format: "z/lon/lat"
             location = loc.split(/[\/]+/);
             location = [location[1], location[2], location[0]]; // re-order
         }
@@ -659,6 +689,39 @@ function parseLocation(loc) {
     } else {
         console.warn("Can't parse location:", ''+loc);
     }
+}
+
+// parse a tile coordinate and return a standardized [lon, lat, z]
+// tile coordinates: [z, x, y]
+function parseCoordinate(coord) {
+    var location, coordinate;
+    // expect format: "z/lon/lat" or "z,lon,lat"
+    if (typeof(coord) === "string") {
+        if (coord.indexOf(',') > 0 ) { // comma-delimited
+            coordinate = coord.split(/[ ,]+/);
+        } else if (coord.indexOf('/') > 0 ) { // slash-delimited
+            coordinate = coord.split(/[\/]+/);
+        }
+    } else {
+        coordinate = coord.slice();
+    }
+    try {
+        coordinate = coordinate.map(parseFloat);
+        location = [tile2lat(coordinate[2], coordinate[0]), tile2long(coordinate[1], coordinate[0]), coordinate[0]]
+        location = location.map(parseFloat);
+    } catch(e) {
+        throw new Error("Can't parse coordinate:", ''+coord, e);
+    }
+    console.log('Coordinate:', coord, '=', location)
+    // return updated location
+    return location;
+}
+
+// convert tile coordinates to latlon
+function tile2long(x,z) { return ((x+.5)/Math.pow(2,z)*360-180); }
+function tile2lat(y,z) {
+   var n=Math.PI-2*Math.PI*(y+.5)/Math.pow(2,z);
+   return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
 
 // load an image from a file
@@ -897,22 +960,22 @@ function goClick() {
         slots.slot2.tests = sortByKey(slots.slot2.tests, "name");
 
         get("goButton").setAttribute("style","display:none");
-        get('stopButton').setAttribute("style","display:inline");
-        get('stopButtonTop').setAttribute("style","display:inline");
+        get("stopButton").setAttribute("style","display:inline");
+        get("stopButtonTop").setAttribute("style","display:inline");
         proceed();
     }).catch(function(err){
-      if (typeof err != 'undefined') {
-        console.log(err);
-        diffSay(err);
-      }
-      stopClick();
+        if (typeof err != "undefined") {
+          console.log(err);
+          diffSay(err);
+        }
+        stopClick();
     });
 
 }
 
 // stop button
 function stopClick() {
-    get('stopButton').blur();
+    get("stopButton").blur();
     diffSay("Stopping Diff.");
     stop();
 }
@@ -920,10 +983,10 @@ function stopClick() {
 // all stop
 function stop() {
     running = false;
-    if (typeof slots.slot1 != 'undefined') slots.slot1.tests = [];
-    if (typeof slots.slot2 != 'undefined') slots.slot2.tests = [];
-    get('stopButton').setAttribute("style","display:none");
-    get('stopButtonTop').setAttribute("style","display:none");
+    if (typeof slots.slot1 != "undefined") slots.slot1.tests = [];
+    if (typeof slots.slot2 != "undefined") slots.slot2.tests = [];
+    get("stopButton").setAttribute("style","display:none");
+    get("stopButtonTop").setAttribute("style","display:none");
     get("goButton").setAttribute("style","display:inline");
 }
 
@@ -951,8 +1014,8 @@ function proceed() {
             running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
-            console.log('proceed ?', err);
-            diffSay('Problem loading map: "'+err+'"');
+            console.log('proceed()', err);
+            diffSay(err);
             stopClick();
         });
     });
@@ -1016,6 +1079,7 @@ function prepImage(test, frame, msg) {
 // prep scene file urls
 function prepStyles(test1, test2) {
     return new Promise(function(resolve, reject) {
+        // if there's no test scene, check for a default scene
         if (typeof test1.url == 'undefined') {
             if (typeof slots.slot1.defaultScene != 'undefined') {
                 test1.url = slots.slot1.defaultScene;
@@ -1026,16 +1090,17 @@ function prepStyles(test1, test2) {
                 test2.url = slots.slot2.defaultScene;
             }
         }
+        // if there's still no test scene for either test, check the other one
         var url = setEither(test1.url, test2.url);
         if (url === null) {
             url = setEither(slots.slot1.defaultScene, slots.slot2.defaultScene);
         }
+        // if there's still no test scene, bail
         if (url === null) {
             diffSay("No scenefile URLs found for either test!");
             stopClick();
             return;
         } else {
-
             test1.url = url[0];
             test2.url = url[1];
             if (!isPathAbsolute(test1.url)) {
@@ -1126,7 +1191,7 @@ function prepTestImages(test1, test2) {
             // all done
             stop();
             console.log("Done!");
-            var msg = "<a href='"+slots.slot1.url+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.url+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
+            var msg = "<a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
             diffSay(msg);
             get('statustext').innerHTML = "";
 
@@ -1275,16 +1340,11 @@ function makeRow(test1, test2, matchScore) {
             var title = document.createElement('div');
             title.className = 'testname';
             // make test title a link to a live version of the test
-
             // parse locations
             var loc = parseLocation(test1.location);
             // make links
-            var test1link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test1.url)
-                +"&lib="+library1.value
-                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
-            var test2link = "http://tangrams.github.io/tangram-frame/?url="+convertGithub(test2.url)
-                +"&lib="+library2.value
-                +"#"+loc[2]+"/"+loc[0]+"/"+loc[1];
+            var test1link = "http://tangrams.github.io/tangram-frame/?url=" + test1.url + "&lib=" + library1.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
+            var test2link = "http://tangrams.github.io/tangram-frame/?url=" + test2.url + "&lib=" + library2.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
             title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
             testdiv.appendChild(title);
 
