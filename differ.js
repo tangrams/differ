@@ -372,8 +372,12 @@ function prepMap(which) {
         var map = frame.contentDocument.getElementById("map");
         // var map = which['document'].getElementById("map");
         // var map = which.document.getElementById("map");
+
         map.style.height = size+"px";
         map.style.width = size+"px";
+
+        // remove weird 2px border Leaflet adds to map when you resize it
+        mapWindow.map.invalidateSize();
 
         resolve(mapWindow.map);
     }); 
@@ -964,6 +968,7 @@ function goClick() {
         get("goButton").setAttribute("style","display:none");
         get("stopButton").setAttribute("style","display:inline");
         get("stopButtonTop").setAttribute("style","display:inline");
+
         proceed();
     }).catch(function(err){
         if (typeof err != "undefined") {
