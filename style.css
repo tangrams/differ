@@ -183,7 +183,7 @@ canvas {
     position: relative;
 }
 .test img {
-    border: 1px solid #ddd;
+    outline: 1px solid #ddd;
 }
 .header {
     clear: both;
@@ -206,6 +206,7 @@ canvas {
     width: 25%;
     float: left;
     margin-right: 10px;
+    overflow: visible;
 }
 #diff {
     position: absolute;
