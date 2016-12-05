@@ -414,7 +414,7 @@ function loadFile(url, args) {
         if (typeof tests === 'undefined') tests = {};
         if (typeof tests.tests === 'undefined') tests.tests = [];
 
-        if (urlext == "yaml") {
+        if (urlext == "yaml" || urlext == "zip") {
             slot.defaultScene = url;
             // set a global default scene
             defaultScene = url;
