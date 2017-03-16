@@ -822,6 +822,8 @@ function resetViewComplete(frame) {
     }
 }
 
+var api_key = 'mapzen-7AQT7zc';
+
 // load a map position and zoom
 function loadView (view, location, frame) {
     return new Promise(function(resolve, reject) {
@@ -840,6 +842,19 @@ function loadView (view, location, frame) {
             frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true;
             frame.window.Tangram.debug.debugSettings.suppress_label_snap_animation = true;
         }
+
+        // ensure there's an api key
+        scene.subscribe({
+            load(event) {
+                // Modify the scene config object here. This mutates the original scene
+                // config object directly and will not be returned. Tangram does not expect
+                // the object to be passed back, and will render with the mutated object.
+                injectAPIKey(event.config, api_key);
+
+            }
+
+        });
+
         return scene.load(url).then(function(r) {
             scene.animated = false;
             map.setView([location[0], location[1]], location[2], { animate: false});
@@ -1633,6 +1648,58 @@ var saveData = (function () {
         window.URL.revokeObjectURL(url);
     };
 }());
+
+
+// API key enforcement
+
+// regex to detect a mapzen.com url
+var URL_PATTERN = /((https?:)?\/\/(vector|tile).mapzen.com([a-z]|[A-Z]|[0-9]|\/|\{|\}|\.|\||:)+(topojson|geojson|mvt|png|tif|gz))/;
+
+// 
+function isValidMapzenApiKey(string) {
+  return (typeof string === 'string' && string.match(/[-a-z]+-[0-9a-zA-Z_-]{7}/));
+}
+
+function injectAPIKey(config, apiKey) {
+    var didInjectKey = false;
+
+    Object.keys(config.sources).forEach((key) => {
+
+        var value = config.sources[key];
+        var valid = false;
+
+        // Only operate on the URL if it's a Mapzen-hosted vector tile service
+        if (!value.url.match(URL_PATTERN)) return;
+
+        // Check for valid API keys in the source.
+        // First, check theurl_params.api_key field
+        // Tangram.js compatibility note: Tangram >= v0.11.7 fires the `load`
+        // event after `global` property substitution, so we don't need to manually
+        // check global properties here.
+        if (value.url_params && value.url_params.api_key &&
+            isValidMapzenApiKey(value.url_params.api_key)) {
+            valid = true;
+        // Next, check if there is an api_key param in the query string
+        } else if (value.url.match(/(\?|&)api_key=[-a-z]+-[0-9a-zA-Z_-]{7}/)) {
+            valid = true;
+        }
+
+        if (!valid) {
+            // Add a default API key as a url_params setting.
+            // Preserve existing url_params if present.
+            var params = Object.assign({}, config.sources[key].url_params, {
+                api_key: apiKey,
+            });
+
+            // Mutate the original on purpose.
+            // eslint-disable-next-line no-param-reassign
+            config.sources[key].url_params = params;
+            didInjectKey = true;
+        }
+    });
+
+    return didInjectKey;
+}
 
 // when the page first loads:
 window.onload = function() {
