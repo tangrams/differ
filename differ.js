@@ -899,7 +899,7 @@ function loadView (view, location, frame) {
 // if url is a schemeless alphanumeric string, add a scheme
 function ensureScheme(url) {
     if (/[a-z]+/.test(url)) {
-        if (url.search(/^(http|data|blob):/) === -1) url = window.location.protocol + "//" + url;
+        if (url.search(/^(http|https|data|blob):/) === -1) url = window.location.protocol + "//" + url;
     }
     return url;
 }
