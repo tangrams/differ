@@ -616,6 +616,11 @@ function prepPage() {
     if (typeof frame2.window.scene == 'undefined') {
         throw new Error("Frame 2 failed to load, check library url: \""+library2.value+"\"");
     }
+    // disable Tangram animation effects
+    [frame1, frame2].forEach(function(frame) {
+        frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true;
+        frame.window.Tangram.debug.debugSettings.suppress_label_snap_animation = true;
+    });
     // subscribe to Tangram's published view_complete event
     frame1.window.scene.subscribe({
         // trigger promise resolution
@@ -837,11 +842,6 @@ function loadView (view, location, frame) {
         var scene = frame.window.scene;
         var map = frame.window.map;
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
-        if (frame.window.Tangram.debug.debugSettings) {
-            // prevent screenshots of animating labels
-            frame.window.Tangram.debug.debugSettings.suppress_label_fade_in = true;
-            frame.window.Tangram.debug.debugSettings.suppress_label_snap_animation = true;
-        }
 
         // ensure there's an api key
         scene.subscribe({
