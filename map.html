@@ -73,13 +73,14 @@
 
         var url = getQueryVariable("url");
         var scriptElement = document.getElementById("tangram");
+        url = encodeURI(url);
         if (url == "") {
             lib_url = "https://mapzen.com/tangram/tangram.debug.js";
         } else if (url.indexOf("/") > -1) {
             // assume it's a full path
             // check that it's a tangram library
-            if (url.substr(url.length - 17) == '/tangram.debug.js' ||
-                url.substr(url.length - 15) == '/tangram.min.js') {
+            if (url.indexOf('/tangram.debug.js') !== -1 ||
+                url.indexOf('/tangram.min.js') !== -1) {
                 var lib_url = url;
             } else {
                 // noooo you don't
