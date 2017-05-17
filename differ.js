@@ -911,7 +911,7 @@ function goClick() {
     updateProgress(numTests);
 
     get('alert').innerHTML = '';
-    diffSay("Starting Diff");
+    diffSay("Starting Diff.");
     get("goButton").blur();
 
     // reset iframe promises
@@ -998,13 +998,14 @@ function goClick() {
 // stop button
 function stopClick() {
     get("stopButton").blur();
-    diffSay("Stopping Diff.");
     stop();
 }
 
 // all stop
 function stop() {
+    if (!running) return;
     running = false;
+    diffSay("Stopping Diff.");
     if (typeof slots.slot1 != "undefined") slots.slot1.tests = [];
     if (typeof slots.slot2 != "undefined") slots.slot2.tests = [];
     get("stopButton").setAttribute("style","display:none");
@@ -1021,6 +1022,7 @@ function stop() {
 //
 
 function proceed() {
+    running = true;
     // load the map iframes
     return Promise.all([prepMap(frame1), prepMap(frame2)]).then(function() {
         prepTests().then(function() {
@@ -1033,7 +1035,6 @@ function proceed() {
             var test1 = slots.slot1.tests.shift();
             var test2 = slots.slot2.tests.shift();
 
-            running = true;
             prepTestImages(test1, test2);
         }).catch(function(err) {
             console.log('proceed()', err);
