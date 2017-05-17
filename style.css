@@ -37,6 +37,7 @@ body {
 #alert {
     margin-top: 6px;
     height: 128px;
+    font-size: .9em;
     overflow: scroll;
     background-color: #f6f6f6;
 }
