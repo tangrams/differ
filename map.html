@@ -83,8 +83,8 @@
                 var lib_url = url;
             } else {
                 // noooo you don't
-                console.log('lib param error:', url, "is not a valid tangram library, defaulting to latest release");
-                lib_url = 'https://mapzen.com/tangram/tangram.debug.js';
+                var errortext = 'lib param error: '+url+" is not a valid Tangram library. Stopping test.";
+                console.log(errortext);
             }
         } else if (url.indexOf("/") == -1) {
             // assume it's a version # only

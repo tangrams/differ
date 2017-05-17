@@ -368,6 +368,12 @@ function prepMap(which) {
         var frame = which.iframe;
         var mapWindow = which.window;
 
+        // check that frame initialized
+        if (typeof mapWindow.map === 'undefined') {
+            diffSay("Couldn't load <a href='"+frame.src+"'>"+frame.src+"</a>");
+            stopClick();
+        }
+
         // not sure why the others hit a race condition but this doesn't ಠ_ಠ
         var map = frame.contentDocument.getElementById("map");
         // var map = which['document'].getElementById("map");
