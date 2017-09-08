@@ -857,12 +857,13 @@ function loadView (view, location, frame) {
                 // the object to be passed back, and will render with the mutated object.
                 injectAPIKey(event.config, api_key);
 
+                // Force animation off for consistent testing
+                event.config.scene.animated = false;
             }
 
         });
 
         return scene.load(url).then(function(r) {
-            scene.animated = false;
             map.setView([location[0], location[1]], location[2], { animate: false});
             // scene.requestRedraw(); // necessary? guess not
 
