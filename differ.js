@@ -833,7 +833,7 @@ function resetViewComplete(frame) {
     }
 }
 
-var api_key = 'mapzen-7AQT7zc';
+var api_key = 'DtiDR_SqTwOtflSZielr2Q'; // nextzen tile key (dedicated for Differ use)
 
 // load a map position and zoom
 function loadView (view, location, frame) {
@@ -1660,13 +1660,8 @@ var saveData = (function () {
 
 // API key enforcement
 
-// regex to detect a mapzen.com url
-var URL_PATTERN = /((https?:)?\/\/(vector|tile).mapzen.com([a-z]|[A-Z]|[0-9]|\/|\{|\}|\.|\||:)+(topojson|geojson|mvt|png|tif|gz))/;
-
-// 
-function isValidMapzenApiKey(string) {
-  return (typeof string === 'string' && string.match(/[-a-z]+-[0-9a-zA-Z_-]{7}/));
-}
+// regex to detect a nextzen url
+var URL_PATTERN = /((https?:)?\/\/tile?.nextzen.org([a-z]|[A-Z]|[0-9]|\/|\{|\}|\.|\||:)+(topojson|geojson|mvt|png|tif|gz))/;
 
 function injectAPIKey(config, apiKey) {
     var didInjectKey = false;
@@ -1676,7 +1671,7 @@ function injectAPIKey(config, apiKey) {
         var value = config.sources[key];
         var valid = false;
 
-        // Only operate on the URL if it's a Mapzen-hosted vector tile service
+        // Only operate on the URL if it's a Nextzen-hosted vector tile service
         if (!value.url.match(URL_PATTERN)) return;
 
         // Check for valid API keys in the source.
@@ -1684,8 +1679,7 @@ function injectAPIKey(config, apiKey) {
         // Tangram.js compatibility note: Tangram >= v0.11.7 fires the `load`
         // event after `global` property substitution, so we don't need to manually
         // check global properties here.
-        if (value.url_params && value.url_params.api_key &&
-            isValidMapzenApiKey(value.url_params.api_key)) {
+        if (value.url_params && value.url_params.api_key) {
             valid = true;
         // Next, check if there is an api_key param in the query string
         } else if (value.url.match(/(\?|&)api_key=[-a-z]+-[0-9a-zA-Z_-]{7}/)) {
