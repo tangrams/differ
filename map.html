@@ -75,7 +75,7 @@
         var scriptElement = document.getElementById("tangram");
         url = encodeURI(url);
         if (url == "") {
-            lib_url = "https://mapzen.com/tangram/tangram.debug.js";
+            lib_url = "https://unpkg.com/tangram/dist/tangram.debug.js";
         } else if (url.indexOf("/") > -1) {
             // assume it's a full path
             // check that it's a tangram library
@@ -89,7 +89,7 @@
             }
         } else if (url.indexOf("/") == -1) {
             // assume it's a version # only
-            lib_url = "https://mapzen.com/tangram/"+url+"/tangram.debug.js";
+            lib_url = "https://unpkg.com/tangram@"+url+"/dist/tangram.debug.js";
         }
 
         scriptElement.src = lib_url;
