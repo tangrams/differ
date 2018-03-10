@@ -32,12 +32,12 @@
         Compare this .json test file or .yaml scene file:<br>
         <input id="slot1" class="slot" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
         Using this Tangram library:<br>
-        <input id="library1" class="slot" value="https://mapzen.com/tangram/0.14/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
+        <input id="library1" class="slot" value="https://unpkg.com/tangram/dist/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
         <datalist id='libslist'>
            <option value='0.14'>
            <option value='http://localhost:8000/dist/tangram.debug.js'>
-           <option value='https://precog.mapzen.com/tangrams/tangram/master/dist/tangram.min.js'>
-           <option value='https://mapzen.com/tangram/tangram.debug.js'>
+           <option value='https://tangram.city/dist/tangram.debug.js'>
+           <option value='https://master--tangram.netlify.com/dist/tangram.debug.js'>
         </datalist>
         <input type="checkbox" id="checkbox1"> (ignoring any prerendered images)<br><br>
 
@@ -48,13 +48,13 @@
            <option value='https://tangrams.github.io/differ-tests/unit-tests/geo-sampler.json'>
            <option value='https://tangrams.github.io/differ-tests/unit-tests/lines/lines-tests.json'>
            <option value='https://tangrams.github.io/differ-tests/unit-tests/fonts/fonts.json'>
-           <option value='https://mapzen.com/carto/bubble-wrap-style/bubble-wrap-style.zip'>
-           <option value='https://mapzen.com/carto/walkabout-style/walkabout-style.zip'>
-           <option value='https://mapzen.com/carto/tron-style/tron-style.zip'>
+           <option value='https://www.nextzen.org/carto/bubble-wrap-style/bubble-wrap-style.zip'>
+           <option value='https://www.nextzen.org/carto/walkabout-style/walkabout-style.zip'>
+           <option value='https://www.nextzen.org/carto/tron-style/tron-style.zip'>
         </datalist>
 
         Using this Tangram library:<br>
-        <input id="library2" class="slot" value="https://mapzen.com/tangram/0.14/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
+        <input id="library2" class="slot" value="https://unpkg.com/tangram/dist/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
         <input type="checkbox" id="checkbox2"> (ignoring any prerendered images)<br>
 
         <button class="goButton" id="goButton" onclick="goClick()">GO👍</button>
