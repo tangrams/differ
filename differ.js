@@ -404,23 +404,33 @@ function loadFile(url, args) {
             reject();
         }
         var originalurl = url.slice();
-        // if it's a github url, get the raw file
-        url = convertGithub(url);
-        var urlname = splitURL(url).file;
-        var urlext = splitURL(url).ext;
 
         // populate slots array
         var slot = {};
         slot.originalurl = originalurl;
         slot.url = url;
-        slot.dir = splitURL(url).dir;
+
+        var urlname, urlext;
+        if (url[0] !== '{') { // not a JSON string
+            url = convertGithub(url); // if it's a github url, get the raw file
+            urlname = splitURL(url).file;
+            urlext = splitURL(url).ext;
+            slot.dir = splitURL(url).dir;
+        }
+        else { // decode JSON string
+            url = JSON.parse(url);
+            urlname = url;
+            urlext = 'object';
+            slot.dir = '';
+        }
+        
         slot.file = urlname;
 
         if (typeof slot.tests === 'undefined') slot.tests = [];
         if (typeof tests === 'undefined') tests = {};
         if (typeof tests.tests === 'undefined') tests.tests = [];
 
-        if (urlext == "yaml" || urlext == "zip") {
+        if (urlext == "yaml" || urlext == "zip" || urlext == 'object') {
             slot.defaultScene = url;
             // set a global default scene
             defaultScene = url;
@@ -903,10 +913,10 @@ function loadView (view, location, frame) {
     });
 }
 
-// if url is a schemeless alphanumeric string, add a scheme
+// if url is a schemeless alphanumeric string (and not a JSON string), add a scheme
 function ensureScheme(url) {
     if (/[a-z]+/.test(url)) {
-        if (url.search(/^(http|https|data|blob):/) === -1) url = window.location.protocol + "//" + url;
+        if (url.search(/^(http|https|data|blob):/) === -1 && url[0] !== '{') url = window.location.protocol + "//" + url;
     }
     return url;
 }
