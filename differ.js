@@ -857,6 +857,10 @@ function loadView (view, location, frame) {
         // if (!view.location) reject('no view location');
         // load and draw scene
         var url = convertGithub(view.url);
+        if (url[0] === '{') {
+            url = JSON.parse(url);
+        }
+
         // reset the view_complete triggers
         resetViewComplete(frame);
         var scene = frame.window.scene;
