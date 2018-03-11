@@ -506,7 +506,7 @@ function loadFile(url, args) {
                             testUrl = data.tests[key].url;
                             // if the test url is relative, prepend the parent's root directory
                             // set full path of scene file
-                            if (r.test(data.tests[key].url) === false ) {
+                            if (r.test(data.tests[key].url) === false && data.tests[key].url[0] !== '{') {
                                 // make sure there's only one slash at the join:
                                 // remove any trailing slash from parent url
                                 slotUrl = slot.dir.replace(/\/$/, "");
