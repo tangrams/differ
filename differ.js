@@ -159,6 +159,10 @@ function diffSay(txt) {
 
 // convert github links to raw github files
 function convertGithub(url) {
+    if (typeof url !== 'string') {
+        return url;
+    }
+    
     var a = document.createElement('a');
     a.href = url;
     if (a.hostname == "github.com") {
