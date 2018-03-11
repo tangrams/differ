@@ -159,7 +159,7 @@ function diffSay(txt) {
 
 // convert github links to raw github files
 function convertGithub(url) {
-    if (typeof url !== 'string') {
+    if (typeof url !== 'string' && url[0] !== '{') {
         return url;
     }
     
