@@ -61,6 +61,26 @@
     <!-- Load Tangram by URL -->
     <script>
 
+        // https://maymay.net/blog/2008/06/15/ridiculously-simple-javascript-version-string-to-object-parser/
+        function parseVersionString (str) {
+            if (typeof(str) !== 'string') { return false; }
+
+            // Remove extra non-numeric characters (e.g. `v` for version), preserves dots
+            // http://stackoverflow.com/a/9409894/738675
+            var x = str.replace(/[^\d.-]/g, '');
+
+            var parts = x.split('.');
+            // parse from string or default to 0 if can't parse
+            var maj = parseInt(parts[0], 10) || 0;
+            var min = parseInt(parts[1], 10) || 0;
+            var pat = parseInt(parts[2], 10) || 0;
+            return {
+                major: maj,
+                minor: min,
+                patch: pat
+            }
+        }
+
         function getQueryVariable(variable) {
            var query = window.location.search.substring(1);
            var vars = query.split("&");
@@ -89,7 +109,20 @@
             }
         } else if (url.indexOf("/") == -1) {
             // assume it's a version # only
-            lib_url = "https://unpkg.com/tangram@"+url+"/dist/tangram.debug.js";
+
+            var v = parseVersionString(url);
+            if (v.minor < 13) {
+                // use rawgit
+                var version = v.major+"."+v.minor+"."+v.patch;
+                lib_url = "https://rawgit.com/tangrams/tangram/v"+version+"/dist/tangram.debug.js";
+            } else {
+                // use unpkg – it's faster
+                lib_url = "https://unpkg.com/tangram@"+url+"/dist/tangram.debug.js";
+            }
+            // Check if it's a version 0.8 or lower, which uses Leaflet@1.0.0-beta.2
+            if (v.major < 1 && v.minor < 8) {
+                legacyLeaflet = true;
+            }
         }
 
         scriptElement.src = lib_url;
