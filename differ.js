@@ -45,8 +45,8 @@ var slot1 = get("slot1");
 var slot2 = get("slot2");
 var library1 = get("library1");
 var library2 = get("library2");
-var checkbox1 = get("checkbox1");
-var checkbox2 = get("checkbox2");
+var useImages1 = get("useImages1");
+var useImages2 = get("useImages2");
 var tests = get("tests");
 
 // two iframes to hold maps
@@ -130,14 +130,14 @@ function parseQuery() {
     if (lib !== "") {
         library2.value = lib;
     }
-    // ignore prerendered images checkbox
-    var check = getQueryVariable("ignore1");
+    // use prerendered images checkbox
+    var check = getQueryVariable("useimages1");
     if (check) {
-        checkbox1.checked = true;
+        useImages1.checked = true;
     }
-    check = getQueryVariable("ignore2");
+    check = getQueryVariable("useimages2");
     if (check) {
-        checkbox2.checked = true;
+        useImages2.checked = true;
     }
     // start immediately
     url = getQueryVariable("go");
@@ -233,7 +233,7 @@ function readTextFile(file, callback, errorback) {
 function updateURL() {
     var parser = document.createElement('a');
     parser.href = window.location;
-    var url = parser.pathname+"?1="+encodeURI(slot1.value)+"&2="+encodeURI(slot2.value)+"&lib1="+encodeURI(library1.value)+"&lib2="+encodeURI(library2.value)+(checkbox1.checked ? "&ignore1" : "")+(checkbox2.checked ? "&ignore2" : "")+"&go";
+    var url = parser.pathname+"?1="+encodeURI(slot1.value)+"&2="+encodeURI(slot2.value)+"&lib1="+encodeURI(library1.value)+"&lib2="+encodeURI(library2.value)+(useImages1.checked ? "&useimages1" : "")+(useImages2.checked ? "&useimages2" : "")+"&go";
     if (parser.origin+url+"&go" != window.location) {
         var currentstate = history.state;
         window.history.pushState(currentstate, "", url);
@@ -391,7 +391,7 @@ function prepMap(which) {
 
 // parse url and load the appropriate file, then create tests
 function loadFile(url, args) {
-    var ignoreImages = args.ignoreImages;
+    var useImages = args.useImages;
     var depth = args.depth;
     var tests = args.tests;
     var scene = args.scene;
@@ -484,7 +484,7 @@ function loadFile(url, args) {
                                 // prepend slot.dir to path
                                 testUrl = slotUrl + '/' + testUrl;
                             }
-                            loadFile(testUrl, {ignoreImages: true, depth: depth, tests: tests}).then(function(result) {
+                            loadFile(testUrl, {useImages: false, depth: depth, tests: tests}).then(function(result) {
                             });
                         } else {
                             // add test's name as a property of the test
@@ -501,8 +501,8 @@ function loadFile(url, args) {
                                 // prepend slot.dir to path
                                 data.tests[key].url = slot.dir + data.tests[key].url;
                             }
-                            // if checkbox isn't checked
-                            if (!ignoreImages) {
+                            // if checkbox is checked
+                            if (useImages) {
                                 // add path of pre-rendered image to look for
                                 data.tests[key].imageURL = slot.dir + data.tests[key].name + imgType;
                             }
@@ -958,7 +958,7 @@ function goClick() {
     if (slot1.value === "" && slot2.value !== "") slot1Val = slot2.value;
     if (slot2.value === "" && slot1.value !== "") slot2Val = slot1.value;
     // load any files in the file inputs and parse their contents
-    return Promise.all([loadFile(slot1Val, {ignoreImages: checkbox1.checked, depth: slot1depth, tests: slot1tests}), loadFile(slot2Val, {ignoreImages: checkbox2.checked, depth: slot2depth, tests: slot2tests}), frame1Ready, frame2Ready]).then(function(result){
+    return Promise.all([loadFile(slot1Val, {useImages: useImages1.checked, depth: slot1depth, tests: slot1tests}), loadFile(slot2Val, {useImages: useImages2.checked, depth: slot2depth, tests: slot2tests}), frame1Ready, frame2Ready]).then(function(result){
         slots.slot1 = result[0];
         slots.slot2 = result[1];
 

@@ -39,7 +39,7 @@
            <option value='https://tangram.city/dist/tangram.debug.js'>
            <option value='https://master--tangram.netlify.com/dist/tangram.debug.js'>
         </datalist>
-        <input type="checkbox" id="checkbox1"> (ignoring any prerendered images)<br><br>
+        <input type="checkbox" id="useImages1"> (look for prerendered images)<br><br>
 
         to this this .json test file or .yaml scene file:<br>
         <input id="slot2" class="slot" onkeypress="catchEnter(event)" list='testlist' autocomplete="on">
@@ -55,7 +55,7 @@
 
         Using this Tangram library:<br>
         <input id="library2" class="slot" value="https://unpkg.com/tangram/dist/tangram.debug.js" onkeypress="catchEnter(event)" list="libslist" autocomplete="on">
-        <input type="checkbox" id="checkbox2"> (ignoring any prerendered images)<br>
+        <input type="checkbox" id="useImages2"> (look for prerendered images)<br>
 
         <button class="goButton" id="goButton" onclick="goClick()">GO👍</button>
         <button class="goButton" id="stopButton" onclick="stopClick()">STOP✋</button>
