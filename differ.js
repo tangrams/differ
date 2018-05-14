@@ -275,22 +275,25 @@ function rgbToHex(r, g, b) {
 }
 
 // flash background color
-function flashDone () {
-    for (var x = 1; x < 11; x++) {
-        setColorDelay(x);
+function flashDone() {
+    var steps = 25;
+    for (var x = 1; x < steps; x++) {
+        setColorDelay(x, steps);
     }
 }
 
-function setColorDelay(x) {
-    var stepms = 40;
+function setColorDelay(x, steps) {
+    var ms = 20; // delay between steps in ms
     setTimeout(function() {
-        var c = 255 - 255 / x;
+        var step = 255 / steps;
+        var c = step * x;
         var color = rgbToHex(parseInt(c), 255, parseInt(c));
         document.body.style.background = color;
-    }, x * stepms);
+    }, x * ms);
+    // reset to white
     setTimeout(function() {
         document.body.style.background = 'white';
-    }, stepms * 11);
+    }, ms * (steps + 1));
 }
 
 // first add raf shim
