@@ -1,6 +1,6 @@
 // A utility to draw and compare Tangram maps.
 // Uses Vladimir Agafonkin's pixelmatch: https://github.com/mapbox/pixelmatch
-// (c) 2016 Peter Richardson, MIT license
+// (c) 2016-2018 Peter Richardson, MIT license
 
 // "use strict";
 /*jslint browser: true*/
@@ -191,7 +191,6 @@ function splitURL(url) {
 function parseURL(url) {
     var parser = document.createElement('a');
     parser.href = url;
-    console.log('parser:', parser);
     return parser;
 }
 
@@ -346,7 +345,6 @@ function scrollToY(scrollTargetY, speed, easing) {
             requestAnimFrame(tick);
             window.scrollTo(0, scrollY + ((scrollTargetY - scrollY) * t));
         } else {
-            // console.log('scroll done');
             window.scrollTo(0, scrollTargetY);
         }
     }
@@ -427,8 +425,8 @@ function loadFile(url, args) {
             // decrement depth value
             depth.val--;
             if (depth.val === 0) {
+                // resolving with a yaml
                 defaultScene = url;
-                // console.log('resolving with a yaml')
                 resolve(slot);
             }
         } else if (urlext == "json") {
@@ -805,10 +803,8 @@ function screenshot (save, name, frame) {
 }
 
 // use Tangram's view_complete event to resolve a promise
-var viewComplete1Resolve, viewComplete1Reject;
-var viewComplete1;
-var viewComplete2Resolve, viewComplete2Reject;
-var viewComplete2;
+var viewComplete1, viewComplete1Resolve, viewComplete1Reject;
+var viewComplete2, viewComplete2Resolve, viewComplete2Reject;
 
 // reset the triggers on the viewComplete events to wait for the next ones
 function resetViewComplete(frame) {
@@ -850,6 +846,7 @@ function loadView (view, location, frame) {
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
 
         // ensure there's an api key
+
         scene.subscribe({
             load(event) {
                 // Modify the scene config object here. This mutates the original scene
@@ -1376,9 +1373,10 @@ function makeRow(test1, test2, matchScore) {
             // make test title a link to a live version of the test
             // parse locations
             var loc = parseLocation(test1.location);
+            var frameURL = "http://tangrams.github.io/tangram-frame/";
             // make links
-            var test1link = "http://tangrams.github.io/tangram-frame/?url=" + test1.url + "&lib=" + library1.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
-            var test2link = "http://tangrams.github.io/tangram-frame/?url=" + test2.url + "&lib=" + library2.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
+            var test1link = frameURL + "?url=" + test1.url + "&lib=" + library1.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
+            var test2link = frameURL + "?url=" + test2.url + "&lib=" + library2.value + "#" + loc[2] + "/" + loc[0] + "/" + loc[1];
             title.innerHTML = "<span class='titletext'>"+test1.name+"</span> <small>"+test1.location+"</small>";
             testdiv.appendChild(title);
 
