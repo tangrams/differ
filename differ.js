@@ -858,7 +858,11 @@ function loadView (view, location, frame) {
                 injectAPIKey(event.config, api_key);
 
                 // Force animation off for consistent testing
-                event.config.scene.animated = false;
+                if (typeof event.config.scene != 'undefined') event.config.scene.animated = false;
+
+                // unsubscribe so it doesn't keep doing this
+                // may also need to be more specific about "scene"
+                scene.unsubscribe(this);
             }
 
         });
