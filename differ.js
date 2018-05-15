@@ -849,7 +849,6 @@ function loadView (view, location, frame) {
         scene.last_valid_config_source = null; // overriding a Tangram fail-safe
 
         // ensure there's an api key
-
         scene.subscribe({
             load(event) {
                 // Modify the scene config object here. This mutates the original scene
@@ -1311,6 +1310,7 @@ function doDiff( test1, test2 ) {
 
 // re-run a single test
 function refresh(test1, test2) {
+    // move tests to top of tests queue
     slots.slot1.tests.unshift(test1);
     slots.slot2.tests.unshift(test2);
     if (!running) {
@@ -1470,6 +1470,7 @@ function makeRow(test1, test2, matchScore) {
             var refreshButton =  document.createElement('button');
             refreshButton.innerHTML = "refresh";
             refreshButton.onclick = function() {refresh(test1, test2);};
+            refreshButton.id = "refresh" + tests.children.length;
             controls.appendChild(refreshButton);
 
             var exportButton =  document.createElement('button');
