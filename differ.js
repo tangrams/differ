@@ -32,7 +32,7 @@ var slot1tests = {tests: []},
 var lsize = size * window.devicePixelRatio; // logical pixels
 var numTests, scores = [], totalScore = 0;
 var data, metadata;
-var loadTime = Date();
+var startTime, loadTime = Date();
 var defaultScene = "simple.yaml";
 var defaultWarning = false;
 var running = false;
@@ -916,6 +916,7 @@ function ensureScheme(url) {
 
 // go time
 function goClick() {
+    startTime = new Date().getTime();
     // console.clear();
     // reset progress bar
     updateProgress(numTests);
@@ -1224,7 +1225,9 @@ function prepTestImages(test1, test2) {
             // all done
             stop();
             console.log("Done!");
-            var msg = "<a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!";
+            var s = (new Date().getTime() - startTime)/1000;
+            var humanTime = (s-(s%=60))/60+(9<s?'m ':':0')+s+'s';
+            var msg = "<a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!<br>"+humanTime;
             diffSay(msg);
             get('statustext').innerHTML = "";
 
@@ -1235,7 +1238,7 @@ function prepTestImages(test1, test2) {
             if (document.getElementById('donediv') === null) {
                 var doneDiv = document.createElement('div');
                 doneDiv.id = 'donediv';
-                doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2></a>';
+                doneDiv.innerHTML = '<a class="done" href="#" onclick="scrollToY(0, 25000)"><H2>Done! 🎉</H2><br><center>'+humanTime+'</center></a>';
                 doneDiv.className = 'test';
                 get('tests').appendChild(doneDiv);
             }
