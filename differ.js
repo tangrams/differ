@@ -215,6 +215,7 @@ function readTextFile(file, callback, errorback) {
             // diffSay("401 - can't load file <a href='"+file+"'>"+filename+"</a>");
             console.error("401 – can't load file", file);
             errorback("401 – can't load file "+ file);
+            diffSay("401 Not authorized to load the file: <a href='"+file+"'>"+filename+"</a>");
             return false;
         } else if (rawFile.readyState === 4) {
             diffSay("Had trouble loading the file: <a href='"+file+"'>"+filename+"</a>");
