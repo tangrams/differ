@@ -48,7 +48,12 @@
             layer = Tangram.leafletLayer({
                 scene: 'empty.yaml'
             });
-            layer.addTo(map);
+            window.addEventListener('load', function () {
+                // Scene initialized
+                layer.on('init', function() {
+                });
+                layer.addTo(map);
+            });
 
             scene = layer.scene;
             // console.log('map loaded')
