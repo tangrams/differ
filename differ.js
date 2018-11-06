@@ -387,7 +387,7 @@ function prepMap(which) {
         mapWindow.map.invalidateSize();
 
         resolve(mapWindow.map);
-    }); 
+    });
 }
 
 // parse url and load the appropriate file, then create tests
@@ -1303,7 +1303,7 @@ function doDiff( test1, test2 ) {
             diff2.width=size;
             diff2.onload = function() {
                 images[test1.name].diffImg = diff2;
-                images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize); 
+                images[test1.name].strip = makeStrip([test1.img, test2.img, diff2], lsize);
                 resolve();
             };
             diff2.src = linkFromBlob( blob );
