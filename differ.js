@@ -1224,7 +1224,7 @@ function prepTestImages(test1, test2) {
         } else {
             // all done
             stop();
-            console.log("Done!");
+            console.log("Done!\n\n");
             var s = (new Date().getTime() - startTime)/1000;
             var humanTime = (s-(s%=60))/60+(9<s?'m ':':0')+s+'s';
             var msg = "<a href='"+slots.slot1.originalurl+"'>"+slots.slot1.file+"</a> vs. <a href='"+slots.slot2.originalurl+"'>"+slots.slot2.file+"</a><br>" + numTests + " test"+ (numTests == 1 ? "" : "s") + ": Done!<br>"+humanTime;
