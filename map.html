@@ -60,9 +60,6 @@
         }
     </script>
 
-    <!-- Main tangram library -->
-    <script id="tangram" onload="loadMap()"></script>
-
     <!-- Load Tangram by URL -->
     <script>
 
@@ -97,7 +94,6 @@
         }
 
         var url = getQueryVariable("url");
-        var scriptElement = document.getElementById("tangram");
         url = encodeURI(url);
         if (url == "") {
             lib_url = "https://unpkg.com/tangram/dist/tangram.debug.js";
@@ -129,7 +125,25 @@
             }
         }
 
-        scriptElement.src = lib_url;
+        // load Tangram library, first as regular <script>, then as <script type="module"> if needed
+        var scriptElement = document.createElement('script');
+        scriptElement.id = 'tangram';
+        scriptElement.src = lib_url;        
+        scriptElement.onload = function() {
+            if (!window.Tangram) {
+                // if library didn't load, try again as ES module
+                scriptElement = document.createElement('script');
+                scriptElement.type = 'module';
+                scriptElement.id = 'tangram';
+                scriptElement.onload = loadMap;
+                scriptElement.src = lib_url;
+                document.body.appendChild(scriptElement);
+            }
+            else {
+                loadMap();
+            }
+        };
+        document.body.appendChild(scriptElement);
 
     </script>
 
