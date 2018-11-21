@@ -96,7 +96,7 @@
         } else if (url.indexOf("/") > -1) {
             // assume it's a full path
             // check that it's a tangram library
-            if (url.match(/.+\/tangram\.(es5\.)?(debug|min)\.js/) != null) {
+            if (url.match(/.+\/tangram\.(debug|min)\.m?js/) != null) {
                 var lib_url = url;
             } else {
                 // noooo you don't
