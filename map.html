@@ -125,21 +125,11 @@
         // load Tangram library, first as regular <script>, then as <script type="module"> if needed
         var scriptElement = document.createElement('script');
         scriptElement.id = 'tangram';
-        scriptElement.src = lib_url;        
-        scriptElement.onload = function() {
-            if (!window.Tangram) {
-                // if library didn't load, try again as ES module
-                scriptElement = document.createElement('script');
-                scriptElement.type = 'module';
-                scriptElement.id = 'tangram';
-                scriptElement.onload = loadMap;
-                scriptElement.src = lib_url;
-                document.body.appendChild(scriptElement);
-            }
-            else {
-                loadMap();
-            }
-        };
+        scriptElement.src = lib_url;       
+        if (lib_url.slice(lib_url.lastIndexOf('.')+1) === 'mjs') {
+            scriptElement.type = 'module';
+        }
+        scriptElement.onload = loadMap;
         document.body.appendChild(scriptElement);
 
     </script>
