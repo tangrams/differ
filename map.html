@@ -46,7 +46,11 @@
             map.setView([0,0],1);
 
             layer = Tangram.leafletLayer({
-                scene: 'empty.yaml'
+                scene: 'empty.yaml',
+                debug: {
+                    suppress_label_fade_in: true,
+                    suppress_label_snap_animation: true
+                }
             });
             
             layer.addTo(map);
